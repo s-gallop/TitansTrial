@@ -9,15 +9,15 @@
 #include "physics_system.hpp"
 
 // Game configuration
-const size_t MAX_TURTLES = 15;
+const size_t MAX_ENEMIES = 15;
 const size_t MAX_FISH = 5;
-const size_t TURTLE_DELAY_MS = 2000 * 3;
+const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 
 // Create the fish world
 WorldSystem::WorldSystem()
 	: points(0)
-	, next_turtle_spawn(0.f)
+	, next_enemy_spawn(0.f)
 	, next_fish_spawn(0.f) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -149,12 +149,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	}
 
 	// Spawning new turtles
-	next_turtle_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.hardShells.components.size() <= MAX_TURTLES && next_turtle_spawn < 0.f) {
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
+	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f) {
 		// Reset timer
-		next_turtle_spawn = (TURTLE_DELAY_MS / 2) + uniform_dist(rng) * (TURTLE_DELAY_MS / 2);
+		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		// Create turtle
-		Entity entity = createTurtle(renderer, {0,0});
+		Entity entity = createEnemy(renderer, {0, 0});
 		// Setting random initial position and constant velocity
 		Motion& motion = registry.motions.get(entity);
 		motion.position =
@@ -219,7 +219,8 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
-
+    //add bg
+    createBackground();
 	// Create a new salmon
 	player_salmon = createSalmon(renderer, { 100, 200 });
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
@@ -252,8 +253,8 @@ void WorldSystem::handle_collisions() {
 		if (registry.players.has(entity)) {
 			//Player& player = registry.players.get(entity);
 
-			// Checking Player - HardShell collisions
-			if (registry.hardShells.has(entity_other)) {
+			// Checking Player - Enemies collisions
+			if (registry.enemies.has(entity_other)) {
 				// initiate death unless already dying
 				if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer, and make the salmon sink

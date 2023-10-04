@@ -57,7 +57,7 @@ Entity createFish(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createTurtle(RenderSystem* renderer, vec2 position)
+Entity createEnemy(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
 
@@ -72,17 +72,35 @@ Entity createTurtle(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({ -TURTLE_BB_WIDTH, TURTLE_BB_HEIGHT });
+	motion.scale = vec2({-ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
 
 	// Create and (empty) Turtle component to be able to refer to all turtles
-	registry.hardShells.emplace(entity);
+	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TURTLE,
+		{ TEXTURE_ASSET_ID::ENEMY,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
+}
+
+Entity createBackground()
+{
+    Entity entity = Entity();
+    auto& motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    motion.velocity = { 0.f, 0.f };
+    motion.position = {window_width_px/2,window_height_px/2};
+    motion.scale = {1000,1000};
+
+    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+    registry.renderRequests.insert(
+            entity,
+            { TEXTURE_ASSET_ID::BACKGROUND,
+              EFFECT_ASSET_ID::TEXTURED,
+              GEOMETRY_BUFFER_ID::SPRITE });
+    return entity;
 }
 
 Entity createLine(vec2 position, vec2 scale)
@@ -119,7 +137,7 @@ Entity createPebble(vec2 pos, vec2 size)
 	motion.scale = size;
 
 	// Create and (empty) Salmon component to be able to refer to all turtles
-	registry.hardShells.emplace(entity);
+	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
