@@ -16,6 +16,11 @@ struct Enemies
 
 };
 
+struct Sword 
+{
+
+};
+
 // Fish and Salmon have a soft shell
 struct SoftShell
 {
@@ -113,7 +118,8 @@ struct Mesh
 enum class TEXTURE_ASSET_ID {
 	FISH = 0,
 	ENEMY = FISH + 1,
-    BACKGROUND = ENEMY + 1,
+	SWORD = ENEMY + 1,
+    BACKGROUND = SWORD + 1,
 	TEXTURE_COUNT = BACKGROUND + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;

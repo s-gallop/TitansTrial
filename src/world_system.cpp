@@ -11,13 +11,16 @@
 // Game configuration
 const size_t MAX_ENEMIES = 15;
 const size_t MAX_FISH = 5;
+const size_t MAX_SWORDS = 3; 
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
+const size_t SWORD_DELAY_MS = 8000 * 3;
 
 // Create the fish world
 WorldSystem::WorldSystem()
 	: points(0)
 	, next_enemy_spawn(0.f)
+	, next_sword_spawn(1000.f)
 	, next_fish_spawn(0.f) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -161,6 +164,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			vec2(window_width_px -200.f,
 				 50.f + uniform_dist(rng) * (window_height_px - 100.f));
 		motion.velocity = vec2(-100.f, 0.f);
+	}
+
+	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
+	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f) {
+		// Reset timer
+		next_sword_spawn = (SWORD_DELAY_MS	 / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
+		// Create sword at random position
+		float sword_x = uniform_dist(rng) * window_width_px;
+		float sword_y = uniform_dist(rng) * window_height_px;
+
+		createSword(renderer, {sword_x, sword_y});
 	}
 
 	// Spawning new fish

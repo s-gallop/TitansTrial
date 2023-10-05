@@ -9,6 +9,8 @@ const float FISH_BB_WIDTH = 0.4f * 296.f;
 const float FISH_BB_HEIGHT = 0.4f * 165.f;
 const float ENEMY_BB_WIDTH = 0.4f * 620.f;
 const float ENEMY_BB_HEIGHT = 0.4f * 430.f;
+const float SWORD_BB_WIDTH = 0.4f * 100.f;
+const float SWORD_BB_HEIGHT = 0.4f * 200.f;
 
 // the player
 Entity createSalmon(RenderSystem* renderer, vec2 pos);
@@ -16,6 +18,8 @@ Entity createSalmon(RenderSystem* renderer, vec2 pos);
 Entity createFish(RenderSystem* renderer, vec2 position);
 // the enemy
 Entity createEnemy(RenderSystem* renderer, vec2 position);
+// the sword
+Entity createSword(RenderSystem* renderer, vec2 position);
 // the background
 Entity createBackground();
 // a red line for debugging purposes
