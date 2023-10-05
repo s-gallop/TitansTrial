@@ -2,6 +2,8 @@
 #include "physics_system.hpp"
 #include "world_init.hpp"
 
+const float GRAVITY_ACCELERATION_FACTOR = 5.0;
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -33,11 +35,13 @@ void PhysicsSystem::step(float elapsed_ms)
 	auto& motion_container = registry.motions;
 	for(uint i = 0; i < motion_container.size(); i++)
 	{
-		// !!! TODO A1: update motion.position based on step_seconds and motion.velocity
-		//Motion& motion = motion_container.components[i];
-		//Entity entity = motion_container.entities[i];
-		//float step_seconds = elapsed_ms / 1000.f;
-		(void)elapsed_ms; // placeholder to silence unused warning until implemented
+		Motion& motion = motion_container.components[i];
+		Entity entity = motion_container.entities[i];
+		float step_seconds = elapsed_ms / 1000.f;
+		motion.position += motion.velocity * step_seconds;
+		if (registry.players.has(entity)) {
+			motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR;
+		}
 	}
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

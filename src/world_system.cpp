@@ -5,6 +5,7 @@
 // stlib
 #include <cassert>
 #include <sstream>
+#include <bitset>
 
 #include "physics_system.hpp"
 
@@ -13,6 +14,11 @@ const size_t MAX_ENEMIES = 15;
 const size_t MAX_FISH = 5;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
+
+const float BASIC_SPEED = 100.0;
+const float JUMP_INITIAL_SPEED = 250.0;
+
+std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -287,13 +293,37 @@ bool WorldSystem::is_over() const {
 	return bool(glfwWindowShouldClose(window));
 }
 
+void motion_helper(Motion& playerMotion) {
+	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
+	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
+	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
+}
+
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// TODO A1: HANDLE SALMON MOVEMENT HERE
-	// key is of 'type' GLFW_KEY_
-	// action can be GLFW_PRESS GLFW_RELEASE GLFW_REPEAT
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	if (!registry.deathTimers.has(player_salmon)) {
+		Motion& playerMotion = registry.motions.get(player_salmon);
+
+		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+			motionKeyStatus.set(0);
+		}
+		else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
+			motionKeyStatus.reset(0);
+		}
+		else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+			motionKeyStatus.set(1);
+		}
+		else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+			motionKeyStatus.reset(1);
+		}
+
+		motion_helper(playerMotion);
+
+		if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
+		}
+	}
 
 	// Resetting game
 	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
