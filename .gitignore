@@ -11,3 +11,5 @@ ext/project_path.hpp
 ext/project_path.hpp.*
 
 .DS_Store
+
+.vscode/

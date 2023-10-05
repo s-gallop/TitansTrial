@@ -55,6 +55,7 @@ private:
 	RenderSystem* renderer;
 	float current_speed;
 	float next_enemy_spawn;
+	float next_sword_spawn;
 	float next_fish_spawn;
 	Entity player_salmon;
 
