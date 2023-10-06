@@ -291,8 +291,14 @@ void WorldSystem::handle_collisions() {
 					registry.remove_all_components_of(entity_other);
 					Mix_PlayChannel(-1, salmon_eat_sound, 0);
 					++points;
-
-					// !!! TODO A1: create a new struct called LightUp in components.hpp and add an instance to the salmon entity by modifying the ECS registry
+					
+				}
+			}
+			// Checking Player - Sword collusion
+			else if (registry.swords.has(entity_other)) {
+				if (!registry.deathTimers.has(entity)) {
+					registry.remove_all_components_of(entity_other);
+					registry.players.get(player_salmon).hasWeapon = 1;
 				}
 			}
 		}
@@ -354,7 +360,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D) {
+	if (key == GLFW_KEY_B) {
 		if (action == GLFW_RELEASE)
 			debugging.in_debug_mode = false;
 		else
