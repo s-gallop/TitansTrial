@@ -33,7 +33,8 @@ class RenderSystem {
 			textures_path("fish.png"),
 			textures_path("mock_enemy.png"),
 			textures_path("sword.png"),
-            textures_path("background.png") };
+			textures_path("block.png"),
+            textures_path("background.png")};
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.

@@ -27,4 +27,6 @@ Entity createLine(vec2 position, vec2 size);
 // a pebble
 Entity createPebble(vec2 pos, vec2 size);
 
+Entity createBlock(vec2 pos, vec2 size);
+
 

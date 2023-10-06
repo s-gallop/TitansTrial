@@ -3,7 +3,7 @@
 #include "world_init.hpp"
 
 const float GRAVITY_ACCELERATION_FACTOR = 5.0;
-
+const float COLLISION_THRESHOLD = 5.0f; 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -11,22 +11,20 @@ vec2 get_bounding_box(const Motion& motion)
 	return { abs(motion.scale.x), abs(motion.scale.y) };
 }
 
-// This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
-// if the center point of either object is inside the other's bounding-box-circle. You can
-// surely implement a more accurate detection
+// assumes that the colliders are box shaped
+
 bool collides(const Motion& motion1, const Motion& motion2)
 {
-	vec2 dp = motion1.position - motion2.position;
-	float dist_squared = dot(dp,dp);
-	const vec2 other_bonding_box = get_bounding_box(motion1) / 2.f;
-	const float other_r_squared = dot(other_bonding_box, other_bonding_box);
-	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
-	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
-	const float r_squared = max(other_r_squared, my_r_squared);
-	if (dist_squared < r_squared)
+	vec2 scale1 = get_bounding_box(motion1) / 2.0f;
+	vec2 scale2 = get_bounding_box(motion2) / 2.0f;
+	if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) && 
+		abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y)) {
 		return true;
+	}
 	return false;
 }
+
+
 
 void PhysicsSystem::step(float elapsed_ms)
 {
@@ -59,9 +57,56 @@ void PhysicsSystem::step(float elapsed_ms)
 		for(uint j = i+1; j < motion_container.components.size(); j++)
 		{
 			Motion& motion_j = motion_container.components[j];
+			
 			if (collides(motion_i, motion_j))
 			{
 				Entity entity_j = motion_container.entities[j];
+				if (motion_i.isSolid && motion_j.isSolid) {
+					
+					vec2 scale1 = get_bounding_box(motion_i) / 2.0f;
+					vec2 scale2 = get_bounding_box(motion_j) / 2.0f;
+					if (abs(motion_i.position.y - motion_j.position.y) < (scale1.y + scale2.y) + COLLISION_THRESHOLD) {
+						
+						if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x) {
+
+							motion_i.position.x = motion_j.position.x - scale2.x - scale1.x;
+							motion_j.position.x = motion_i.position.x + scale2.x + scale1.x;
+							motion_i.velocity.x = 0;
+							motion_j.velocity.x = 0;
+							
+						}
+						else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x) {
+							motion_i.position.x = motion_j.position.x + scale2.x + scale1.x;
+							motion_j.position.x = motion_i.position.x - scale2.x - scale1.x;
+							motion_i.velocity.x = 0;
+							motion_j.velocity.x = 0;
+						}
+						
+						
+					}
+					if (abs(motion_i.position.x - motion_j.position.x) < (scale1.x + scale2.x) + COLLISION_THRESHOLD) {
+
+						if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y) {
+
+							motion_i.position.y = motion_j.position.y - scale2.y - scale1.y;
+							motion_j.position.y = motion_i.position.y + scale2.y + scale1.y;
+							motion_i.velocity.y = 0;
+							motion_j.velocity.y = 0;
+						}
+						else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y) {
+							motion_i.position.y = motion_j.position.y + scale2.y + scale1.y;
+							motion_j.position.y = motion_i.position.y - scale2.y - scale1.y;
+							motion_i.velocity.y = 0;
+							motion_j.velocity.y = 0;
+						}
+						
+
+					}
+					
+					
+					
+				}
+				
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);

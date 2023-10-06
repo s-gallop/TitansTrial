@@ -16,6 +16,7 @@ Entity createSalmon(RenderSystem* renderer, vec2 pos)
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = mesh.original_size * 150.f;
 	motion.scale.x *= -1; // point front to the right
+	motion.isSolid = true;
 
 	// Create and (empty) Salmon component to be able to refer to all turtles
 	registry.players.emplace(entity);
@@ -70,7 +71,6 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = { -100.f, 0.f };
 	motion.position = position;
-
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.scale = vec2({-ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
 
@@ -171,6 +171,28 @@ Entity createPebble(vec2 pos, vec2 size)
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
 			EFFECT_ASSET_ID::PEBBLE,
 			GEOMETRY_BUFFER_ID::PEBBLE });
+
+	return entity;
+}
+
+Entity createBlock(vec2 pos, vec2 size)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = size;
+	motion.isSolid = true;
+	// Create and (empty) Salmon component to be able to refer to all turtles
+	
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BLOCK, // TEXTURE_COUNT indicates that no txture is needed
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
