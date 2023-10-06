@@ -321,15 +321,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
 			motionKeyStatus.set(0);
+			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(0);
+			if (motionKeyStatus.test(1))
+				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
 			motionKeyStatus.set(1);
+			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(1);
+			if (motionKeyStatus.test(0))
+				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 
 		motion_helper(playerMotion);
