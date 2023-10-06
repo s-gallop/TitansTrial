@@ -7,6 +7,10 @@
 // Player component
 struct Player
 {
+	//Flag for player having weapon
+	// Only using 0 & 1 right now but other values available for more weapons
+	// hasSword = 1
+	uint hasWeapon = 0;
 
 };
 
