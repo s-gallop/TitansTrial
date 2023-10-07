@@ -263,12 +263,20 @@ void WorldSystem::restart_game() {
 
 // Checks if enemyis on dirToCheck side of player and player is facing that direction
 bool direction_collision_helper(Motion& playerMotion, Motion& enemyMotion) {
-	if (playerMotion.direction == 1 && enemyMotion.position.x > playerMotion.position.x) {
+	if (playerMotion.direction == 0 && enemyMotion.position.y > playerMotion.position.y) {
+		// enemy is above and player is facing up
+		return true;
+	}
+	else if (playerMotion.direction == 1 && enemyMotion.position.x > playerMotion.position.x) {
 		// enemy is to the right and player is facing right
 		return true;
 	}
-	else if (playerMotion.direction == 3 && enemyMotion.position.x < playerMotion.position.x) {
+	else if (playerMotion.direction == 2 && enemyMotion.position.x < playerMotion.position.x) {
 		// enemy is to the left and player is facing left
+		return true;
+	}
+	else if (playerMotion.direction == 4 && enemyMotion.position.y < playerMotion.position.y) {
+		// enemy is below and player is facing down
 		return true;
 	}
 
