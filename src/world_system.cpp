@@ -151,7 +151,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// (the containers exchange the last element with the current)
 	for (int i = (int)motion_container.components.size()-1; i>=0; --i) {
 	    Motion& motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f) {
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f) {
 			if(!registry.players.has(motion_container.entities[i])) // don't remove the player
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
