@@ -25,6 +25,8 @@ Entity createSalmon(RenderSystem* renderer, vec2 pos)
 			EFFECT_ASSET_ID::SALMON,
 			GEOMETRY_BUFFER_ID::SALMON });
 
+	registry.gravities.emplace(entity);
+
 	return entity;
 }
 
@@ -81,6 +83,8 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 		{ TEXTURE_ASSET_ID::ENEMY,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
+
+	registry.gravities.emplace(entity);
 
 	return entity;
 }

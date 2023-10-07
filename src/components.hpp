@@ -39,6 +39,11 @@ struct Motion {
 	vec2 scale = { 10.f, 10.f };
 };
 
+// Gravity is valid for all entities in this struct
+struct Gravity {
+
+};
+
 // Stucture to store collision information
 struct Collision
 {
