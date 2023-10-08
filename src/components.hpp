@@ -25,6 +25,12 @@ struct Sword
 
 };
 
+//Weapon the player has picked up
+struct Weapon
+{
+	
+};
+
 // Fish and Salmon have a soft shell
 struct SoftShell
 {
@@ -37,8 +43,7 @@ struct Motion {
 	float angle = 0.f;
 	vec2 velocity = { 0.f, 0.f };
 	vec2 scale = { 10.f, 10.f };
-	// Direction: up = 0, right = 1, down = 2, left = 3
-	uint direction = 1;
+	vec2 positionOffset = {0.f, 0.f};
 };
 
 // Gravity is valid for all entities in this struct

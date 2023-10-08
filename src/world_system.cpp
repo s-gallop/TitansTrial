@@ -157,6 +157,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
+	// Keep weapons centred on player
+	for (Entity entity: registry.weapons.entities) {
+		registry.motions.get(entity).position = registry.motions.get(player_salmon).position;
+	}
+
 	// Spawning new turtles
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
 	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f) {
@@ -260,29 +265,6 @@ void WorldSystem::restart_game() {
 	*/
 }
 
-
-// Checks if enemyis on dirToCheck side of player and player is facing that direction
-bool direction_collision_helper(Motion& playerMotion, Motion& enemyMotion) {
-	if (playerMotion.direction == 0 && enemyMotion.position.y > playerMotion.position.y) {
-		// enemy is above and player is facing up
-		return true;
-	}
-	else if (playerMotion.direction == 1 && enemyMotion.position.x > playerMotion.position.x) {
-		// enemy is to the right and player is facing right
-		return true;
-	}
-	else if (playerMotion.direction == 2 && enemyMotion.position.x < playerMotion.position.x) {
-		// enemy is to the left and player is facing left
-		return true;
-	}
-	else if (playerMotion.direction == 4 && enemyMotion.position.y < playerMotion.position.y) {
-		// enemy is below and player is facing down
-		return true;
-	}
-
-	return false;
-}
-
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
@@ -299,15 +281,13 @@ void WorldSystem::handle_collisions() {
 			// Checking Player - Enemies collisions
 			if (registry.enemies.has(entity_other)) {
 				// initiate death unless already dying
-				if (registry.players.has(entity) && registry.players.get(entity).hasWeapon == 1 && direction_collision_helper(registry.motions.get(entity), registry.motions.get(entity_other))) {
-					registry.remove_all_components_of(entity_other);
-				}
-				else if (!registry.deathTimers.has(entity)) {
+				if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer, and make the salmon sink
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, salmon_dead_sound, 0);
+
+					// !!! TODO A1: change the salmon orientation and color on death
 				}
-				
 			}
 			// Checking Player - SoftShell collisions
 			else if (registry.softShells.has(entity_other)) {
@@ -323,7 +303,16 @@ void WorldSystem::handle_collisions() {
 			else if (registry.swords.has(entity_other)) {
 				if (!registry.deathTimers.has(entity)) {
 					registry.remove_all_components_of(entity_other);
-					registry.players.get(player_salmon).hasWeapon = 1;
+					if (!registry.players.get(player_salmon).hasWeapon) {
+						createWeaponSword(renderer);
+						registry.players.get(player_salmon).hasWeapon = 1;
+					}
+				}
+			}
+		} else if (registry.weapons.has(entity)) {
+			if (registry.enemies.has(entity_other)) {
+				if (!registry.deathTimers.has(player_salmon)) {
+					registry.remove_all_components_of(entity_other);
 				}
 			}
 		}
@@ -352,36 +341,27 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
 			motionKeyStatus.set(0);
-			//playerMotion.scale.x = -abs(playerMotion.scale.x);
+			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(0);
-			//if (motionKeyStatus.test(1))
-				//playerMotion.scale.x = abs(playerMotion.scale.x);
+			if (motionKeyStatus.test(1))
+				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
 			motionKeyStatus.set(1);
-			//playerMotion.scale.x = abs(playerMotion.scale.x);
+			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(1);
-			//if (motionKeyStatus.test(0))
-				//playerMotion.scale.x = -abs(playerMotion.scale.x);
+			if (motionKeyStatus.test(0))
+				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 
 		motion_helper(playerMotion);
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS) {
 			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
-		}
-
-		if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
-			playerMotion.direction = 1;
-		}
-		else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-			playerMotion.scale.x = abs(playerMotion.scale.x);
-			playerMotion.direction = 3;
 		}
 	}
 
@@ -414,11 +394,10 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// TODO A1: HANDLE SALMON ROTATION HERE
-	// xpos and ypos are relative to the top-left of the window, the salmon's
-	// default facing direction is (1, 0)
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	(vec2)mouse_position; // dummy to avoid compiler warning
+	if (!registry.deathTimers.has(player_salmon)) {
+		for (Entity entity: registry.weapons.entities) {
+			Motion& motion = registry.motions.get(entity);
+			motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
+		}
+	}
 }

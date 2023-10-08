@@ -13,6 +13,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	// thus ORDER IS IMPORTANT
 	Transform transform;
 	transform.translate(motion.position);
+	transform.rotate(motion.angle);
+	transform.translate(motion.positionOffset);
 	transform.scale(motion.scale);
 
 	assert(registry.renderRequests.has(entity));
