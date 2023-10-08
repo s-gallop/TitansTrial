@@ -37,7 +37,7 @@ void PhysicsSystem::step(float elapsed_ms)
 		Entity entity = motion_container.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
 		motion.position += motion.velocity * step_seconds;
-		if (registry.players.has(entity)) {
+		if (registry.gravities.has(entity)) {
 			motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR;
 		}
 	}

@@ -7,6 +7,10 @@
 // Player component
 struct Player
 {
+	//Flag for player having weapon
+	// Only using 0 & 1 right now but other values available for more weapons
+	// hasSword = 1
+	uint hasWeapon = 0;
 
 };
 
@@ -34,6 +38,13 @@ struct Motion {
 	vec2 velocity = { 0.f, 0.f };
 	vec2 scale = { 10.f, 10.f };
 	bool isSolid = false;
+	// Direction: up = 0, right = 1, down = 2, left = 3
+	uint direction = 1;
+};
+
+// Gravity is valid for all entities in this struct
+struct Gravity {
+
 };
 
 // Stucture to store collision information
