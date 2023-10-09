@@ -11,6 +11,8 @@ const float ENEMY_BB_WIDTH = 4.f * 26.f;
 const float ENEMY_BB_HEIGHT = 4.f * 30.f;
 const float SWORD_BB_WIDTH = 1.f * 21.f;
 const float SWORD_BB_HEIGHT = 1.f * 50.f;
+const float HERO_BB_WIDTH = 15.f * 3.f;
+const float HERO_BB_HEIGHT = 16.f * 3.f;
 
 // the player
 Entity createHero(RenderSystem* renderer, vec2 pos);

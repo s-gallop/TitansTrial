@@ -48,21 +48,26 @@ bool collides (const Motion& motion1, const Motion& motion2) {
 	vec2 scale2j = vec2(0, get_bounding_box(motion2).y) * rotMat2 / 2.f;
 	vec2 pos1 = motion1.position + motion1.positionOffset * rotMat1;
 	vec2 pos2 = motion2.position + motion2.positionOffset * rotMat2;
-	vec2 vec1To2 = {pos2.x - pos1.x, pos2.y - pos1.y};
-	vec2 vec2To1 = {pos1.x - pos2.x, pos1.y - pos2.y};
+	vec2 vec1To2 = pos2 - pos1;
+	vec2 vec2To1 = pos1 - pos2;
 	float angle1To2 = atan(dot(vec1To2, vec2(-scale1i.y, scale1i.x)) / dot(vec1To2, scale1i));
 	float angle2To1 = atan(dot(vec2To1, vec2(-scale2i.y, scale2i.x)) / dot(vec2To1, scale2i));
 	vec2 box1To2 = getVecToOther(angle1To2, scale1i, scale1j);
 	vec2 box2To1 = getVecToOther(angle2To1, scale2i, scale2j);
-	if (length(vec1To2) < length(box1To2) + length(box2To1)) {
+	if (length(vec1To2) < length(box1To2) + length(box2To1))
 		return true;
-	}
+
 	vec2 closestCorner1 = pos1 + getClosestCorner(angle1To2, scale1i, scale1j);
 	vec2 closestCorner2 = pos2 + getClosestCorner(angle2To1, scale2i, scale2j);
-	vec2 corner1To2 = {closestCorner2.x - closestCorner1.x, closestCorner2.y - closestCorner1.y};
-	if (signbit(corner1To2.x) != signbit(vec1To2.x) && signbit(corner1To2.y) != signbit(vec1To2.y)) {
+	vec2 pos1ToCorner2 = closestCorner2 - pos1;
+	vec2 pos2ToCorner1 = closestCorner1 - pos2;
+	float angle1ToCorner2 = atan(dot(pos1ToCorner2, vec2(-scale1i.y, scale1i.x)) / dot(pos1ToCorner2, scale1i));
+	float angle2ToCorner1 = atan(dot(pos2ToCorner1, vec2(-scale2i.y, scale2i.x)) / dot(pos2ToCorner1, scale2i));
+	vec2 box1ToCorner2 = getVecToOther(angle1ToCorner2, scale1i, scale1j);
+	vec2 box2ToCorner1 = getVecToOther(angle2ToCorner1, scale2i, scale2j);
+	if (length(pos1ToCorner2) < length(box1ToCorner2) || length(pos2ToCorner1) < length(box2ToCorner1))
 		return true;
-	}
+	
 	return false;
 }
 

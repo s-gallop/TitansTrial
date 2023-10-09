@@ -14,7 +14,7 @@ Entity createHero(RenderSystem* renderer, vec2 pos)
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-    motion.scale = vec2({15*3, 16*3 });
+    motion.scale = {HERO_BB_WIDTH, HERO_BB_HEIGHT};
 	motion.isSolid = true;
 
 	// Create and (empty) Salmon component to be able to refer to all turtles
