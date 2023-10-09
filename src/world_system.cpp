@@ -17,7 +17,7 @@ const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 const size_t SWORD_DELAY_MS = 8000 * 3;
 
-const float BASIC_SPEED = 100.0;
+const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 250.0;
 
 std::bitset<2> motionKeyStatus("00");
@@ -247,7 +247,7 @@ void WorldSystem::restart_game() {
     //add bg
     createBackground();
 	// Create a new salmon
-	player_salmon = createSalmon(renderer, { 100, 200 });
+	player_salmon = createHero(renderer, {100, 200});
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
 	Entity block1 = createBlock({ 300, 300 }, { 200, 200 });
 	Entity block2 = createBlock({ 500, 450 }, { 100, 450 });
@@ -330,10 +330,13 @@ bool WorldSystem::is_over() const {
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Motion& playerMotion) {
+void motion_helper(Entity& player) {
+    Motion& playerMotion = registry.motions.get(player);
+    AnimationInfo& playerAnimation = registry.animated.get(player);
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
+    playerAnimation.curState = playerMotion.velocity[0] != 0 ? 1 : 0;
 }
 
 // On key callback
@@ -361,7 +364,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 
-		motion_helper(playerMotion);
+		motion_helper(player_salmon);
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS) {
 			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
