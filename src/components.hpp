@@ -94,6 +94,12 @@ struct TexturedVertex
 	vec2 texcoord;
 };
 
+struct AnimationInfo
+{
+    int states;
+    std::vector<int> stateFrameLength;
+    int curState;
+};
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
@@ -129,7 +135,8 @@ struct Mesh
 
 enum class TEXTURE_ASSET_ID {
 	FISH = 0,
-	ENEMY = FISH + 1,
+    HERO = FISH + 1,
+	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
 	BLOCK = SWORD + 1,
     BACKGROUND = BLOCK + 1,
@@ -143,7 +150,8 @@ enum class EFFECT_ASSET_ID {
 	PEBBLE = COLOURED + 1,
 	SALMON = PEBBLE + 1,
 	TEXTURED = SALMON + 1,
-	WATER = TEXTURED + 1,
+    ANIMATED = TEXTURED + 1,
+	WATER = ANIMATED + 1,
 	EFFECT_COUNT = WATER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;

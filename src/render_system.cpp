@@ -36,7 +36,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	// Input data location as in the vertex buffer
-	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED)
+	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED || render_request.used_effect == EFFECT_ASSET_ID::ANIMATED )
 	{
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -54,6 +54,15 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			(void *)sizeof(
 				vec3)); // note the stride to skip the preceeding vertex position
 
+        if (registry.animated.has(entity))
+        {
+            AnimationInfo& info = registry.animated.get(entity);
+            GLint frame_loc = glGetUniformLocation(program, "frame");
+            glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
+            GLint scale_loc = glGetUniformLocation(program, "scale");
+            glUniform2f(scale_loc, 9.0,4.0);
+
+        }
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();

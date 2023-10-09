@@ -13,7 +13,7 @@ const float SWORD_BB_WIDTH = 0.4f * 100.f;
 const float SWORD_BB_HEIGHT = 0.4f * 200.f;
 
 // the player
-Entity createSalmon(RenderSystem* renderer, vec2 pos);
+Entity createHero(RenderSystem* renderer, vec2 pos);
 // the prey
 Entity createFish(RenderSystem* renderer, vec2 position);
 // the enemy

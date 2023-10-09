@@ -25,6 +25,7 @@ public:
 	ComponentContainer<Sword> swords;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
+    ComponentContainer<AnimationInfo> animated;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
