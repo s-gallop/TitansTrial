@@ -96,7 +96,7 @@ Entity createBackground()
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = {window_width_px/2,window_height_px/2};
-    motion.scale = {window_width_px, window_width_px};
+    motion.scale = {window_width_px, window_height_px};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
@@ -120,12 +120,36 @@ Entity createSword(RenderSystem* renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
-
-	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({-SWORD_BB_WIDTH, SWORD_BB_HEIGHT });
+	motion.scale = vec2({SWORD_BB_WIDTH, SWORD_BB_HEIGHT });
 
 	// Create and (empty) Turtle component to be able to refer to all turtles
 	registry.swords.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::SWORD,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createWeaponSword(RenderSystem* renderer) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = { 0.f, 0.f };
+	motion.scale = {2*SWORD_BB_WIDTH, 2*SWORD_BB_HEIGHT };
+	motion.positionOffset = {0.f, -100.f};
+
+	// Add to weapons and renderRequests
+	registry.weapons.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::SWORD,
