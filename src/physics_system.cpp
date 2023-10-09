@@ -13,18 +13,58 @@ vec2 get_bounding_box(const Motion& motion)
 
 // assumes that the colliders are box shaped
 
-bool collides(const Motion& motion1, const Motion& motion2)
-{
-	vec2 scale1 = get_bounding_box(motion1) / 2.0f;
-	vec2 scale2 = get_bounding_box(motion2) / 2.0f;
-	if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) && 
-		abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y)) {
+// bool collides(const Motion& motion1, const Motion& motion2)
+// {
+// 	vec2 scale1 = get_bounding_box(motion1) / 2.0f;
+// 	vec2 scale2 = get_bounding_box(motion2) / 2.0f;
+// 	if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) && 
+// 		abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y)) {
+// 		return true;
+// 	}
+// 	return false;
+// }
+
+vec2 getVecToOther(float angle1To2, vec2 scale1i, vec2 scale1j) {
+	float angleToCorner = atan(length(scale1j) / length(scale1i));
+	if (abs(angle1To2) <= angleToCorner || abs(angle1To2) >= M_PI - angleToCorner) {
+		return (abs(angle1To2) < M_PI/2 ? -1.f : 1.f) * scale1i + sin(angle1To2) * scale1j;
+	} else {
+		return cos(angle1To2) * scale1i + (angle1To2 < 0 ? -1.f : 1.f) * scale1j;
+	}
+}
+
+vec2 getClosestCorner(float angle, vec2 scaleI, vec2 scaleJ) {
+	return (abs(angle) < M_PI/2 ? -1.f : 1.f) * scaleI + (angle < 0 ? -1.f : 1.f) * scaleJ;
+}
+
+bool collides (const Motion& motion1, const Motion& motion2) {
+	float angle1 = motion1.angle;
+	float angle2 = motion2.angle;
+	mat2 rotMat1 = {cos(angle1), -sin(angle1), sin(angle1), cos(angle1)};
+	mat2 rotMat2 = {cos(angle2), -sin(angle2), sin(angle2), cos(angle2)};
+	vec2 scale1i = vec2(get_bounding_box(motion1).x, 0) * rotMat1 / 2.f;
+	vec2 scale1j = vec2(0, get_bounding_box(motion1).y) * rotMat1 / 2.f;
+ 	vec2 scale2i = vec2(get_bounding_box(motion2).x, 0) * rotMat2 / 2.f;
+	vec2 scale2j = vec2(0, get_bounding_box(motion2).y) * rotMat2 / 2.f;
+	vec2 pos1 = motion1.position + motion1.positionOffset * rotMat1;
+	vec2 pos2 = motion2.position + motion2.positionOffset * rotMat2;
+	vec2 vec1To2 = {pos2.x - pos1.x, pos2.y - pos1.y};
+	vec2 vec2To1 = {pos1.x - pos2.x, pos1.y - pos2.y};
+	float angle1To2 = atan(dot(vec1To2, vec2(-scale1i.y, scale1i.x)) / dot(vec1To2, scale1i));
+	float angle2To1 = atan(dot(vec2To1, vec2(-scale2i.y, scale2i.x)) / dot(vec2To1, scale2i));
+	vec2 box1To2 = getVecToOther(angle1To2, scale1i, scale1j);
+	vec2 box2To1 = getVecToOther(angle2To1, scale2i, scale2j);
+	if (length(vec1To2) < length(box1To2) + length(box2To1)) {
+		return true;
+	}
+	vec2 closestCorner1 = pos1 + getClosestCorner(angle1To2, scale1i, scale1j);
+	vec2 closestCorner2 = pos2 + getClosestCorner(angle2To1, scale2i, scale2j);
+	vec2 corner1To2 = {closestCorner2.x - closestCorner1.x, closestCorner2.y - closestCorner1.y};
+	if (signbit(corner1To2.x) != signbit(vec1To2.x) && signbit(corner1To2.y) != signbit(vec1To2.y)) {
 		return true;
 	}
 	return false;
 }
-
-
 
 void PhysicsSystem::step(float elapsed_ms)
 {

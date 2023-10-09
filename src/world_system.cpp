@@ -316,6 +316,7 @@ void WorldSystem::handle_collisions() {
 			if (registry.enemies.has(entity_other)) {
 				if (!registry.deathTimers.has(player_salmon)) {
 					registry.remove_all_components_of(entity_other);
+					++points;
 				}
 			}
 		}
@@ -347,21 +348,21 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
 			motionKeyStatus.set(0);
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
+			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(0);
 			if (motionKeyStatus.test(1))
-				playerMotion.scale.x = abs(playerMotion.scale.x);
+				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
 			motionKeyStatus.set(1);
-			playerMotion.scale.x = abs(playerMotion.scale.x);
+			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
 			motionKeyStatus.reset(1);
 			if (motionKeyStatus.test(0))
-				playerMotion.scale.x = -abs(playerMotion.scale.x);
+				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
 		motion_helper(player_salmon);
