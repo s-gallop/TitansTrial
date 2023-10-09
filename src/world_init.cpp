@@ -210,19 +210,16 @@ Entity createBlock(vec2 pos, vec2 size)
 {
 	auto entity = Entity();
 
-	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = size;
 	motion.isSolid = true;
-	// Create and (empty) Salmon component to be able to refer to all turtles
-	
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BLOCK, // TEXTURE_COUNT indicates that no txture is needed
-			EFFECT_ASSET_ID::TEXTURED,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
+			EFFECT_ASSET_ID::COLOURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;

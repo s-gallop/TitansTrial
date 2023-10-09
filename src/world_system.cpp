@@ -12,7 +12,7 @@
 // Game configuration
 const size_t MAX_ENEMIES = 15;
 const size_t MAX_FISH = 5;
-const size_t MAX_SWORDS = 3; 
+const size_t MAX_SWORDS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 const size_t SWORD_DELAY_MS = 8000 * 3;
@@ -24,15 +24,14 @@ std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0)
-	, next_enemy_spawn(0.f)
-	, next_sword_spawn(1000.f)
-	, next_fish_spawn(0.f) {
+	: points(0), next_enemy_spawn(0.f), next_sword_spawn(1000.f), next_fish_spawn(0.f)
+{
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
 
-WorldSystem::~WorldSystem() {
+WorldSystem::~WorldSystem()
+{
 	// Destroy music components
 	if (background_music != nullptr)
 		Mix_FreeMusic(background_music);
@@ -50,19 +49,23 @@ WorldSystem::~WorldSystem() {
 }
 
 // Debugging
-namespace {
-	void glfw_err_cb(int error, const char *desc) {
+namespace
+{
+	void glfw_err_cb(int error, const char *desc)
+	{
 		fprintf(stderr, "%d: %s", error, desc);
 	}
 }
 
 // World initialization
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer
-GLFWwindow* WorldSystem::create_window() {
+GLFWwindow *WorldSystem::create_window()
+{
 	///////////////////////////////////////
 	// Initialize GLFW
 	glfwSetErrorCallback(glfw_err_cb);
-	if (!glfwInit()) {
+	if (!glfwInit())
+	{
 		fprintf(stderr, "Failed to initialize GLFW");
 		return nullptr;
 	}
@@ -82,7 +85,8 @@ GLFWwindow* WorldSystem::create_window() {
 
 	// Create the main window (for rendering, keyboard, and mouse input)
 	window = glfwCreateWindow(window_width_px, window_height_px, "Salmon Game Assignment", nullptr, nullptr);
-	if (window == nullptr) {
+	if (window == nullptr)
+	{
 		fprintf(stderr, "Failed to glfwCreateWindow");
 		return nullptr;
 	}
@@ -91,18 +95,22 @@ GLFWwindow* WorldSystem::create_window() {
 	// Input is handled using GLFW, for more info see
 	// http://www.glfw.org/docs/latest/input_guide.html
 	glfwSetWindowUserPointer(window, this);
-	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
-	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
+	auto key_redirect = [](GLFWwindow *wnd, int _0, int _1, int _2, int _3)
+	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
+	auto cursor_pos_redirect = [](GLFWwindow *wnd, double _0, double _1)
+	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_move({_0, _1}); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+	if (SDL_Init(SDL_INIT_AUDIO) < 0)
+	{
 		fprintf(stderr, "Failed to initialize SDL Audio");
 		return nullptr;
 	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
+	{
 		fprintf(stderr, "Failed to open audio device");
 		return nullptr;
 	}
@@ -111,29 +119,32 @@ GLFWwindow* WorldSystem::create_window() {
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 	salmon_eat_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
 
-	if (background_music == nullptr || salmon_dead_sound == nullptr || salmon_eat_sound == nullptr) {
+	if (background_music == nullptr || salmon_dead_sound == nullptr || salmon_eat_sound == nullptr)
+	{
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
-			audio_path("music.wav").c_str(),
-			audio_path("salmon_dead.wav").c_str(),
-			audio_path("salmon_eat.wav").c_str());
+				audio_path("music.wav").c_str(),
+				audio_path("salmon_dead.wav").c_str(),
+				audio_path("salmon_eat.wav").c_str());
 		return nullptr;
 	}
 
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg) {
+void WorldSystem::init(RenderSystem *renderer_arg)
+{
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
-    restart_game();
+	restart_game();
 }
 
 // Update our game world
-bool WorldSystem::step(float elapsed_ms_since_last_update) {
+bool WorldSystem::step(float elapsed_ms_since_last_update)
+{
 	// Updating window title with points
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
@@ -141,18 +152,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
-	    registry.remove_all_components_of(registry.debugComponents.entities.back());
+		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
 	// Removing out of screen entities
-	auto& motion_container = registry.motions;
+	auto &motion_container = registry.motions;
 
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
-	for (int i = (int)motion_container.components.size()-1; i>=0; --i) {
-	    Motion& motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f) {
-			if(!registry.players.has(motion_container.entities[i])) // don't remove the player
+	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
+	{
+		Motion &motion = motion_container.components[i];
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f)
+		{
+			if (!registry.players.has(motion_container.entities[i])) // don't remove the player
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
 	}
@@ -164,23 +177,25 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Spawning new turtles
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f) {
+	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f)
+	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		// Create turtle
 		Entity entity = createEnemy(renderer, {0, 0});
 		// Setting random initial position and constant velocity
-		Motion& motion = registry.motions.get(entity);
+		Motion &motion = registry.motions.get(entity);
 		motion.position =
-			vec2(window_width_px -200.f,
+			vec2(window_width_px - 200.f,
 				 50.f + uniform_dist(rng) * (window_height_px - 100.f));
 		motion.velocity = vec2(-100.f, 0.f);
 	}
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f) {
+	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
+	{
 		// Reset timer
-		next_sword_spawn = (SWORD_DELAY_MS	 / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
+		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
 		// Create sword at random position
 		float sword_x = uniform_dist(rng) * window_width_px;
 		float sword_y = uniform_dist(rng) * window_height_px;
@@ -190,7 +205,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Spawning new fish
 	next_fish_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.softShells.components.size() <= MAX_FISH && next_fish_spawn < 0.f) {
+	if (registry.softShells.components.size() <= MAX_FISH && next_fish_spawn < 0.f)
+	{
 		// !!!  TODO A1: Create new fish with createFish({0,0}), as for the Turtles above
 	}
 
@@ -201,22 +217,25 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	// Processing the salmon state
 	assert(registry.screenStates.components.size() <= 1);
-    ScreenState &screen = registry.screenStates.components[0];
+	ScreenState &screen = registry.screenStates.components[0];
 
-    float min_timer_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities) {
+	float min_timer_ms = 3000.f;
+	for (Entity entity : registry.deathTimers.entities)
+	{
 		// progress timer
-		DeathTimer& timer = registry.deathTimers.get(entity);
+		DeathTimer &timer = registry.deathTimers.get(entity);
 		timer.timer_ms -= elapsed_ms_since_last_update;
-		if(timer.timer_ms < min_timer_ms){
+		if (timer.timer_ms < min_timer_ms)
+		{
 			min_timer_ms = timer.timer_ms;
 		}
 
 		// restart the game once the death timer expired
-		if (timer.timer_ms < 0) {
+		if (timer.timer_ms < 0)
+		{
 			registry.deathTimers.remove(entity);
 			screen.screen_darken_factor = 0;
-            restart_game();
+			restart_game();
 			return true;
 		}
 	}
@@ -229,7 +248,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 }
 
 // Reset the world state to its initial state
-void WorldSystem::restart_game() {
+void WorldSystem::restart_game()
+{
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -240,49 +260,74 @@ void WorldSystem::restart_game() {
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all fish, turtles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
-	    registry.remove_all_components_of(registry.motions.entities.back());
+		registry.remove_all_components_of(registry.motions.entities.back());
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
-    //add bg
-    createBackground();
+	// add bg
+	createBackground();
 	// Create a new salmon
 	player_salmon = createHero(renderer, {100, 200});
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
-	Entity block1 = createBlock({ 300, 300 }, { 200, 200 });
-	Entity block2 = createBlock({ 500, 450 }, { 100, 450 });
-	Entity block3 = createBlock({ window_width_px / 2,window_height_px}, { window_width_px,50 });
-	Entity block4 = createBlock({ 700, 500 }, { 100, 500 });
-	// !! TODO A2: Enable static pebbles on the ground, for reference
-	// Create pebbles on the floor, use this for reference
-	/*
-	for (uint i = 0; i < 20; i++) {
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
-		float radius = 30 * (uniform_dist(rng) + 0.3f); // range 0.3 .. 1.3
-		Entity pebble = createPebble({ uniform_dist(rng) * w, h - uniform_dist(rng) * 20 }, 
-			         { radius, radius });
-		float brightness = uniform_dist(rng) * 0.5 + 0.5;
-		registry.colors.insert(pebble, { brightness, brightness, brightness});
-	}
-	*/
+	int background_pixels_width = 768;
+	int background_pixels_height = 432;
+
+	int base_height = ceil(16 * window_height_px / background_pixels_height);
+	int base_width = ceil(16 * window_width_px / background_pixels_width);
+
+	// bottom line
+	createBlock({window_width_px / 2, window_height_px}, {window_width_px, base_height/2});
+	// left line
+	createBlock({-base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	// right line
+	createBlock({window_width_px + base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	// top line
+	createBlock({window_width_px / 2, 0}, {window_width_px, base_height/2});
+
+	// left middle platform
+	createBlock({base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+
+	// top middle platform
+	createBlock({window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+
+	// right middle platform
+	createBlock({window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+
+	// bottom middle left platform
+	createBlock({base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+
+	// bottom middle right platform
+	createBlock({window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+
+	// bottom left padding platform
+	createBlock({base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+
+	// bottom right padding platform
+	createBlock({window_width_px - base_width * 7 + 16, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+
+	// bottom center padding platform
+	createBlock({window_width_px/2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
 }
 
 // Compute collisions between entities
-void WorldSystem::handle_collisions() {
+void WorldSystem::handle_collisions()
+{
 	// Loop over all collisions detected by the physics system
-	auto& collisionsRegistry = registry.collisions;
-	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
+	auto &collisionsRegistry = registry.collisions;
+	for (uint i = 0; i < collisionsRegistry.components.size(); i++)
+	{
 		// The entity and its collider
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other_entity;
 
 		// For now, we are only interested in collisions that involve the salmon
-		if (registry.players.has(entity)) {
-			//Player& player = registry.players.get(entity);
+		if (registry.players.has(entity))
+		{
+			// Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (registry.enemies.has(entity_other)) {
+			if (registry.enemies.has(entity_other))
+			{
 				// initiate death unless already dying
 				if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer, and make the salmon sink
@@ -293,18 +338,21 @@ void WorldSystem::handle_collisions() {
 				}
 			}
 			// Checking Player - SoftShell collisions
-			else if (registry.softShells.has(entity_other)) {
-				if (!registry.deathTimers.has(entity)) {
+			else if (registry.softShells.has(entity_other))
+			{
+				if (!registry.deathTimers.has(entity))
+				{
 					// chew, count points, and set the LightUp timer
 					registry.remove_all_components_of(entity_other);
 					Mix_PlayChannel(-1, salmon_eat_sound, 0);
 					++points;
-					
 				}
 			}
 			// Checking Player - Sword collusion
-			else if (registry.swords.has(entity_other)) {
-				if (!registry.deathTimers.has(entity)) {
+			else if (registry.swords.has(entity_other))
+			{
+				if (!registry.deathTimers.has(entity))
+				{
 					registry.remove_all_components_of(entity_other);
 					if (!registry.players.get(player_salmon).hasWeapon) {
 						createWeaponSword(renderer);
@@ -319,6 +367,16 @@ void WorldSystem::handle_collisions() {
 				}
 			}
 		}
+		// else if (registry.weapons.has(entity))
+		// {
+		// 	if (registry.enemies.has(entity_other))
+		// 	{
+		// 		if (!registry.deathTimers.has(player_salmon))
+		// 		{
+		// 			registry.remove_all_components_of(entity_other);
+		// 		}
+		// 	}
+		// }
 	}
 
 	// Remove all collisions from this simulation step
@@ -326,7 +384,8 @@ void WorldSystem::handle_collisions() {
 }
 
 // Should the game be over ?
-bool WorldSystem::is_over() const {
+bool WorldSystem::is_over() const
+{
 	return bool(glfwWindowShouldClose(window));
 }
 
@@ -340,25 +399,31 @@ void motion_helper(Entity& player) {
 }
 
 // On key callback
-void WorldSystem::on_key(int key, int, int action, int mod) {
+void WorldSystem::on_key(int key, int, int action, int mod)
+{
 
-	if (!registry.deathTimers.has(player_salmon)) {
-		Motion& playerMotion = registry.motions.get(player_salmon);
+	if (!registry.deathTimers.has(player_salmon))
+	{
+		Motion &playerMotion = registry.motions.get(player_salmon);
 
-		if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+		if (key == GLFW_KEY_D && action == GLFW_PRESS)
+		{
 			motionKeyStatus.set(0);
 			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
-		else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
+		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+		{
 			motionKeyStatus.reset(0);
 			if (motionKeyStatus.test(1))
 				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
-		else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
+		{
 			motionKeyStatus.set(1);
 			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
-		else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+		{
 			motionKeyStatus.reset(1);
 			if (motionKeyStatus.test(0))
 				playerMotion.scale.x = -abs(playerMotion.scale.x);
@@ -366,21 +431,24 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		motion_helper(player_salmon);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+		if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		{
 			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 		}
 	}
 
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_R)
+	{
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
 
-        restart_game();
+		restart_game();
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_B) {
+	if (key == GLFW_KEY_B)
+	{
 		if (action == GLFW_RELEASE)
 			debugging.in_debug_mode = false;
 		else
@@ -388,11 +456,13 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	}
 
 	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
+	{
 		current_speed -= 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
+	{
 		current_speed += 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
