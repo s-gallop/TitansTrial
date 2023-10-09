@@ -44,6 +44,9 @@ struct Motion {
 	vec2 velocity = { 0.f, 0.f };
 	vec2 scale = { 10.f, 10.f };
 	vec2 positionOffset = {0.f, 0.f};
+	bool isSolid = false;
+	// Direction: up = 0, right = 1, down = 2, left = 3
+	uint direction = 1;
 };
 
 // Gravity is valid for all entities in this struct
@@ -135,8 +138,10 @@ enum class TEXTURE_ASSET_ID {
 	FISH = 0,
 	ENEMY = FISH + 1,
 	SWORD = ENEMY + 1,
-    BACKGROUND = SWORD + 1,
+	BLOCK = SWORD + 1,
+    BACKGROUND = BLOCK + 1,
 	TEXTURE_COUNT = BACKGROUND + 1
+
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 

@@ -249,7 +249,10 @@ void WorldSystem::restart_game() {
 	// Create a new salmon
 	player_salmon = createSalmon(renderer, { 100, 200 });
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
-
+	Entity block1 = createBlock({ 300, 300 }, { 200, 200 });
+	Entity block2 = createBlock({ 500, 450 }, { 100, 450 });
+	Entity block3 = createBlock({ window_width_px / 2,window_height_px}, { window_width_px,50 });
+	Entity block4 = createBlock({ 700, 500 }, { 100, 500 });
 	// !! TODO A2: Enable static pebbles on the ground, for reference
 	// Create pebbles on the floor, use this for reference
 	/*
