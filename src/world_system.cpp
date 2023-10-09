@@ -367,16 +367,6 @@ void WorldSystem::handle_collisions()
 				}
 			}
 		}
-		// else if (registry.weapons.has(entity))
-		// {
-		// 	if (registry.enemies.has(entity_other))
-		// 	{
-		// 		if (!registry.deathTimers.has(player_salmon))
-		// 		{
-		// 			registry.remove_all_components_of(entity_other);
-		// 		}
-		// 	}
-		// }
 	}
 
 	// Remove all collisions from this simulation step
