@@ -146,7 +146,7 @@ Entity createWeaponSword(RenderSystem* renderer) {
 	motion.velocity = { 0.f, 0.f };
 	motion.position = { 0.f, 0.f };
 	motion.scale = {2*SWORD_BB_WIDTH, 2*SWORD_BB_HEIGHT };
-	motion.positionOffset = {0.f, 100.f};
+	motion.positionOffset = {0.f, -100.f};
 
 	// Add to weapons and renderRequests
 	registry.weapons.emplace(entity);
