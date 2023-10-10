@@ -163,7 +163,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
 	{
 		Motion &motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f)
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
 		{
 			if (!registry.players.has(motion_container.entities[i])) // don't remove the player
 				registry.remove_all_components_of(motion_container.entities[i]);
@@ -181,14 +181,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		// Create turtle
-		Entity entity = createEnemy(renderer, {0, 0});
-		// Setting random initial position and constant velocity
-		Motion &motion = registry.motions.get(entity);
-		motion.position =
-			vec2(window_width_px - 200.f,
-				 50.f + uniform_dist(rng) * (window_height_px - 100.f));
-		motion.velocity = vec2(-100.f, 0.f);
+		// select three directions to come from
+		int selectInitial = rand() % 3;
+		if (selectInitial == 0) { // coming from up
+			createEnemy(renderer, vec2(50 + rand() % (window_width_px - 100), 0), -0.5 * M_PI, vec2(0.f, 200.f), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 2);
+		} else if (selectInitial == 1) { // coming from right
+			createEnemy(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)), 0.0, vec2(-200.f, 0.f), 
+				vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 3);
+		} else if (selectInitial == 2) { // coming from left
+			createEnemy(renderer, vec2(0, 50.f + uniform_dist(rng) * (window_height_px - 100.f)), 0.0, vec2(200.f, 0.f),
+				vec2(-ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 1);
+		}
 	}
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -399,24 +402,24 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(0);
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
+			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
 			if (motionKeyStatus.test(1))
-				playerMotion.scale.x = abs(playerMotion.scale.x);
+				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(1);
-			playerMotion.scale.x = abs(playerMotion.scale.x);
+			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
 			if (motionKeyStatus.test(0))
-				playerMotion.scale.x = -abs(playerMotion.scale.x);
+				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
 		motion_helper(player_salmon);
