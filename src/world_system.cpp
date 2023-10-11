@@ -17,6 +17,7 @@ const size_t MAX_SWORDS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 const size_t SWORD_DELAY_MS = 8000 * 3;
+const uint Max_Jumps = 2;
 
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 250.0;
@@ -209,8 +210,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
-	//next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
-	next_sword_spawn = -1.0f;
+	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
 	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
 	{
 		// Reset timer
@@ -349,17 +349,6 @@ void WorldSystem::handle_collisions()
 					// !!! TODO A1: change the salmon orientation and color on death
 				}
 			}
-			// Checking Player - SoftShell collisions
-			else if (registry.softShells.has(entity_other))
-			{
-				if (!registry.deathTimers.has(entity))
-				{
-					// chew, count points, and set the LightUp timer
-					registry.remove_all_components_of(entity_other);
-					Mix_PlayChannel(-1, salmon_eat_sound, 0);
-					++points;
-				}
-			}
 			// Checking Player - Sword collusion
 			else if (registry.swords.has(entity_other))
 			{
@@ -370,6 +359,14 @@ void WorldSystem::handle_collisions()
 						createWeaponSword(renderer);
 						registry.players.get(player_salmon).hasWeapon = 1;
 					}
+				}
+			}
+			else if (registry.blocks.has(entity_other)) {
+				if ((registry.motions.get(entity).position.y < registry.motions.get(entity_other).position.y + registry.motions.get(entity_other).scale.y / 2) ||
+					(registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x - registry.motions.get(entity_other).scale.x / 2) ||
+					(registry.motions.get(entity).position.x > registry.motions.get(entity_other).position.x + registry.motions.get(entity_other).scale.x / 2))
+				{
+					registry.players.get(entity).jumps = Max_Jumps;
 				}
 			}
 		} else if (registry.swords.has(entity)) {
@@ -445,7 +442,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{
-			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
+			if (registry.players.get(player_salmon).jumps >0) {
+				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
+				registry.players.get(player_salmon).jumps--;
+			}
+			
 		}
 	}
 
