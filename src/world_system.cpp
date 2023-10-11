@@ -165,14 +165,59 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		Motion &motion = motion_container.components[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f)
 		{
-			if (!registry.players.has(motion_container.entities[i])) // don't remove the player
+			if (registry.enemies.has(motion_container.entities[i])) // only remove enemies
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
 	}
 
 	// Keep weapons centred on player
 	for (Entity entity: registry.weapons.entities) {
-		registry.motions.get(entity).position = registry.motions.get(player_salmon).position;
+		Motion& weaponMot = registry.motions.get(entity);
+		weaponMot.position = registry.motions.get(player_salmon).position;
+		uint& swingState = registry.weapons.get(entity).swing;
+		switch (swingState) {
+			case 1:
+				weaponMot.angle -= M_PI / 32;
+				if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4) {
+					swingState = 3;
+					float angleBackup = weaponMot.angleBackup;
+					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
+					float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
+					registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				}
+				break;
+			case 2:
+				weaponMot.angle += M_PI / 32;
+				if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4) {
+					swingState = 4;
+					float angleBackup = weaponMot.angleBackup;
+					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), sin(angleBackup)}, {-sin(angleBackup), cos(angleBackup)});
+					float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
+					registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				}
+				break;
+			case 3:
+				weaponMot.angle += M_PI / 16;
+				if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4) {
+					swingState = 0;
+					weaponMot.angleBackup = weaponMot.angle;
+					for (Entity hitBox: registry.weapons.get(entity).hitBoxes) {
+						registry.remove_all_components_of(hitBox);
+					}
+					registry.weapons.get(entity).hitBoxes.clear();
+				}
+				break;
+			case 4:
+				weaponMot.angle -= M_PI / 16;
+				if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4) {
+					swingState = 0;
+					weaponMot.angleBackup = weaponMot.angle;
+					for (Entity hitBox: registry.weapons.get(entity).hitBoxes) {
+						registry.remove_all_components_of(hitBox);
+					}
+					registry.weapons.get(entity).hitBoxes.clear();
+				}
+		}
 	}
 
 	// Spawning new turtles
@@ -360,7 +405,7 @@ void WorldSystem::handle_collisions()
 					}
 				}
 			}
-		} else if (registry.weapons.has(entity)) {
+		} else if (registry.weaponHitBoxes.has(entity)) {
 			if (registry.enemies.has(entity_other)) {
 				if (!registry.deathTimers.has(player_salmon)) {
 					registry.remove_all_components_of(entity_other);
@@ -426,6 +471,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 		}
+
+		if (key == GLFW_KEY_SPACE) {
+			for (Entity entity: registry.weapons.entities) {
+				uint& swingState = registry.weapons.get(entity).swing;
+				if (swingState == 0) {
+					float weaponAngle = registry.motions.get(entity).angle;
+					swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 2 : 1;
+				}
+			}
+		}
 	}
 
 	// Resetting game
@@ -463,8 +518,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	if (!registry.deathTimers.has(player_salmon)) {
 		for (Entity entity: registry.weapons.entities) {
-			Motion& motion = registry.motions.get(entity);
-			motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
+			if (registry.weapons.get(entity).swing == 0) {
+				Motion& motion = registry.motions.get(entity);
+				motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
+				motion.angleBackup = motion.angle;
+			}
 		}
 	}
 }

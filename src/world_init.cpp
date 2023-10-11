@@ -148,8 +148,8 @@ Entity createWeaponSword(RenderSystem* renderer) {
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = { 0.f, 0.f };
-	motion.scale = {2*SWORD_BB_WIDTH, 2*SWORD_BB_HEIGHT };
-	motion.positionOffset = {0.f, -100.f};
+	motion.scale = {1.3 * SWORD_BB_WIDTH, 1.3 * SWORD_BB_HEIGHT };
+	motion.positionOffset = {0.f, -50.f};
 
 	// Add to weapons and renderRequests
 	registry.weapons.emplace(entity);
@@ -216,6 +216,23 @@ Entity createBlock(vec2 pos, vec2 size)
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = size;
 	motion.isSolid = true;
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
+			EFFECT_ASSET_ID::COLOURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createWeaponHitBox(vec2 pos, vec2 size)
+{
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = size;
+	registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed

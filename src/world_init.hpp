@@ -7,8 +7,8 @@
 // These are ahrd coded to the dimensions of the entity texture
 const float FISH_BB_WIDTH = 0.4f * 296.f;
 const float FISH_BB_HEIGHT = 0.4f * 165.f;
-const float ENEMY_BB_WIDTH = 4.f * 26.f;
-const float ENEMY_BB_HEIGHT = 4.f * 30.f;
+const float ENEMY_BB_WIDTH = 3.f * 26.f;
+const float ENEMY_BB_HEIGHT = 3.f * 30.f;
 const float SWORD_BB_WIDTH = 1.f * 21.f;
 const float SWORD_BB_HEIGHT = 1.f * 50.f;
 const float HERO_BB_WIDTH = 15.f * 3.f;
@@ -33,4 +33,4 @@ Entity createPebble(vec2 pos, vec2 size);
 
 Entity createBlock(vec2 pos, vec2 size);
 
-
+Entity createWeaponHitBox(vec2 pos, vec2 size);
