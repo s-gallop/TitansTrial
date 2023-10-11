@@ -378,7 +378,14 @@ void WorldSystem::handle_collisions()
 					}
 				}
 			}
-		} else if (registry.weapons.has(entity)) {
+		} else if (registry.swords.has(entity)) {
+			
+			if (registry.blocks.has(entity_other)) {
+				registry.gravities.remove(entity);
+				registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 55);
+			}
+		}
+		else if (registry.weapons.has(entity)) {
 			if (registry.enemies.has(entity_other)) {
 				if (!registry.deathTimers.has(player_salmon)) {
 					registry.remove_all_components_of(entity_other);
