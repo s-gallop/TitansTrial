@@ -209,23 +209,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
-	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
+	//next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
+	next_sword_spawn = -1.0f;
 	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
 	{
 		// Reset timer
 		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
 		// Create sword at random position
-		float sword_x = uniform_dist(rng) * window_width_px;
-		float sword_y = uniform_dist(rng) * window_height_px;
+		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 		createSword(renderer, {sword_x, sword_y});
-	}
-
-	// Spawning new fish
-	next_fish_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.softShells.components.size() <= MAX_FISH && next_fish_spawn < 0.f)
-	{
-		// !!!  TODO A1: Create new fish with createFish({0,0}), as for the Turtles above
 	}
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -284,7 +278,7 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 	// add bg
 	createBackground();
-	// Create a new salmon
+	// Create a new hero
 	player_salmon = createHero(renderer, {100, 200});
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
 	int background_pixels_width = 768;
@@ -382,7 +376,13 @@ void WorldSystem::handle_collisions()
 			
 			if (registry.blocks.has(entity_other)) {
 				registry.gravities.remove(entity);
-				registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 55);
+				registry.motions.get(entity).velocity = vec2(0, 0);
+
+				if (registry.motions.get(entity).position.y > 600 && (registry.motions.get(entity).position.x < 190 || registry.motions.get(entity).position.x > 1010)) {
+					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 90);
+				} else {
+					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 55);
+				}
 			}
 		}
 		else if (registry.weapons.has(entity)) {
@@ -471,12 +471,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
 	{
 		current_speed -= 0.1f;
-		printf("Current speed = %f\n", current_speed);
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
 	{
 		current_speed += 0.1f;
-		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
 }
