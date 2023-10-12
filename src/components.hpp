@@ -49,6 +49,14 @@ struct Motion {
 	uint direction = 1;
 };
 
+// just for milestone 1 sudden requirement
+struct TestAI {
+	bool departFromRight = true;
+	float a;
+	float b;
+	float c;
+};
+
 // Gravity is valid for all entities in this struct
 struct Gravity {
 
