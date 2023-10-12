@@ -352,7 +352,10 @@ void WorldSystem::handle_collisions()
 					registry.deathTimers.emplace(entity);
 					Mix_PlayChannel(-1, salmon_dead_sound, 0);
 
-					// !!! TODO A1: change the salmon orientation and color on death
+					Motion &motion = registry.motions.get(player_salmon);
+                    motion.angle = M_PI/2;
+                    motion.velocity = vec2(0, 100);
+                    registry.colors.get(player_salmon) = vec3(1, 0, 0);
 				}
 			}
 			// Checking Player - SoftShell collisions
