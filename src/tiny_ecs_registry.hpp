@@ -25,6 +25,7 @@ public:
 	ComponentContainer<Enemies> enemies;
 	ComponentContainer<Sword> swords;
 	ComponentContainer<Weapon> weapons;
+	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
     ComponentContainer<AnimationInfo> animated;
@@ -47,6 +48,7 @@ public:
 		registry_list.push_back(&enemies);
 		registry_list.push_back(&swords);
 		registry_list.push_back(&weapons);
+		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
 	}
