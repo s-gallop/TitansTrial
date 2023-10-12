@@ -19,7 +19,7 @@ Entity createHero(RenderSystem* renderer, vec2 pos);
 // the prey
 Entity createFish(RenderSystem* renderer, vec2 position);
 // the enemy
-Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale, uint direction);
+Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
 // the sword
 Entity createSword(RenderSystem* renderer, vec2 position);
 // the sword weapon

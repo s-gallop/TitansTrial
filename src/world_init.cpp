@@ -63,7 +63,7 @@ Entity createFish(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale, uint direction)
+Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
 {
 	auto entity = Entity();
 
@@ -78,8 +78,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velo
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = velocity;
 	motion.scale = scale;
-	motion.direction = direction;
-
+	
 	// Create and (empty) Turtle component to be able to refer to all turtles
 	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
