@@ -123,27 +123,27 @@ void PhysicsSystem::step(float elapsed_ms)
                     float hCollisionDepth = (scale1.x + scale2.x) - abs(motion_i.position.x - motion_j.position.x) + COLLISION_THRESHOLD;
                     if (vCollisionDepth > 0 && hCollisionDepth > 0) {
                         if (vCollisionDepth < hCollisionDepth) {
-                            if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y) {
+                            if (motion_i.velocity.y > motion_j.velocity.y) {
 
                                 motion_i.position.y = motion_j.position.y - scale2.y - scale1.y;
                                 motion_j.position.y = motion_i.position.y + scale2.y + scale1.y;
                                 motion_i.velocity.y = 0;
                                 motion_j.velocity.y = 0;
                             }
-                            else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y) {
+                            else if (motion_i.velocity.y < motion_j.velocity.y) {
                                 motion_i.position.y = motion_j.position.y + scale2.y + scale1.y;
                                 motion_j.position.y = motion_i.position.y - scale2.y - scale1.y;
                                 motion_i.velocity.y = 0;
                                 motion_j.velocity.y = 0;
                             }
                         } else {
-                            if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x) {
+                            if (motion_i.velocity.x > motion_j.velocity.x) {
 
                                 motion_i.position.x = motion_j.position.x - scale2.x - scale1.x;
                                 motion_j.position.x = motion_i.position.x + scale2.x + scale1.x;
 
                             }
-                            else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x) {
+                            else if (motion_i.velocity.x < motion_j.velocity.x) {
                                 motion_i.position.x = motion_j.position.x + scale2.x + scale1.x;
                                 motion_j.position.x = motion_i.position.x - scale2.x - scale1.x;
                             }
