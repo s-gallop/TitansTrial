@@ -20,7 +20,7 @@ const size_t SWORD_DELAY_MS = 8000 * 3;
 const uint Max_Jumps = 2;
 
 const float BASIC_SPEED = 200.0;
-const float JUMP_INITIAL_SPEED = 250.0;
+const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
 std::bitset<2> motionKeyStatus("00");
