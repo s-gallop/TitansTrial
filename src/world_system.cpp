@@ -17,9 +17,10 @@ const size_t MAX_SWORDS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 const size_t SWORD_DELAY_MS = 8000 * 3;
+const uint Max_Jumps = 2;
 
 const float BASIC_SPEED = 200.0;
-const float JUMP_INITIAL_SPEED = 250.0;
+const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
 std::bitset<2> motionKeyStatus("00");
@@ -284,23 +285,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
-	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
+	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
 	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
 	{
 		// Reset timer
 		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
 		// Create sword at random position
-		float sword_x = uniform_dist(rng) * window_width_px;
-		float sword_y = uniform_dist(rng) * window_height_px;
+		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 		createSword(renderer, {sword_x, sword_y});
-	}
-
-	// Spawning new fish
-	next_fish_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.softShells.components.size() <= MAX_FISH && next_fish_spawn < 0.f)
-	{
-		// !!!  TODO A1: Create new fish with createFish({0,0}), as for the Turtles above
 	}
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -360,7 +354,7 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 	// add bg
 	createBackground();
-	// Create a new salmon
+	// Create a new hero
 	player_salmon = createHero(renderer, {100, 200});
 	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
 	int background_pixels_width = 768;
@@ -434,17 +428,6 @@ void WorldSystem::handle_collisions()
                     registry.colors.get(player_salmon) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - SoftShell collisions
-			else if (registry.softShells.has(entity_other))
-			{
-				if (!registry.deathTimers.has(entity))
-				{
-					// chew, count points, and set the LightUp timer
-					registry.remove_all_components_of(entity_other);
-					Mix_PlayChannel(-1, salmon_eat_sound, 0);
-					++points;
-				}
-			}
 			// Checking Player - Sword collusion
 			else if (registry.swords.has(entity_other))
 			{
@@ -457,7 +440,28 @@ void WorldSystem::handle_collisions()
 					}
 				}
 			}
-		} else if (registry.weaponHitBoxes.has(entity)) {
+			else if (registry.blocks.has(entity_other)) {
+				if ((registry.motions.get(entity).position.y < registry.motions.get(entity_other).position.y + registry.motions.get(entity_other).scale.y / 2) ||
+					(registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x - registry.motions.get(entity_other).scale.x / 2) ||
+					(registry.motions.get(entity).position.x > registry.motions.get(entity_other).position.x + registry.motions.get(entity_other).scale.x / 2))
+				{
+					registry.players.get(entity).jumps = Max_Jumps;
+				}
+			}
+		} else if (registry.swords.has(entity)) {
+			
+			if (registry.blocks.has(entity_other)) {
+				registry.gravities.remove(entity);
+				registry.motions.get(entity).velocity = vec2(0, 0);
+
+				if (registry.motions.get(entity).position.y > 600 && (registry.motions.get(entity).position.x < 190 || registry.motions.get(entity).position.x > 1010)) {
+					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 90);
+				} else {
+					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 55);
+				}
+			}
+		}
+		else if (registry.weaponHitBoxes.has(entity)) {
 			if (registry.enemies.has(entity_other)) {
 				if (!registry.deathTimers.has(player_salmon)) {
 					registry.remove_all_components_of(entity_other);
@@ -518,7 +522,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{
-			playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
+			if (registry.players.get(player_salmon).jumps >0) {
+				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
+				registry.players.get(player_salmon).jumps--;
+			}
+			
 		}
 
 		if (key == GLFW_KEY_SPACE) {
@@ -554,12 +562,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
 	{
 		current_speed -= 0.1f;
-		printf("Current speed = %f\n", current_speed);
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
 	{
 		current_speed += 0.1f;
-		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
 }

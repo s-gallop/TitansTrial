@@ -34,34 +34,34 @@ Entity createHero(RenderSystem* renderer, vec2 pos)
 	return entity;
 }
 
-Entity createFish(RenderSystem* renderer, vec2 position)
-{
-	// Reserve en entity
-	auto entity = Entity();
-
-	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
-	// Initialize the position, scale, and physics components
-	auto& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { -50.f, 0.f };
-	motion.position = position;
-
-	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({ -FISH_BB_WIDTH, FISH_BB_HEIGHT });
-
-	// Create an (empty) Fish component to be able to refer to all fish
-	registry.softShells.emplace(entity);
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::FISH,
-			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
-
-	return entity;
-}
+//Entity createFish(RenderSystem* renderer, vec2 position)
+//{
+//	 Reserve en entity
+//	auto entity = Entity();
+//
+//	 Store a reference to the potentially re-used mesh object
+//	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+//	registry.meshPtrs.emplace(entity, &mesh);
+//
+//	 Initialize the position, scale, and physics components
+//	auto& motion = registry.motions.emplace(entity);
+//	motion.angle = 0.f;
+//	motion.velocity = { -50.f, 0.f };
+//	motion.position = position;
+//
+//	 Setting initial values, scale is negative to make it face the opposite way
+//	motion.scale = vec2({ -FISH_BB_WIDTH, FISH_BB_HEIGHT });
+//
+//	 Create an (empty) Fish component to be able to refer to all fish
+//	registry.softShells.emplace(entity);
+//	registry.renderRequests.insert(
+//		entity,
+//		{ TEXTURE_ASSET_ID::FISH,
+//			EFFECT_ASSET_ID::TEXTURED,
+//			GEOMETRY_BUFFER_ID::SPRITE });
+//
+//	return entity;
+//}
 
 Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
 {
@@ -126,8 +126,9 @@ Entity createSword(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	motion.scale = vec2({SWORD_BB_WIDTH, SWORD_BB_HEIGHT });
 
-	// Create and (empty) Turtle component to be able to refer to all turtles
+	// Add to swords, gravity and render requests
 	registry.swords.emplace(entity);
+	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::SWORD,
@@ -217,6 +218,7 @@ Entity createBlock(vec2 pos, vec2 size)
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = size;
 	motion.isSolid = true;
+	registry.blocks.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed

@@ -11,6 +11,10 @@ struct Player
 	// Only using 0 & 1 right now but other values available for more weapons
 	// hasSword = 1
 	uint hasWeapon = 0;
+	uint jumps = 2;
+};
+
+struct Block {
 
 };
 
