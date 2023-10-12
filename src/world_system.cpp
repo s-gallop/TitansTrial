@@ -194,7 +194,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4) {
 					swingState = 4;
 					float angleBackup = weaponMot.angleBackup;
-					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), sin(angleBackup)}, {-sin(angleBackup), cos(angleBackup)});
+					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 					float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
 					registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
 				}
