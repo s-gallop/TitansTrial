@@ -89,6 +89,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velo
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
 	// registry.gravities.emplace(entity);
+	registry.testAIs.emplace(entity);
 
 	return entity;
 }
