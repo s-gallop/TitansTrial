@@ -56,7 +56,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			(void *)sizeof(
 				vec3)); // note the stride to skip the preceeding vertex position
 
-        if (registry.animated.has(entity))
+        if (registry.animated.has(entity) && !registry.deathTimers.has(entity))
         {
             AnimationInfo& info = registry.animated.get(entity);
             GLint frame_loc = glGetUniformLocation(program, "frame");
