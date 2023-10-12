@@ -146,7 +146,6 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-    std::cout << registry.motions.get(player_salmon).velocity.y << ' ' ;
 	// Updating window title with points
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
