@@ -6,6 +6,7 @@
 #include <cassert>
 #include <sstream>
 #include <bitset>
+#include <iostream>
 
 #include "physics_system.hpp"
 
@@ -145,6 +146,7 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
+    std::cout << registry.motions.get(player_salmon).velocity.y << ' ' ;
 	// Updating window title with points
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
@@ -174,6 +176,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity entity: registry.weapons.entities) {
 		registry.motions.get(entity).position = registry.motions.get(player_salmon).position;
 	}
+    vec2 playerVelocity = registry.motions.get(player_salmon).velocity;
+    AnimationInfo& playerAnimation = registry.animated.get(player_salmon);
+    if (playerVelocity.y > 0) {
+        playerAnimation.curState = 3;
+    } else if (playerVelocity.y < 0) {
+        playerAnimation.curState = 2;
+    } else if (playerVelocity.x != 0) {
+        playerAnimation.curState = 1;
+    } else {
+        playerAnimation.curState = 0;
+    }
+
+
 
 	// Spawning new turtles
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -382,13 +397,10 @@ bool WorldSystem::is_over() const
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Entity& player) {
-    Motion& playerMotion = registry.motions.get(player);
-    AnimationInfo& playerAnimation = registry.animated.get(player);
+void motion_helper(Motion& playerMotion) {
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
-    playerAnimation.curState = playerMotion.velocity[0] != 0 ? 1 : 0;
 }
 
 // On key callback
@@ -422,7 +434,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
-		motion_helper(player_salmon);
+		motion_helper(playerMotion);
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{
