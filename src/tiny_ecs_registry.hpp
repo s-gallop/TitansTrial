@@ -15,6 +15,7 @@ public:
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Gravity> gravities;
+	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
 	ComponentContainer<Mesh*> meshPtrs;
@@ -37,6 +38,7 @@ public:
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&motions);
 		registry_list.push_back(&gravities);
+		registry_list.push_back(&testAIs);
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);
 		registry_list.push_back(&meshPtrs);

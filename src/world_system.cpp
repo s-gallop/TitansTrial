@@ -6,6 +6,7 @@
 #include <cassert>
 #include <sstream>
 #include <bitset>
+#include <iostream>
 
 #include "physics_system.hpp"
 
@@ -19,6 +20,7 @@ const size_t SWORD_DELAY_MS = 8000 * 3;
 
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 250.0;
+const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
 std::bitset<2> motionKeyStatus("00");
 
@@ -145,6 +147,7 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
+    std::cout << registry.motions.get(player_salmon).velocity.y << ' ' ;
 	// Updating window title with points
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
@@ -163,7 +166,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
 	{
 		Motion &motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.y > 800.0f)
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
 		{
 			if (registry.enemies.has(motion_container.entities[i])) // only remove enemies
 				registry.remove_all_components_of(motion_container.entities[i]);
@@ -219,6 +222,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				}
 		}
 	}
+    vec2 playerVelocity = registry.motions.get(player_salmon).velocity;
+    AnimationInfo& playerAnimation = registry.animated.get(player_salmon);
+    if (playerVelocity.y > 0) {
+        playerAnimation.curState = 3;
+    } else if (playerVelocity.y < 0) {
+        playerAnimation.curState = 2;
+    } else if (playerVelocity.x != 0) {
+        playerAnimation.curState = 1;
+    } else {
+        playerAnimation.curState = 0;
+    }
+
+
 
 	// Spawning new turtles
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -226,14 +242,47 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		// Create turtle
-		Entity entity = createEnemy(renderer, {0, 0});
-		// Setting random initial position and constant velocity
-		Motion &motion = registry.motions.get(entity);
-		motion.position =
-			vec2(window_width_px - 200.f,
-				 50.f + uniform_dist(rng) * (window_height_px - 100.f));
-		motion.velocity = vec2(-100.f, 0.f);
+		srand(time(0));
+		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 3);
+		TestAI& enemyTestAI = registry.testAIs.get(newEnemy);
+		enemyTestAI.departFromRight = true;
+		enemyTestAI.a = (float)squareFactor;
+		enemyTestAI.b = curveParameter;
+		enemyTestAI.c = (float)leftHeight;
+	}
+
+	auto& testAI_container = registry.testAIs;
+	for (uint i = 0; i < testAI_container.size(); i++) {
+		TestAI& testAI = testAI_container.components[i];
+		Entity entity = testAI_container.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		if (testAI.departFromRight && motion.position[0] < 0) {
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(0.0, testAI.c);
+			float curveParameter = (float)(rightHeight - testAI.c - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = false;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+		} else if (!testAI.departFromRight && motion.position[0] > window_width_px) {
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = testAI.a * window_width_px * window_width_px + testAI.b * window_width_px + testAI.c;
+			int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(window_width_px, rightHeight);
+			float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = true;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+			testAI.c = (float)leftHeight;
+		}
+		float gradient = 2 * testAI.a * motion.position[0] + testAI.b;
+		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
+		float direction = testAI.departFromRight ? -1.0 : 1.0;
+		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed;
@@ -295,6 +344,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	motionKeyStatus.reset();
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -425,13 +475,10 @@ bool WorldSystem::is_over() const
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Entity& player) {
-    Motion& playerMotion = registry.motions.get(player);
-    AnimationInfo& playerAnimation = registry.animated.get(player);
+void motion_helper(Motion& playerMotion) {
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
-    playerAnimation.curState = playerMotion.velocity[0] != 0 ? 1 : 0;
 }
 
 // On key callback
@@ -465,7 +512,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
-		motion_helper(player_salmon);
+		motion_helper(playerMotion);
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{

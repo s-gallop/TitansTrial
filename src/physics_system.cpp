@@ -1,9 +1,10 @@
 // internal
+#include <iostream>
 #include "physics_system.hpp"
 #include "world_init.hpp"
 
-const float GRAVITY_ACCELERATION_FACTOR = 5.0;
-const float COLLISION_THRESHOLD = 5.0f; 
+const float GRAVITY_ACCELERATION_FACTOR = 10.0;
+const float COLLISION_THRESHOLD = 0.0f;
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -81,10 +82,10 @@ void PhysicsSystem::step(float elapsed_ms)
 		Motion& motion = motion_container.components[i];
 		Entity entity = motion_container.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
+        if (registry.gravities.has(entity)) {
+            motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR;
+        }
 		motion.position += motion.velocity * step_seconds;
-		if (registry.gravities.has(entity)) {
-			motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR;
-		}
 	}
 
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -116,15 +117,11 @@ void PhysicsSystem::step(float elapsed_ms)
 
 							motion_i.position.x = motion_j.position.x - scale2.x - scale1.x;
 							motion_j.position.x = motion_i.position.x + scale2.x + scale1.x;
-							motion_i.velocity.x = 0;
-							motion_j.velocity.x = 0;
 							
 						}
 						else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x) {
 							motion_i.position.x = motion_j.position.x + scale2.x + scale1.x;
 							motion_j.position.x = motion_i.position.x - scale2.x - scale1.x;
-							motion_i.velocity.x = 0;
-							motion_j.velocity.x = 0;
 						}
 						
 						
