@@ -15,6 +15,7 @@ public:
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Gravity> gravities;
+	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
 	ComponentContainer<Block> blocks;
@@ -25,6 +26,7 @@ public:
 	ComponentContainer<Enemies> enemies;
 	ComponentContainer<Sword> swords;
 	ComponentContainer<Weapon> weapons;
+	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
     ComponentContainer<AnimationInfo> animated;
@@ -37,6 +39,7 @@ public:
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&motions);
 		registry_list.push_back(&gravities);
+		registry_list.push_back(&testAIs);
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);
 		registry_list.push_back(&blocks);
@@ -47,6 +50,7 @@ public:
 		registry_list.push_back(&enemies);
 		registry_list.push_back(&swords);
 		registry_list.push_back(&weapons);
+		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
 	}

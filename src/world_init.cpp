@@ -14,7 +14,7 @@ Entity createHero(RenderSystem* renderer, vec2 pos)
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-    motion.scale = vec2({15*3, 16*3 });
+    motion.scale = {HERO_BB_WIDTH, HERO_BB_HEIGHT};
 	motion.isSolid = true;
 
 	// Create and (empty) Salmon component to be able to refer to all turtles
@@ -63,7 +63,7 @@ Entity createHero(RenderSystem* renderer, vec2 pos)
 //	return entity;
 //}
 
-Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale, uint direction)
+Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
 {
 	auto entity = Entity();
 
@@ -78,8 +78,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velo
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = velocity;
 	motion.scale = scale;
-	motion.direction = direction;
-
+	
 	// Create and (empty) Turtle component to be able to refer to all turtles
 	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
@@ -89,6 +88,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velo
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
 	// registry.gravities.emplace(entity);
+	registry.testAIs.emplace(entity);
 
 	return entity;
 }
@@ -150,8 +150,8 @@ Entity createWeaponSword(RenderSystem* renderer) {
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.position = { 0.f, 0.f };
-	motion.scale = {2*SWORD_BB_WIDTH, 2*SWORD_BB_HEIGHT };
-	motion.positionOffset = {0.f, -100.f};
+	motion.scale = {1.3 * SWORD_BB_WIDTH, 1.3 * SWORD_BB_HEIGHT };
+	motion.positionOffset = {0.f, -50.f};
 
 	// Add to weapons and renderRequests
 	registry.weapons.emplace(entity);
@@ -219,6 +219,23 @@ Entity createBlock(vec2 pos, vec2 size)
 	motion.scale = size;
 	motion.isSolid = true;
 	registry.blocks.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
+			EFFECT_ASSET_ID::COLOURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createWeaponHitBox(vec2 pos, vec2 size)
+{
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = size;
+	registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed

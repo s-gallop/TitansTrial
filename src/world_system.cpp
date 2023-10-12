@@ -21,6 +21,7 @@ const uint Max_Jumps = 2;
 
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 250.0;
+const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
 std::bitset<2> motionKeyStatus("00");
 
@@ -168,14 +169,59 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		Motion &motion = motion_container.components[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
 		{
-			if (!registry.players.has(motion_container.entities[i])) // don't remove the player
+			if (registry.enemies.has(motion_container.entities[i])) // only remove enemies
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
 	}
 
 	// Keep weapons centred on player
 	for (Entity entity: registry.weapons.entities) {
-		registry.motions.get(entity).position = registry.motions.get(player_salmon).position;
+		Motion& weaponMot = registry.motions.get(entity);
+		weaponMot.position = registry.motions.get(player_salmon).position;
+		uint& swingState = registry.weapons.get(entity).swing;
+		switch (swingState) {
+			case 1:
+				weaponMot.angle -= M_PI / 32;
+				if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4) {
+					swingState = 3;
+					float angleBackup = weaponMot.angleBackup;
+					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
+					float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
+					registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				}
+				break;
+			case 2:
+				weaponMot.angle += M_PI / 32;
+				if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4) {
+					swingState = 4;
+					float angleBackup = weaponMot.angleBackup;
+					vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), sin(angleBackup)}, {-sin(angleBackup), cos(angleBackup)});
+					float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
+					registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				}
+				break;
+			case 3:
+				weaponMot.angle += M_PI / 16;
+				if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4) {
+					swingState = 0;
+					weaponMot.angleBackup = weaponMot.angle;
+					for (Entity hitBox: registry.weapons.get(entity).hitBoxes) {
+						registry.remove_all_components_of(hitBox);
+					}
+					registry.weapons.get(entity).hitBoxes.clear();
+				}
+				break;
+			case 4:
+				weaponMot.angle -= M_PI / 16;
+				if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4) {
+					swingState = 0;
+					weaponMot.angleBackup = weaponMot.angle;
+					for (Entity hitBox: registry.weapons.get(entity).hitBoxes) {
+						registry.remove_all_components_of(hitBox);
+					}
+					registry.weapons.get(entity).hitBoxes.clear();
+				}
+		}
 	}
     vec2 playerVelocity = registry.motions.get(player_salmon).velocity;
     AnimationInfo& playerAnimation = registry.animated.get(player_salmon);
@@ -197,17 +243,47 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		// select three directions to come from
-		int selectInitial = rand() % 3;
-		if (selectInitial == 0) { // coming from up
-			createEnemy(renderer, vec2(50 + rand() % (window_width_px - 100), 0), -0.5 * M_PI, vec2(0.f, 200.f), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 2);
-		} else if (selectInitial == 1) { // coming from right
-			createEnemy(renderer, vec2(window_width_px, 50.f + uniform_dist(rng) * (window_height_px - 100.f)), 0.0, vec2(-200.f, 0.f), 
-				vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 3);
-		} else if (selectInitial == 2) { // coming from left
-			createEnemy(renderer, vec2(0, 50.f + uniform_dist(rng) * (window_height_px - 100.f)), 0.0, vec2(200.f, 0.f),
-				vec2(-ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT), 1);
+		srand(time(0));
+		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		TestAI& enemyTestAI = registry.testAIs.get(newEnemy);
+		enemyTestAI.departFromRight = true;
+		enemyTestAI.a = (float)squareFactor;
+		enemyTestAI.b = curveParameter;
+		enemyTestAI.c = (float)leftHeight;
+	}
+
+	auto& testAI_container = registry.testAIs;
+	for (uint i = 0; i < testAI_container.size(); i++) {
+		TestAI& testAI = testAI_container.components[i];
+		Entity entity = testAI_container.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		if (testAI.departFromRight && motion.position[0] < 0) {
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(0.0, testAI.c);
+			float curveParameter = (float)(rightHeight - testAI.c - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = false;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+		} else if (!testAI.departFromRight && motion.position[0] > window_width_px) {
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = testAI.a * window_width_px * window_width_px + testAI.b * window_width_px + testAI.c;
+			int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(window_width_px, rightHeight);
+			float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = true;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+			testAI.c = (float)leftHeight;
 		}
+		float gradient = 2 * testAI.a * motion.position[0] + testAI.b;
+		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
+		float direction = testAI.departFromRight ? -1.0 : 1.0;
+		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
@@ -262,6 +338,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	motionKeyStatus.reset();
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -382,10 +459,11 @@ void WorldSystem::handle_collisions()
 				}
 			}
 		}
-		else if (registry.weapons.has(entity)) {
+		else if (registry.weaponHitBoxes.has(entity)) {
 			if (registry.enemies.has(entity_other)) {
 				if (!registry.deathTimers.has(player_salmon)) {
 					registry.remove_all_components_of(entity_other);
+					++points;
 				}
 			}
 		}
@@ -448,6 +526,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 			
 		}
+
+		if (key == GLFW_KEY_SPACE) {
+			for (Entity entity: registry.weapons.entities) {
+				uint& swingState = registry.weapons.get(entity).swing;
+				if (swingState == 0) {
+					float weaponAngle = registry.motions.get(entity).angle;
+					swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 2 : 1;
+				}
+			}
+		}
 	}
 
 	// Resetting game
@@ -483,8 +571,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	if (!registry.deathTimers.has(player_salmon)) {
 		for (Entity entity: registry.weapons.entities) {
-			Motion& motion = registry.motions.get(entity);
-			motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
+			if (registry.weapons.get(entity).swing == 0) {
+				Motion& motion = registry.motions.get(entity);
+				motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
+				motion.angleBackup = motion.angle;
+			}
 		}
 	}
 }

@@ -32,7 +32,14 @@ struct Sword
 //Weapon the player has picked up
 struct Weapon
 {
-	
+	//Swing State: 0 = not swinging, 1 = wind-up right, 2 = wind-up left, 3 = swing right, 4 = swing left
+	uint swing = 0;
+	std::vector<Entity> hitBoxes;
+};
+
+struct WeaponHitBox
+{
+
 };
 
 // Fish and Salmon have a soft shell
@@ -45,12 +52,19 @@ struct SoftShell
 struct Motion {
 	vec2 position = { 0.f, 0.f };
 	float angle = 0.f;
+	float angleBackup = 0.f;
 	vec2 velocity = { 0.f, 0.f };
 	vec2 scale = { 10.f, 10.f };
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
-	// Direction: up = 0, right = 1, down = 2, left = 3
-	uint direction = 1;
+};
+
+// just for milestone 1 sudden requirement
+struct TestAI {
+	bool departFromRight = true;
+	float a;
+	float b;
+	float c;
 };
 
 // Gravity is valid for all entities in this struct
