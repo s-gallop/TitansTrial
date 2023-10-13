@@ -2,11 +2,11 @@
 
 Titan's Trial - A 2D Endless survival game
 
-##Implemented features:
+## Implemented features:
 * Basic level design
 
 
-##Write-up Milestone 1:
+## Write-up Milestone 1:
 There were few changes that we had to implement to our previous proposal, all changes can be seen highlighted in green in the M1_Proposal_V2 document. The changes include:
 * Clarification on enemy - player collision 
 * Early implementations 
