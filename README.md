@@ -17,4 +17,15 @@ There were few changes that we had to implement to our previous proposal, all ch
 * Added creative elements
 	* Player movement animations
 	* Audio Feedback
- 
+ ## Features:
+	* Map asset - data/textures/background.png; world_init.cpp : func createBackground
+	* Collision with platform and Boundary - physics_system.cpp : func step
+	* Map collision placement - world_init.cpp : function createBlock; world_system.cpp : func restart_game; render_system.cpp : func drawTexturedMesh
+	* Player movement - world_system.cpp: func on_key, motion_helper
+	* Player gravity - physics_system.cpp : func step
+	* Double Jump + Wall Jump - world_system.cpp: func on_key, handle_collisions
+	* Random Movement enemy - world_init.cpp : func createEnemy; world_system.cpp : func step
+	* Random sword spawn -  world_system.cpp : func step, handle_collisions
+	* Sword swing and collision with enemy - world_system.cpp : func on_key, handle_collisions, on_mouse_move, step
+	* Sprite Animation - render_system.cpp : func drawTexturedMesh; world_init.cpp : func createHero; world_system.cpp: motion_helper; animated.fs.glsl; animated.vs.glsl
+	*
