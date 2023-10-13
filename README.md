@@ -18,6 +18,7 @@ There were few changes that we had to implement to our previous proposal, all ch
 	* Player movement animations
 	* Audio Feedback
  ## Features:
+ 
 	* Map asset - data/textures/background.png; world_init.cpp : func createBackground
 	* Collision with platform and Boundary - physics_system.cpp : func step
 	* Map collision placement - world_init.cpp : function createBlock; world_system.cpp : func restart_game; render_system.cpp : func drawTexturedMesh
