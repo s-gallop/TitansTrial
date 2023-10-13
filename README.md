@@ -29,41 +29,41 @@ There were few changes that we had to implement to our previous proposal, all ch
   * world_init.cpp :
     * function createBlock
   * world_system.cpp :
-    * func restart_game - lines 367-428
+    * func restart_game - lines 410-440
   * render_system.cpp :
     * func drawTexturedMesh - lines 78-88
 * Player movement
   * world_system.cpp :
-    * func on_key - lines 536-619
+    * func on_key - lines 552-589
     * func motion_helper
 * Player gravity
   * physics_system.cpp :
     * func step - lines 86-89
 * Double Jump + Wall Jump
   * world_system.cpp:
-    * func on_key - lines 570-574
-    * func handle_collisions - lines 479-484
+    * func on_key - lines 581-589
+    * func handle_collisions - lines 490-498
 * Random Movement enemy
   * world_init.cpp :
     * func createEnemy
   * world_system.cpp :
-    * func step - lines 270-320
+    * func step - lines 283-333
 * Random sword spawn
   * world_system.cpp :
-    * func step - lines 322-332
-    * func handle_collisions - lines 490-503
+    * func step - lines 335-345
+    * func handle_collisions - lines 500-517
 * Sword and collision with enemy
   * world_system.cpp :
-    * func on_key - lines 577-588
-    * func handle_collisions - lines 505-515
+    * func on_key - lines 591-602
+    * func handle_collisions - lines 518-528
     * func on_mouse_move
-    * func step - lines 195-250
+    * func step - lines 200-263
 * Sprite Animation
   * render_system.cpp :
     * func drawTexturedMesh - line 59-66
   * world_init.cpp :
     * func createHero - lines 21-24
   * world_system.cpp:
-    * func step - lines 252-268
+    * func step - lines 265-281
   * animated.fs.glsl
   * animated.vs.glsl
