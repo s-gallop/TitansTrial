@@ -22,13 +22,52 @@ There were few changes that we had to implement to our previous proposal, all ch
 
 ## Features
 
-* Map asset - data/textures/background.png; world_init.cpp : func createBackground
-* Collision with platform and Boundary - physics_system.cpp : func step
-* Map collision placement - world_init.cpp : function createBlock; world_system.cpp : func restart_game; render_system.cpp : func drawTexturedMesh
-* Player movement - world_system.cpp: func on_key, motion_helper
-* Player gravity - physics_system.cpp : func step
-* Double Jump + Wall Jump - world_system.cpp: func on_key, handle_collisions
-* Random Movement enemy - world_init.cpp : func createEnemy; world_system.cpp : func step
-* Random sword spawn -  world_system.cpp : func step, handle_collisions
-* Sword swing and collision with enemy - world_system.cpp : func on_key, handle_collisions, on_mouse_move, step
-* Sprite Animation - render_system.cpp : func drawTexturedMesh; world_init.cpp : func createHero; world_system.cpp: motion_helper; animated.fs.glsl; animated.vs.glsl
+* Map asset
+  * data/textures/background.png
+  * world_init.cpp :
+    * func createBackground
+* Collision with platform and Boundary
+  * physics_system.cpp :
+    * func collides
+* Map collision placement
+  * world_init.cpp :
+    * function createBlock
+  * world_system.cpp :
+    * func restart_game - lines 367-428
+  * render_system.cpp :
+    * func drawTexturedMesh - lines 78-88
+* Player movement
+  * world_system.cpp :
+    * func on_key - lines 536-619
+    * func motion_helper
+* Player gravity
+  * physics_system.cpp :
+    * func step - lines 86-89
+* Double Jump + Wall Jump
+  * world_system.cpp:
+    * func on_key - lines 570-574
+    * func handle_collisions - lines 479-484
+* Random Movement enemy
+  * world_init.cpp :
+    * func createEnemy
+  * world_system.cpp :
+    * func step - lines 270-320
+* Random sword spawn
+  * world_system.cpp :
+    * func step - lines 322-332
+    * func handle_collisions - lines 490-503
+* Sword and collision with enemy
+  * world_system.cpp :
+    * func on_key - lines 577-588,
+    * func handle_collisions - lines 505-515,
+    * func on_mouse_move,
+    * func step - lines 195-250
+* Sprite Animation
+  * render_system.cpp :
+    * func drawTexturedMesh - line 59-66
+  * world_init.cpp :
+    * func createHero - lines 21-24;
+  * world_system.cpp:
+    * func step - lines 252-268;
+  * animated.fs.glsl;
+  * animated.vs.glsl
