@@ -32,4 +32,3 @@ There were few changes that we had to implement to our previous proposal, all ch
 * Random sword spawn -  world_system.cpp : func step, handle_collisions
 * Sword swing and collision with enemy - world_system.cpp : func on_key, handle_collisions, on_mouse_move, step
 * Sprite Animation - render_system.cpp : func drawTexturedMesh; world_init.cpp : func createHero; world_system.cpp: motion_helper; animated.fs.glsl; animated.vs.glsl
-*
