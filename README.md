@@ -13,7 +13,8 @@ There were few changes that we had to implement to our previous proposal, all ch
 	* Mouse + space for weapon use forgoing arrow keys
 	* Some improved movement options (double jump + wall jump)
 		* To allow better traversal of the level
-	* Player movement animations
 	* Rudementary scoring system
-
+* Added creative elements
+	* Player movement animations
+	* Audio Feedback
  
