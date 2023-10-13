@@ -36,6 +36,7 @@ struct Weapon
 
 struct WeaponHitBox
 {
+	bool soundPlayed = false;
 };
 
 // All data relevant to the shape and motion of entities

@@ -63,6 +63,8 @@ private:
 	Mix_Music *background_music;
 	Mix_Chunk *hero_dead_sound;
 	Mix_Chunk *hero_kill_sound;
+	Mix_Chunk *sword_swing_sound;
+	Mix_Chunk *hero_jump_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;

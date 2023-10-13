@@ -90,22 +90,6 @@ void PhysicsSystem::step(float elapsed_ms)
         motion.position += motion.velocity * step_seconds;
     }
 
-    auto doXYCollision =
-        [](int dir, Motion &motion_i, Motion &motion_j, vec2 &scale1, vec2 &scale2)
-    {
-        if (motion_i.velocity[dir] > motion_j.velocity[dir] && motion_i.position[dir] < motion_j.position[dir] - scale2[dir])
-        {
-
-            motion_i.position[dir] = motion_j.position[dir] - scale2[dir] - scale1[dir];
-            motion_j.position[dir] = motion_i.position[dir] + scale2[dir] + scale1[dir];
-        }
-        else
-        {
-            motion_i.position[dir] = motion_j.position[dir] + scale2[dir] + scale1[dir];
-            motion_j.position[dir] = motion_i.position[dir] - scale2[dir] - scale1[dir];
-        }
-    };
-
     // Check for collisions between all moving entities
     for (uint i = 0; i < motion_container.components.size(); i++)
     {
