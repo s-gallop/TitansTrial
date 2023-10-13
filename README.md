@@ -2,10 +2,6 @@
 
 Titan's Trial - A 2D Endless survival game
 
-## Implemented features
-
-* Basic level design
-
 ## Write-up Milestone 1
 
 There were few changes that we had to implement to our previous proposal, all changes can be seen highlighted in green in the M1_Proposal_V2 document. The changes include:
@@ -58,16 +54,16 @@ There were few changes that we had to implement to our previous proposal, all ch
     * func handle_collisions - lines 490-503
 * Sword and collision with enemy
   * world_system.cpp :
-    * func on_key - lines 577-588,
-    * func handle_collisions - lines 505-515,
-    * func on_mouse_move,
+    * func on_key - lines 577-588
+    * func handle_collisions - lines 505-515
+    * func on_mouse_move
     * func step - lines 195-250
 * Sprite Animation
   * render_system.cpp :
     * func drawTexturedMesh - line 59-66
   * world_init.cpp :
-    * func createHero - lines 21-24;
+    * func createHero - lines 21-24
   * world_system.cpp:
-    * func step - lines 252-268;
-  * animated.fs.glsl;
+    * func step - lines 252-268
+  * animated.fs.glsl
   * animated.vs.glsl
