@@ -38,7 +38,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	// Input data location as in the vertex buffer
-	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED || render_request.used_effect == EFFECT_ASSET_ID::ANIMATED )
+	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED || render_request.used_effect == EFFECT_ASSET_ID::ANIMATED)
 	{
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -56,15 +56,14 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			(void *)sizeof(
 				vec3)); // note the stride to skip the preceeding vertex position
 
-        if (registry.animated.has(entity) && !registry.deathTimers.has(entity))
-        {
-            AnimationInfo& info = registry.animated.get(entity);
-            GLint frame_loc = glGetUniformLocation(program, "frame");
-            glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
-            GLint scale_loc = glGetUniformLocation(program, "scale");
-            glUniform2f(scale_loc, 9.0,4.0);
-
-        }
+		if (registry.animated.has(entity) && !registry.deathTimers.has(entity))
+		{
+			AnimationInfo &info = registry.animated.get(entity);
+			GLint frame_loc = glGetUniformLocation(program, "frame");
+			glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
+			GLint scale_loc = glGetUniformLocation(program, "scale");
+			glUniform2f(scale_loc, 9.0, 4.0);
+		}
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
@@ -75,33 +74,6 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
-	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::SALMON || render_request.used_effect == EFFECT_ASSET_ID::PEBBLE)
-	{
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_color_loc = glGetAttribLocation(program, "in_color");
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-							  sizeof(ColoredVertex), (void *)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_color_loc);
-		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
-							  sizeof(ColoredVertex), (void *)sizeof(vec3));
-		gl_has_errors();
-
-		if (render_request.used_effect == EFFECT_ASSET_ID::SALMON)
-		{
-			// Light up?
-			GLint light_up_uloc = glGetUniformLocation(program, "light_up");
-			assert(light_up_uloc >= 0);
-
-			// !!! TODO A1: set the light_up shader variable using glUniform1i,
-			// similar to the glUniform1f call below. The 1f or 1i specified the type, here a single int.
-			gl_has_errors();
-		}
 	}
 	else if (render_request.used_effect == EFFECT_ASSET_ID::COLOURED)
 	{
@@ -252,8 +224,8 @@ mat3 RenderSystem::createProjectionMatrix()
 	float top = 0.f;
 
 	gl_has_errors();
-	float right = (float) window_width_px;
-	float bottom = (float) window_height_px;
+	float right = (float)window_width_px;
+	float bottom = (float)window_height_px;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);

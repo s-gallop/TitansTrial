@@ -6,23 +6,24 @@
 const float GRAVITY_ACCELERATION_FACTOR = 10.0;
 const float COLLISION_THRESHOLD = 0.0f;
 // Returns the local bounding coordinates scaled by the current size of the entity
-vec2 get_bounding_box(const Motion& motion)
+vec2 get_bounding_box(const Motion &motion)
 {
-	// abs is to avoid negative scale due to the facing direction.
-	return { abs(motion.scale.x), abs(motion.scale.y) };
+    // abs is to avoid negative scale due to the facing direction.
+    return {abs(motion.scale.x), abs(motion.scale.y)};
 }
 
 // assumes that the colliders are box shaped
 
-bool collides(const Motion& motion1, const Motion& motion2)
+bool collides(const Motion &motion1, const Motion &motion2)
 {
-	vec2 scale1 = get_bounding_box(motion1) / 2.0f;
-	vec2 scale2 = get_bounding_box(motion2) / 2.0f;
-	if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) && 
-		abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y)) {
-		return true;
-	}
-	return false;
+    vec2 scale1 = get_bounding_box(motion1) / 2.0f;
+    vec2 scale2 = get_bounding_box(motion2) / 2.0f;
+    if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) &&
+        abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y))
+    {
+        return true;
+    }
+    return false;
 }
 
 // vec2 getVecToOther(float angle1To2, vec2 scale1i, vec2 scale1j) {
@@ -68,134 +69,140 @@ bool collides(const Motion& motion1, const Motion& motion2)
 // 	vec2 box2ToCorner1 = getVecToOther(angle2ToCorner1, scale2i, scale2j);
 // 	if (length(pos1ToCorner2) < length(box1ToCorner2) || length(pos2ToCorner1) < length(box2ToCorner1))
 // 		return true;
-	
+
 // 	return false;
 // }
 
 void PhysicsSystem::step(float elapsed_ms)
 {
-	// Move fish based on how much time has passed, this is to (partially) avoid
-	// having entities move at different speed based on the machine.
-	auto& motion_container = registry.motions;
-	for(uint i = 0; i < motion_container.size(); i++)
-	{
-		Motion& motion = motion_container.components[i];
-		Entity entity = motion_container.entities[i];
-		float step_seconds = elapsed_ms / 1000.f;
-        if (registry.gravities.has(entity)) {
+    // Move fish based on how much time has passed, this is to (partially) avoid
+    // having entities move at different speed based on the machine.
+    auto &motion_container = registry.motions;
+    for (uint i = 0; i < motion_container.size(); i++)
+    {
+        Motion &motion = motion_container.components[i];
+        Entity entity = motion_container.entities[i];
+        float step_seconds = elapsed_ms / 1000.f;
+        if (registry.gravities.has(entity))
+        {
             motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR;
         }
-		motion.position += motion.velocity * step_seconds;
-	}
+        motion.position += motion.velocity * step_seconds;
+    }
 
-	auto doXYCollision =
-            [](int dir, Motion& motion_i, Motion& motion_j, vec2& scale1, vec2& scale2) {
-        if (motion_i.velocity[dir] > motion_j.velocity[dir] && motion_i.position[dir] < motion_j.position[dir] - scale2[dir]) {
+    auto doXYCollision =
+        [](int dir, Motion &motion_i, Motion &motion_j, vec2 &scale1, vec2 &scale2)
+    {
+        if (motion_i.velocity[dir] > motion_j.velocity[dir] && motion_i.position[dir] < motion_j.position[dir] - scale2[dir])
+        {
 
             motion_i.position[dir] = motion_j.position[dir] - scale2[dir] - scale1[dir];
             motion_j.position[dir] = motion_i.position[dir] + scale2[dir] + scale1[dir];
-
-        } else {
+        }
+        else
+        {
             motion_i.position[dir] = motion_j.position[dir] + scale2[dir] + scale1[dir];
             motion_j.position[dir] = motion_i.position[dir] - scale2[dir] - scale1[dir];
         }
     };
 
-	// Check for collisions between all moving entities
-	for(uint i = 0; i < motion_container.components.size(); i++)
-	{
-		Motion& motion_i = motion_container.components[i];
-		Entity entity_i = motion_container.entities[i];
-		
-		// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
-		for(uint j = i+1; j < motion_container.components.size(); j++)
-		{
-			Motion& motion_j = motion_container.components[j];
-			
-			if (collides(motion_i, motion_j))
-			{
-				Entity entity_j = motion_container.entities[j];
-				if (motion_i.isSolid && motion_j.isSolid) {
-					
-					vec2 scale1 = get_bounding_box(motion_i) / 2.0f;
-					vec2 scale2 = get_bounding_box(motion_j) / 2.0f;
+    // Check for collisions between all moving entities
+    for (uint i = 0; i < motion_container.components.size(); i++)
+    {
+        Motion &motion_i = motion_container.components[i];
+        Entity entity_i = motion_container.entities[i];
+
+        // note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
+        for (uint j = i + 1; j < motion_container.components.size(); j++)
+        {
+            Motion &motion_j = motion_container.components[j];
+
+            if (collides(motion_i, motion_j))
+            {
+                Entity entity_j = motion_container.entities[j];
+                if (motion_i.isSolid && motion_j.isSolid)
+                {
+
+                    vec2 scale1 = get_bounding_box(motion_i) / 2.0f;
+                    vec2 scale2 = get_bounding_box(motion_j) / 2.0f;
                     float vCollisionDepth = (scale1.y + scale2.y) - abs(motion_i.position.y - motion_j.position.y) + COLLISION_THRESHOLD;
                     float hCollisionDepth = (scale1.x + scale2.x) - abs(motion_i.position.x - motion_j.position.x) + COLLISION_THRESHOLD;
-                    if (vCollisionDepth > 0 && hCollisionDepth > 0) {
-                        if (vCollisionDepth < hCollisionDepth) {
-                            if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y) {
+                    if (vCollisionDepth > 0 && hCollisionDepth > 0)
+                    {
+                        if (vCollisionDepth < hCollisionDepth)
+                        {
+                            if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y)
+                            {
 
                                 motion_i.position.y = motion_j.position.y - scale2.y - scale1.y;
                                 motion_j.position.y = motion_i.position.y + scale2.y + scale1.y;
                                 motion_i.velocity.y = 0;
                                 motion_j.velocity.y = 0;
                             }
-                            else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y) {
+                            else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y)
+                            {
                                 motion_i.position.y = motion_j.position.y + scale2.y + scale1.y;
                                 motion_j.position.y = motion_i.position.y - scale2.y - scale1.y;
                                 motion_i.velocity.y = 0;
                                 motion_j.velocity.y = 0;
                             }
-                        } else {
-                            if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x) {
+                        }
+                        else
+                        {
+                            if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x)
+                            {
 
                                 motion_i.position.x = motion_j.position.x - scale2.x - scale1.x;
                                 motion_j.position.x = motion_i.position.x + scale2.x + scale1.x;
-
                             }
-                            else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x) {
+                            else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x)
+                            {
                                 motion_i.position.x = motion_j.position.x + scale2.x + scale1.x;
                                 motion_j.position.x = motion_i.position.x - scale2.x - scale1.x;
                             }
                         }
+                    }
+                    else if (vCollisionDepth > 0)
+                    {
 
-
-
-
-
-					}else if (vCollisionDepth > 0) {
-
-                        if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y) {
+                        if (motion_i.velocity.y > motion_j.velocity.y && motion_i.position.y < motion_j.position.y - scale2.y)
+                        {
 
                             motion_i.position.y = motion_j.position.y - scale2.y - scale1.y;
                             motion_j.position.y = motion_i.position.y + scale2.y + scale1.y;
                             motion_i.velocity.y = 0;
                             motion_j.velocity.y = 0;
                         }
-                        else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y) {
+                        else if (motion_i.velocity.y < motion_j.velocity.y && motion_i.position.y > motion_j.position.y + scale2.y)
+                        {
                             motion_i.position.y = motion_j.position.y + scale2.y + scale1.y;
                             motion_j.position.y = motion_i.position.y - scale2.y - scale1.y;
                             motion_i.velocity.y = 0;
                             motion_j.velocity.y = 0;
                         }
-                    } else if (hCollisionDepth > 0) {
+                    }
+                    else if (hCollisionDepth > 0)
+                    {
 
-                        if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x) {
+                        if (motion_i.velocity.x > motion_j.velocity.x && motion_i.position.x < motion_j.position.x - scale2.x)
+                        {
 
                             motion_i.position.x = motion_j.position.x - scale2.x - scale1.x;
                             motion_j.position.x = motion_i.position.x + scale2.x + scale1.x;
-
                         }
-                        else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x) {
+                        else if (motion_i.velocity.x < motion_j.velocity.x && motion_i.position.x > motion_j.position.x + scale2.x)
+                        {
                             motion_i.position.x = motion_j.position.x + scale2.x + scale1.x;
                             motion_j.position.x = motion_i.position.x - scale2.x - scale1.x;
                         }
                     }
+                }
 
-
-
-				}
-				
-				// Create a collisions event
-				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
-				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
-				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
-			}
-		}
-	}
-
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// TODO A2: HANDLE PEBBLE collisions HERE
-	// DON'T WORRY ABOUT THIS UNTIL ASSIGNMENT 2
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Create a collisions event
+                // We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
+                registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+                registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+            }
+        }
+    }
 }

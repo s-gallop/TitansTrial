@@ -7,60 +7,52 @@
 // Player component
 struct Player
 {
-	//Flag for player having weapon
-	// Only using 0 & 1 right now but other values available for more weapons
-	// hasSword = 1
+	// Flag for player having weapon
+	//  Only using 0 & 1 right now but other values available for more weapons
+	//  hasSword = 1
 	uint hasWeapon = 0;
 	uint jumps = 2;
 };
 
-struct Block {
-
+struct Block
+{
 };
 
-// Turtles have a hard shell
 struct Enemies
 {
-
 };
 
-struct Sword 
+struct Sword
 {
-
 };
 
-//Weapon the player has picked up
+// Weapon the player has picked up
 struct Weapon
 {
-	//Swing State: 0 = not swinging, 1 = wind-up right, 2 = wind-up left, 3 = swing right, 4 = swing left
+	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = wind-up left, 3 = swing right, 4 = swing left
 	uint swing = 0;
 	std::vector<Entity> hitBoxes;
 };
 
 struct WeaponHitBox
 {
-
-};
-
-// Fish and Salmon have a soft shell
-struct SoftShell
-{
-
 };
 
 // All data relevant to the shape and motion of entities
-struct Motion {
-	vec2 position = { 0.f, 0.f };
+struct Motion
+{
+	vec2 position = {0.f, 0.f};
 	float angle = 0.f;
 	float angleBackup = 0.f;
-	vec2 velocity = { 0.f, 0.f };
-	vec2 scale = { 10.f, 10.f };
+	vec2 velocity = {0.f, 0.f};
+	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
 };
 
 // just for milestone 1 sudden requirement
-struct TestAI {
+struct TestAI
+{
 	bool departFromRight = true;
 	float a;
 	float b;
@@ -68,8 +60,8 @@ struct TestAI {
 };
 
 // Gravity is valid for all entities in this struct
-struct Gravity {
-
+struct Gravity
+{
 };
 
 // Stucture to store collision information
@@ -77,11 +69,12 @@ struct Collision
 {
 	// Note, the first object is stored in the ECS container.entities
 	Entity other_entity; // the second object involved in the collision
-	Collision(Entity& other_entity) { this->other_entity = other_entity; };
+	Collision(Entity &other_entity) { this->other_entity = other_entity; };
 };
 
 // Data structure for toggling debug mode
-struct Debug {
+struct Debug
+{
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
 };
@@ -99,13 +92,13 @@ struct DebugComponent
 	// Note, an empty struct has size 1
 };
 
-// A timer that will be associated to dying salmon
+// A timer that will be associated to dying player
 struct DeathTimer
 {
 	float timer_ms = 3000.f;
 };
 
-// Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & salmon.vs.glsl)
+// Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl)
 struct ColoredVertex
 {
 	vec3 position;
@@ -121,15 +114,15 @@ struct TexturedVertex
 
 struct AnimationInfo
 {
-    int states;
-    std::vector<int> stateFrameLength;
-    int curState;
+	int states;
+	std::vector<int> stateFrameLength;
+	int curState;
 };
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
-	static bool loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<uint16_t>& out_vertex_indices, vec2& out_size);
-	vec2 original_size = {1,1};
+	static bool loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex> &out_vertices, std::vector<uint16_t> &out_vertex_indices, vec2 &out_size);
+	vec2 original_size = {1, 1};
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
 };
@@ -158,41 +151,39 @@ struct Mesh
  * enums there are, and as a default value to represent uninitialized fields.
  */
 
-enum class TEXTURE_ASSET_ID {
-	FISH = 0,
-    HERO = FISH + 1,
+enum class TEXTURE_ASSET_ID
+{
+	HERO = 0,
 	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
-    BACKGROUND = SWORD + 1,
+	BACKGROUND = SWORD + 1,
 	TEXTURE_COUNT = BACKGROUND + 1
 
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
-enum class EFFECT_ASSET_ID {
+enum class EFFECT_ASSET_ID
+{
 	COLOURED = 0,
-	PEBBLE = COLOURED + 1,
-	SALMON = PEBBLE + 1,
-	TEXTURED = SALMON + 1,
-    ANIMATED = TEXTURED + 1,
+	TEXTURED = COLOURED + 1,
+	ANIMATED = TEXTURED + 1,
 	WATER = ANIMATED + 1,
 	EFFECT_COUNT = WATER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
-enum class GEOMETRY_BUFFER_ID {
-	SALMON = 0,
-	SPRITE = SALMON + 1,
-	PEBBLE = SPRITE + 1,
-	DEBUG_LINE = PEBBLE + 1,
+enum class GEOMETRY_BUFFER_ID
+{
+	SPRITE = 0,
+	DEBUG_LINE = SPRITE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
-struct RenderRequest {
+struct RenderRequest
+{
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
-
