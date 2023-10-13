@@ -119,13 +119,18 @@ GLFWwindow *WorldSystem::create_window()
 	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
 	hero_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 	hero_kill_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
+	sword_swing_sound = Mix_LoadWAV(audio_path("sword_swing.wav").c_str());
+	hero_jump_sound = Mix_LoadWAV(audio_path("hero_jump.wav").c_str());
 
-	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr)
+
+	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr)
 	{
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 				audio_path("music.wav").c_str(),
 				audio_path("salmon_dead.wav").c_str(),
-				audio_path("salmon_eat.wav").c_str());
+				audio_path("salmon_eat.wav").c_str(),
+				audio_path("sword_swing.wav").c_str(),
+				audio_path("hero_jump.wav").c_str());
 		return nullptr;
 	}
 
@@ -208,6 +213,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
 				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
+					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
+					Mix_PlayChannel(-1, sword_swing_sound, 0);
+				}
 			}
 			break;
 		case 2:
@@ -219,6 +228,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
 				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
+					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
+					Mix_PlayChannel(-1, sword_swing_sound, 0);
+				}
 			}
 			break;
 		case 3:
@@ -571,6 +584,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;
+				Mix_PlayChannel(-1, hero_jump_sound, 0);
 			}
 		}
 
