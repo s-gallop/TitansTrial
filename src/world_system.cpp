@@ -168,17 +168,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		Motion &motion = motion_container.components[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
 		{
-			if (registry.enemies.has(motion_container.entities[i])) // only remove enemies
+			if (!registry.players.has(motion_container.entities[i])) // only remove enemies
 				registry.remove_all_components_of(motion_container.entities[i]);
+
 		}
 
 		if (motion.position.y > window_height_px-5) {
-			if (registry.enemies.has(motion_container.entities[i])) // only remove enemies
-				registry.remove_all_components_of(motion_container.entities[i]);
 			if (registry.players.has(motion_container.entities[i]))
 				if (!registry.deathTimers.has(motion_container.entities[i])) {
 					// Scream, reset timer, and make the salmon sink
 					registry.deathTimers.emplace(motion_container.entities[i]);
+					for (Entity weapon: registry.weapons.entities) {
+						registry.remove_all_components_of(weapon);
+					}
 					Mix_PlayChannel(-1, salmon_dead_sound, 0);
 
 					Motion& motion = registry.motions.get(player_salmon);
@@ -381,7 +383,7 @@ void WorldSystem::restart_game()
 	int base_width = ceil(16 * window_width_px / background_pixels_width);
 
 	// bottom line
-	//createBlock({window_width_px / 2, window_height_px}, {window_width_px, base_height/2});
+	createBlock({window_width_px / 2, window_height_px + 100}, {window_width_px, base_height/2});
 	// left line
 	createBlock({-base_width, window_height_px / 2}, {base_width * 6, window_height_px});
 	// right line
@@ -437,6 +439,9 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(entity)) {
 					// Scream, reset timer, and make the salmon sink
 					registry.deathTimers.emplace(entity);
+					for (Entity weapon: registry.weapons.entities) {
+						registry.remove_all_components_of(weapon);
+					}
 					Mix_PlayChannel(-1, salmon_dead_sound, 0);
 
 					Motion &motion = registry.motions.get(player_salmon);
