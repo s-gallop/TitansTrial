@@ -44,6 +44,12 @@ WorldSystem::~WorldSystem()
 		Mix_FreeChunk(hero_dead_sound);
 	if (hero_kill_sound != nullptr)
 		Mix_FreeChunk(hero_kill_sound);
+    if (sword_swing_sound != nullptr)
+        Mix_FreeChunk(sword_swing_sound);
+    if (hero_jump_sound != nullptr)
+        Mix_FreeChunk(hero_jump_sound);
+    if (button_click_sound != nullptr)
+        Mix_FreeChunk(button_click_sound);
 	Mix_CloseAudio();
 
 	// Destroy all created components
@@ -128,16 +134,19 @@ GLFWwindow *WorldSystem::create_window()
 	hero_kill_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
 	sword_swing_sound = Mix_LoadWAV(audio_path("sword_swing.wav").c_str());
 	hero_jump_sound = Mix_LoadWAV(audio_path("hero_jump.wav").c_str());
+    button_click_sound = Mix_LoadWAV(audio_path("button_click.wav").c_str());
 
 
-	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr)
+	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr || button_click_sound ==
+                                                                                                                                                                         nullptr)
 	{
-		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
+		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n %s\n %s\n %s\n make sure the data directory is present",
 				audio_path("music.wav").c_str(),
 				audio_path("salmon_dead.wav").c_str(),
 				audio_path("salmon_eat.wav").c_str(),
 				audio_path("sword_swing.wav").c_str(),
-				audio_path("hero_jump.wav").c_str());
+				audio_path("hero_jump.wav").c_str(),
+                audio_path("button_click.wav").c_str());
 		return nullptr;
 	}
 
@@ -566,6 +575,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         change_pause();
+        Mix_PlayChannel(-1, button_click_sound, 0);
     }
 
 	if (!registry.deathTimers.has(player_hero))
@@ -653,7 +663,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	if (!registry.deathTimers.has(player_hero))
+	if (!registry.deathTimers.has(player_hero) && !pause)
 	{
 		for (Entity entity : registry.weapons.entities)
 		{
@@ -671,21 +681,22 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
     // button click check
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);
-        if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
-            Button &buttonInfo = registry.buttons.get(entity);
-            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
-                // switch on what the button does
-                switch (buttonInfo.action) {
-                    case BUTTON_ACTION::FLIP_PAUSE:
-                        change_pause();
-                        break;
-                    case BUTTON_ACTION::QUIT:
-                        exit(0);
-                }
-                buttonInfo.clicked = false;
+        Button &buttonInfo = registry.buttons.get(entity);
+        if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
+            // switch on what the button does
+            switch (buttonInfo.action) {
+                case BUTTON_ACTION::FLIP_PAUSE:
+                    change_pause();
+                    break;
+                case BUTTON_ACTION::QUIT:
+                    exit(0);
             }
+            buttonInfo.clicked = false;
+        }
+        if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
             if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
                 buttonInfo.clicked = true;
+                Mix_PlayChannel(-1, button_click_sound, 0);
             }
         }
     }

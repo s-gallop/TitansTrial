@@ -46,7 +46,7 @@ private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
 	void on_mouse_move(vec2 pos);
-    static void on_mouse_click(int button, int action, int mods);
+    void on_mouse_click(int button, int action, int mods);
 
 	// restart level
 	void restart_game();
@@ -72,6 +72,7 @@ private:
 	Mix_Chunk *hero_kill_sound;
 	Mix_Chunk *sword_swing_sound;
 	Mix_Chunk *hero_jump_sound;
+    Mix_Chunk *button_click_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;
