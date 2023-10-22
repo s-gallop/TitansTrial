@@ -36,7 +36,8 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 		entity,
 		{TEXTURE_ASSET_ID::HERO,
 		 EFFECT_ASSET_ID::ANIMATED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         true});
 
 	registry.gravities.emplace(entity);
 
