@@ -682,6 +682,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);
         Button &buttonInfo = registry.buttons.get(entity);
+        RenderRequest &buttonRender = registry.renderRequests.get(entity);
         if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
             // switch on what the button does
             switch (buttonInfo.action) {
@@ -694,7 +695,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
             buttonInfo.clicked = false;
         }
         if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
-            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS && buttonRender.visibility) {
                 buttonInfo.clicked = true;
                 Mix_PlayChannel(-1, button_click_sound, 0);
             }
