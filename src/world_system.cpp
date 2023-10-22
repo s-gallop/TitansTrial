@@ -21,6 +21,8 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
+bool pause = false;
+
 std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
@@ -548,6 +550,9 @@ void motion_helper(Motion &playerMotion)
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        pause = !pause;
+    }
 
 	if (!registry.deathTimers.has(player_hero))
 	{

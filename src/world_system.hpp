@@ -20,6 +20,8 @@ class WorldSystem
 public:
 	WorldSystem();
 
+    bool pause;
+
 	// Creates a window
 	GLFWwindow *create_window();
 

@@ -151,6 +151,9 @@ struct Mesh
  * The final value in each enumeration is both a way to keep track of how many
  * enums there are, and as a default value to represent uninitialized fields.
  */
+enum class BUTTON_TEXTURE_ASSET_ID
+{
+};
 
 enum class TEXTURE_ASSET_ID
 {
@@ -158,7 +161,17 @@ enum class TEXTURE_ASSET_ID
 	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
 	BACKGROUND = SWORD + 1,
-	TEXTURE_COUNT = BACKGROUND + 1
+    THIN = BACKGROUND + 1,
+    THIN_PRESSED = THIN + 1,
+    WIDE = THIN_PRESSED + 1,
+    WIDE_PRESSED = WIDE + 1,
+    MENU = WIDE_PRESSED + 1,
+    MENU_PRESSED = MENU + 1,
+    TEXT_PLAY = MENU_PRESSED + 1,
+    TEXT_QUIT = TEXT_PLAY + 1,
+    TEXT_RETURN = TEXT_QUIT + 1,
+    HELPER = TEXT_RETURN + 1,
+	TEXTURE_COUNT = HELPER + 1
 
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -168,8 +181,8 @@ enum class EFFECT_ASSET_ID
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
 	ANIMATED = TEXTURED + 1,
-	WATER = ANIMATED + 1,
-	EFFECT_COUNT = WATER + 1
+	SCREEN = ANIMATED + 1,
+	EFFECT_COUNT = SCREEN + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

@@ -170,3 +170,23 @@ Entity createWeaponHitBox(vec2 pos, vec2 size)
 
 	return entity;
 }
+
+Entity Button(vec2 pos,) {
+
+    auto entity = Entity();
+
+    Motion &motion = registry.motions.emplace(entity);
+    motion.position = pos;
+    motion.angle = 0.f;
+    motion.velocity = {0.f, 0.f};
+    motion.scale = size;
+    motion.isSolid = true;
+    registry.blocks.emplace(entity);
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
+             EFFECT_ASSET_ID::COLOURED,
+             GEOMETRY_BUFFER_ID::SPRITE});
+
+    return entity;
+}

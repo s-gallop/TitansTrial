@@ -4,8 +4,7 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::drawTexturedMesh(Entity entity,
-									const mat3 &projection)
+void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool pause)
 {
 	Motion &motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
@@ -56,7 +55,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			(void *)sizeof(
 				vec3)); // note the stride to skip the preceeding vertex position
 
-		if (registry.animated.has(entity) && !registry.deathTimers.has(entity))
+		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && pause)
 		{
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
@@ -119,11 +118,11 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
-void RenderSystem::drawToScreen()
+void RenderSystem::drawToScreen(bool pause)
 {
 	// Setting shaders
 	// get the water texture, sprite mesh, and program
-	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::WATER]);
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
 	gl_has_errors();
 	// Clearing backbuffer
 	int w, h;
@@ -147,13 +146,15 @@ void RenderSystem::drawToScreen()
 		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]); // Note, GL_ELEMENT_ARRAY_BUFFER associates
 																	 // indices to the bound GL_ARRAY_BUFFER
 	gl_has_errors();
-	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::WATER];
+	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::SCREEN];
 	// Set clock
 	GLuint time_uloc = glGetUniformLocation(water_program, "time");
 	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "screen_darken_factor");
+    GLuint pause_uloc = glGetUniformLocation(water_program, "pause");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
 	ScreenState &screen = registry.screenStates.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.screen_darken_factor);
+    glUniform1i(pause_uloc, !pause);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
 	// same VBO)
@@ -177,7 +178,7 @@ void RenderSystem::drawToScreen()
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
-void RenderSystem::draw()
+void RenderSystem::draw(bool pause)
 {
 	// Getting size of window
 	int w, h;
@@ -206,11 +207,11 @@ void RenderSystem::draw()
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		drawTexturedMesh(entity, projection_2D);
+		drawTexturedMesh(entity, projection_2D, pause);
 	}
 
 	// Truely render to the screen
-	drawToScreen();
+	drawToScreen(pause);
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
