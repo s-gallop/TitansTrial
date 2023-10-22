@@ -35,15 +35,10 @@ class RenderSystem
 		textures_path("mock_enemy.png"),
 		textures_path("sword.png"),
         textures_path("background.png"),
-        textures_path("buttons/thin.png"),
-        textures_path("buttons/thin_pressed.png"),
-        textures_path("buttons/thick.png"),
-        textures_path("buttons/thick_pressed.png"),
+        textures_path("buttons/quit.png"),
+        textures_path("buttons/quit_pressed.png"),
         textures_path("buttons/menu.png"),
         textures_path("buttons/menu_pressed.png"),
-        textures_path("buttons/play.png"),
-        textures_path("buttons/quit.png"),
-        textures_path("buttons/return.png"),
         textures_path("helper.png")};
 
 	std::array<GLuint, effect_count> effects;

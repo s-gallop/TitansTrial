@@ -1,5 +1,15 @@
+#include <map>
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
+
+const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
+        { TEXTURE_ASSET_ID::QUIT,{204, 56} },
+        { TEXTURE_ASSET_ID::QUIT_PRESSED,{204, 56} },
+        { TEXTURE_ASSET_ID::MENU,{30, 32} },
+        { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
+        { TEXTURE_ASSET_ID::HELPER,{580, 162} },
+};
+
 
 Entity createHero(RenderSystem *renderer, vec2 pos)
 {
@@ -78,6 +88,27 @@ Entity createBackground()
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE});
 	return entity;
+}
+
+Entity createHelperText()
+{
+    Entity entity = Entity();
+    auto &motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    motion.velocity = {0.f, 0.f};
+    motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HELPER);
+    motion.position = {window_width_px - motion.scale.x/2, window_height_px - motion.scale.y/2};
+
+    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::HELPER,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             true,
+             false});
+    registry.showWhenPaused.emplace(entity);
+    return entity;
 }
 
 Entity createSword(RenderSystem *renderer, vec2 position)
@@ -171,7 +202,7 @@ Entity createWeaponHitBox(vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity Button(vec2 pos,) {
+Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, BUTTON_ACTION action, bool visibility) {
 
     auto entity = Entity();
 
@@ -179,14 +210,20 @@ Entity Button(vec2 pos,) {
     motion.position = pos;
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = size;
-    motion.isSolid = true;
-    registry.blocks.emplace(entity);
+    motion.scale = ASSET_SIZE.at(type);
+    Button &button = registry.buttons.emplace(entity);
+    button.clicked = false;
+    button.action = action;
     registry.renderRequests.insert(
             entity,
-            {TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-             EFFECT_ASSET_ID::COLOURED,
-             GEOMETRY_BUFFER_ID::SPRITE});
+            {type,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             true,
+             visibility});
+    if (!visibility) {
+        registry.showWhenPaused.emplace(entity);
+    }
 
     return entity;
 }

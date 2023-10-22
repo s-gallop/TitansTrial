@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+static bool True = true;
 // Player component
 struct Player
 {
@@ -119,6 +120,9 @@ struct AnimationInfo
 	std::vector<int> stateFrameLength;
 	int curState;
 };
+struct ShowWhenPaused {
+};
+
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
@@ -161,19 +165,15 @@ enum class TEXTURE_ASSET_ID
 	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
 	BACKGROUND = SWORD + 1,
-    THIN = BACKGROUND + 1,
-    THIN_PRESSED = THIN + 1,
-    WIDE = THIN_PRESSED + 1,
-    WIDE_PRESSED = WIDE + 1,
-    MENU = WIDE_PRESSED + 1,
+    QUIT = BACKGROUND + 1,
+    QUIT_PRESSED = QUIT + 1,
+    MENU = QUIT_PRESSED + 1,
     MENU_PRESSED = MENU + 1,
-    TEXT_PLAY = MENU_PRESSED + 1,
-    TEXT_QUIT = TEXT_PLAY + 1,
-    TEXT_RETURN = TEXT_QUIT + 1,
-    HELPER = TEXT_RETURN + 1,
+    HELPER = MENU_PRESSED + 1,
 	TEXTURE_COUNT = HELPER + 1
 
 };
+
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 enum class EFFECT_ASSET_ID
@@ -193,6 +193,12 @@ enum class GEOMETRY_BUFFER_ID
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };
+
+enum class BUTTON_ACTION
+{
+    FLIP_PAUSE = 0,
+    QUIT = FLIP_PAUSE + 1
+};
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 struct RenderRequest
@@ -200,4 +206,13 @@ struct RenderRequest
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+    bool on_top_screen = false;
+    bool visibility = true;
+};
+
+
+// Need access to TEXTURE_ASSET_ID
+struct Button {
+    int clicked;
+    BUTTON_ACTION action;
 };

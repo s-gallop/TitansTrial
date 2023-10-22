@@ -21,7 +21,9 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
-bool pause = false;
+vec2 mouse_pos = {0,0};
+
+bool WorldSystem::pause = false;
 
 std::bitset<2> motionKeyStatus("00");
 
@@ -102,8 +104,11 @@ GLFWwindow *WorldSystem::create_window()
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow *wnd, double _0, double _1)
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_move({_0, _1}); };
+    auto cursor_click_redirect = [](GLFWwindow *wnd, int _0, int _1, int _2)
+    { ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+    glfwSetMouseButtonCallback(window, cursor_click_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -440,6 +445,15 @@ void WorldSystem::restart_game()
 
 	// bottom center padding platform
 	createBlock({window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+
+    create_pause_screen();
+}
+
+// Adds whatever's needed in the pause screen
+void WorldSystem::create_pause_screen() {
+    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, BUTTON_ACTION::FLIP_PAUSE);
+    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, BUTTON_ACTION::QUIT, false);
+    createHelperText();
 }
 
 // Compute collisions between entities
@@ -551,7 +565,7 @@ void motion_helper(Motion &playerMotion)
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        pause = !pause;
+        change_pause();
     }
 
 	if (!registry.deathTimers.has(player_hero))
@@ -651,4 +665,36 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			}
 		}
 	}
+    mouse_pos = mouse_position;
+}
+void WorldSystem::on_mouse_click(int key, int action, int mods){
+    // button click check
+    for(Entity entity : registry.buttons.entities) {
+        Motion &button = registry.motions.get(entity);
+        if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
+            Button &buttonInfo = registry.buttons.get(entity);
+            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+                // switch on what the button does
+                switch (buttonInfo.action) {
+                    case BUTTON_ACTION::FLIP_PAUSE:
+                        change_pause();
+                        break;
+                    case BUTTON_ACTION::QUIT:
+                        exit(0);
+                }
+                buttonInfo.clicked = false;
+            }
+            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+                buttonInfo.clicked = true;
+            }
+        }
+    }
+}
+
+// pause/unpauses game and show pause screen entities
+void WorldSystem::change_pause() {
+    pause = !pause;
+    for (Entity e : registry.showWhenPaused.entities) {
+        registry.renderRequests.get(e).visibility = pause;
+    }
 }
