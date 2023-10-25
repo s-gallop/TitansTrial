@@ -460,8 +460,8 @@ void WorldSystem::restart_game()
 
 // Adds whatever's needed in the pause screen
 void WorldSystem::create_pause_screen() {
-    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, BUTTON_ACTION::FLIP_PAUSE);
-    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, BUTTON_ACTION::QUIT, false);
+    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
+    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
     createHelperText();
 }
 
@@ -684,15 +684,8 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
         Button &buttonInfo = registry.buttons.get(entity);
         RenderRequest &buttonRender = registry.renderRequests.get(entity);
         if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
-            // switch on what the button does
-            switch (buttonInfo.action) {
-                case BUTTON_ACTION::FLIP_PAUSE:
-                    change_pause();
-                    break;
-                case BUTTON_ACTION::QUIT:
-                    exit(0);
-            }
             buttonInfo.clicked = false;
+            buttonInfo.callback();
         }
         if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
             if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS && buttonRender.visibility) {

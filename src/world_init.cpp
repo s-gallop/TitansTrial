@@ -1,4 +1,5 @@
 #include <map>
+#include <utility>
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
@@ -203,7 +204,7 @@ Entity createWeaponHitBox(vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, BUTTON_ACTION action, bool visibility) {
+Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
 
     auto entity = Entity();
 
@@ -214,7 +215,7 @@ Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, BUTTON_ACTION action, bool 
     motion.scale = ASSET_SIZE.at(type);
     Button &button = registry.buttons.emplace(entity);
     button.clicked = false;
-    button.action = action;
+    button.callback = std::move(callback);
     registry.renderRequests.insert(
             entity,
             {type,

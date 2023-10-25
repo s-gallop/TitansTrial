@@ -119,7 +119,13 @@ struct AnimationInfo
 	std::vector<int> stateFrameLength;
 	int curState;
 };
+
 struct ShowWhenPaused {
+};
+
+struct Button {
+    int clicked;
+    std::function<void ()> callback;
 };
 
 // Mesh datastructure for storing vertex and index buffers
@@ -154,9 +160,6 @@ struct Mesh
  * The final value in each enumeration is both a way to keep track of how many
  * enums there are, and as a default value to represent uninitialized fields.
  */
-enum class BUTTON_TEXTURE_ASSET_ID
-{
-};
 
 enum class TEXTURE_ASSET_ID
 {
@@ -192,12 +195,6 @@ enum class GEOMETRY_BUFFER_ID
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };
-
-enum class BUTTON_ACTION
-{
-    FLIP_PAUSE = 0,
-    QUIT = FLIP_PAUSE + 1
-};
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 struct RenderRequest
@@ -207,11 +204,4 @@ struct RenderRequest
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
     bool on_top_screen = false;
     bool visibility = true;
-};
-
-
-// Need access to TEXTURE_ASSET_ID
-struct Button {
-    int clicked;
-    BUTTON_ACTION action;
 };

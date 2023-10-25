@@ -27,6 +27,6 @@ Entity createHelperText();
 
 Entity createBlock(vec2 pos, vec2 size);
 // the ui button
-Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, BUTTON_ACTION action, bool visibility = true);
+Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 
 Entity createWeaponHitBox(vec2 pos, vec2 size);
