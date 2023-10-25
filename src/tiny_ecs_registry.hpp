@@ -53,6 +53,7 @@ public:
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
+        registry_list.push_back(&showWhenPaused);
 	}
 
 	void clear_all_components()

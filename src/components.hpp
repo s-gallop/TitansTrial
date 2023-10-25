@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
-static bool True = true;
 // Player component
 struct Player
 {
