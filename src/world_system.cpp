@@ -25,7 +25,7 @@ std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_sword_spawn(1000.f)
+	: points(0), next_enemy_spawn(0.f), next_weapon_spawn(1000.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -33,14 +33,8 @@ WorldSystem::WorldSystem()
 
 WorldSystem::~WorldSystem()
 {
-	// Destroy music components
-	if (background_music != nullptr)
-		Mix_FreeMusic(background_music);
-	if (hero_dead_sound != nullptr)
-		Mix_FreeChunk(hero_dead_sound);
-	if (hero_kill_sound != nullptr)
-		Mix_FreeChunk(hero_kill_sound);
-	Mix_CloseAudio();
+	// Destroy all sound
+	destroy_sound();
 
 	// Destroy all created components
 	registry.clear_all_components();
@@ -103,36 +97,9 @@ GLFWwindow *WorldSystem::create_window()
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 
-	//////////////////////////////////////
-	// Loading music and sounds with SDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0)
-	{
-		fprintf(stderr, "Failed to initialize SDL Audio");
+	// Initialize all sound
+	if (init_sound())
 		return nullptr;
-	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
-	{
-		fprintf(stderr, "Failed to open audio device");
-		return nullptr;
-	}
-
-	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
-	hero_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
-	hero_kill_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
-	sword_swing_sound = Mix_LoadWAV(audio_path("sword_swing.wav").c_str());
-	hero_jump_sound = Mix_LoadWAV(audio_path("hero_jump.wav").c_str());
-
-
-	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr)
-	{
-		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
-				audio_path("music.wav").c_str(),
-				audio_path("salmon_dead.wav").c_str(),
-				audio_path("salmon_eat.wav").c_str(),
-				audio_path("sword_swing.wav").c_str(),
-				audio_path("hero_jump.wav").c_str());
-		return nullptr;
-	}
 
 	return window;
 }
@@ -140,9 +107,9 @@ GLFWwindow *WorldSystem::create_window()
 void WorldSystem::init(RenderSystem *renderer_arg)
 {
 	this->renderer = renderer_arg;
-	// Playing background music indefinitely
-	Mix_PlayMusic(background_music, -1);
-	fprintf(stderr, "Loaded music\n");
+	
+	// Play background music
+	play_music();
 
 	// Set all states to default
 	restart_game();
@@ -186,7 +153,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 					{
 						registry.remove_all_components_of(weapon);
 					}
-					Mix_PlayChannel(-1, hero_dead_sound, 0);
+					play_sound(SOUND_EFFECT::HERO_DEAD);
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -215,7 +182,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
 				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
 					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					Mix_PlayChannel(-1, sword_swing_sound, 0);
+					play_sound(SOUND_EFFECT::SWORD_SWING);
 				}
 			}
 			break;
@@ -230,7 +197,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
 				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
 					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					Mix_PlayChannel(-1, sword_swing_sound, 0);
+					play_sound(SOUND_EFFECT::SWORD_SWING);
 				}
 			}
 			break;
@@ -332,11 +299,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
-	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
-	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
+	next_weapon_spawn -= elapsed_ms_since_last_update * current_speed * 2;
+	if (registry.swords.components.size() <= MAX_SWORDS && next_weapon_spawn < 0.f)
 	{
 		// Reset timer
-		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
+		next_weapon_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
 		// Create sword at random position
 		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
@@ -466,7 +433,7 @@ void WorldSystem::handle_collisions()
 					{
 						registry.remove_all_components_of(weapon);
 					}
-					Mix_PlayChannel(-1, hero_dead_sound, 0);
+					play_sound(SOUND_EFFECT::HERO_DEAD);
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -584,7 +551,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;
-				Mix_PlayChannel(-1, hero_jump_sound, 0);
+				play_sound(SOUND_EFFECT::HERO_JUMP);
 			}
 		}
 

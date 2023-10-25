@@ -7,11 +7,12 @@
 #include <vector>
 #include <random>
 
-#define SDL_MAIN_HANDLED
-#include <SDL.h>
-#include <SDL_mixer.h>
+// #define SDL_MAIN_HANDLED
+// #include <SDL.h>
+// #include <SDL_mixer.h>
 
 #include "render_system.hpp"
+#include "sound_utils.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -56,15 +57,8 @@ private:
 	RenderSystem *renderer;
 	float current_speed;
 	float next_enemy_spawn;
-	float next_sword_spawn;
+	float next_weapon_spawn;
 	Entity player_hero;
-
-	// music references
-	Mix_Music *background_music;
-	Mix_Chunk *hero_dead_sound;
-	Mix_Chunk *hero_kill_sound;
-	Mix_Chunk *sword_swing_sound;
-	Mix_Chunk *hero_jump_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;
