@@ -12,9 +12,7 @@
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
-const size_t MAX_SWORDS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
-const size_t SWORD_DELAY_MS = 8000 * 3;
 const uint MAX_JUMPS = 2;
 
 const float BASIC_SPEED = 200.0;
@@ -25,7 +23,7 @@ std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_weapon_spawn(1000.f)
+	: points(0), next_enemy_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -164,70 +162,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	// Keep weapons centred on player
-	for (Entity entity : registry.weapons.entities)
-	{
-		Motion &weaponMot = registry.motions.get(entity);
-		weaponMot.position = registry.motions.get(player_hero).position;
-		uint &swingState = registry.weapons.get(entity).swing;
-		switch (swingState)
-		{
-		case 1:
-			weaponMot.angle -= M_PI / 32;
-			if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4)
-			{
-				swingState = 3;
-				float angleBackup = weaponMot.angleBackup;
-				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
-				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
-				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
-					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					play_sound(SOUND_EFFECT::SWORD_SWING);
-				}
-			}
-			break;
-		case 2:
-			weaponMot.angle += M_PI / 32;
-			if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4)
-			{
-				swingState = 4;
-				float angleBackup = weaponMot.angleBackup;
-				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
-				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
-				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
-					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					play_sound(SOUND_EFFECT::SWORD_SWING);
-				}
-			}
-			break;
-		case 3:
-			weaponMot.angle += M_PI / 16;
-			if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4)
-			{
-				swingState = 0;
-				weaponMot.angleBackup = weaponMot.angle;
-				for (Entity hitBox : registry.weapons.get(entity).hitBoxes)
-				{
-					registry.remove_all_components_of(hitBox);
-				}
-				registry.weapons.get(entity).hitBoxes.clear();
-			}
-			break;
-		case 4:
-			weaponMot.angle -= M_PI / 16;
-			if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4)
-			{
-				swingState = 0;
-				weaponMot.angleBackup = weaponMot.angle;
-				for (Entity hitBox : registry.weapons.get(entity).hitBoxes)
-				{
-					registry.remove_all_components_of(hitBox);
-				}
-				registry.weapons.get(entity).hitBoxes.clear();
-			}
-		}
-	}
+	for (Entity weapon: registry.weapons.entities)
+		update_weapon_pos(weapon, player_hero);
+
+	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
@@ -299,17 +237,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
-	next_weapon_spawn -= elapsed_ms_since_last_update * current_speed * 2;
-	if (registry.swords.components.size() <= MAX_SWORDS && next_weapon_spawn < 0.f)
-	{
-		// Reset timer
-		next_weapon_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
-		// Create sword at random position
-		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
-
-		createSword(renderer, {sword_x, sword_y});
-	}
+	update_weapon_timer(elapsed_ms_since_last_update * current_speed * 2, renderer);
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -337,8 +265,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
-	// !!! TODO A1: update LightUp timers and remove if time drops below zero, similar to the death timer
 
 	return true;
 }
@@ -441,7 +367,7 @@ void WorldSystem::handle_collisions()
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - Sword collusion
+			// Checking Player - Sword collision
 			else if (registry.swords.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
@@ -556,17 +482,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 
 		if (key == GLFW_KEY_SPACE)
-		{
-			for (Entity entity : registry.weapons.entities)
-			{
-				uint &swingState = registry.weapons.get(entity).swing;
-				if (swingState == 0)
-				{
-					float weaponAngle = registry.motions.get(entity).angle;
-					swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 2 : 1;
-				}
-			}
-		}
+			for (Entity weapon : registry.weapons.entities)
+				do_weapon_action(weapon);
 	}
 
 	// Resetting game
@@ -602,15 +519,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!registry.deathTimers.has(player_hero))
-	{
-		for (Entity entity : registry.weapons.entities)
-		{
-			if (registry.weapons.get(entity).swing == 0)
-			{
-				Motion &motion = registry.motions.get(entity);
-				motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
-				motion.angleBackup = motion.angle;
-			}
-		}
-	}
+		for (Entity weapon : registry.weapons.entities)
+			rotate_weapon(weapon, mouse_position);
 }

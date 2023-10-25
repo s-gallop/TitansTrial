@@ -13,6 +13,7 @@
 
 #include "render_system.hpp"
 #include "sound_utils.hpp"
+#include "weapon_utils.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -57,7 +58,6 @@ private:
 	RenderSystem *renderer;
 	float current_speed;
 	float next_enemy_spawn;
-	float next_weapon_spawn;
 	Entity player_hero;
 
 	// C++ random number generator
