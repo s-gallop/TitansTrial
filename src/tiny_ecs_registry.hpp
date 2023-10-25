@@ -53,6 +53,8 @@ public:
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
+        registry_list.push_back(&animated);
+        registry_list.push_back(&buttons);
         registry_list.push_back(&showWhenPaused);
 	}
 
