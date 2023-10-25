@@ -355,10 +355,10 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(entity))
 				{
 					registry.deathTimers.emplace(entity);
+					
 					for (Entity weapon : registry.weapons.entities)
-					{
 						registry.remove_all_components_of(weapon);
-					}
+					
 					play_sound(SOUND_EFFECT::HERO_DEAD);
 
 					Motion &motion = registry.motions.get(player_hero);
@@ -368,15 +368,19 @@ void WorldSystem::handle_collisions()
 				}
 			}
 			// Checking Player - Sword collision
-			else if (registry.swords.has(entity_other))
+			else if (registry.collectables.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
 				{
-					registry.remove_all_components_of(entity_other);
-					if (!registry.players.get(player_hero).hasWeapon)
-					{
-						createWeaponSword(renderer);
+					if (!registry.players.get(player_hero).hasWeapon && registry.swords.has(entity_other)) {
+						registry.collectables.remove(entity_other);
+						registry.gravities.remove(entity_other);
+						registry.motions.get(entity_other).scale *= 1.3;
+						registry.motions.get(entity_other).positionOffset.y = -50.f;
+						registry.weapons.emplace(entity_other);
 						registry.players.get(player_hero).hasWeapon = 1;
+					} else if (registry.players.get(player_hero).hasWeapon) {
+						registry.remove_all_components_of(entity_other);
 					}
 				}
 			}
@@ -390,7 +394,7 @@ void WorldSystem::handle_collisions()
 				}
 			}
 		}
-		else if (registry.swords.has(entity))
+		else if (registry.collectables.has(entity))
 		{
 
 			if (registry.blocks.has(entity_other))

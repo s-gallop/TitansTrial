@@ -22,15 +22,19 @@ struct Enemies
 {
 };
 
+struct Collectable
+{
+};
+
 struct Sword
 {
+	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = swing right, 3 = wind-up left, 4 = swing left
+	int swing = 0;
 };
 
 // Weapon the player has picked up
 struct Weapon
 {
-	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = wind-up left, 3 = swing right, 4 = swing left
-	uint swing = 0;
 	std::vector<Entity> hitBoxes;
 };
 
