@@ -11,6 +11,7 @@ struct Player
 	//  Only using 0 & 1 right now but other values available for more weapons
 	//  hasSword = 1
 	uint hasWeapon = 0;
+	Entity weapon;
 	uint jumps = 2;
 };
 
@@ -30,6 +31,10 @@ struct Sword
 {
 	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = swing right, 3 = wind-up left, 4 = swing left
 	int swing = 0;
+};
+
+struct Gun{
+
 };
 
 // Weapon the player has picked up
@@ -161,7 +166,8 @@ enum class TEXTURE_ASSET_ID
 	HERO = 0,
 	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
-	BACKGROUND = SWORD + 1,
+	GUN = SWORD + 1,
+	BACKGROUND = GUN + 1,
 	TEXTURE_COUNT = BACKGROUND + 1
 
 };

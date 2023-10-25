@@ -108,6 +108,34 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
+Entity createGun(RenderSystem *renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto &motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.position = position;
+	motion.scale = vec2({GUN_BB_WIDTH, GUN_BB_HEIGHT});
+
+	// Add to swords, gravity and render requests
+	registry.collectables.emplace(entity);
+	registry.guns.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::GUN,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
 Entity createBlock(vec2 pos, vec2 size)
 {
 	auto entity = Entity();

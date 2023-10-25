@@ -367,21 +367,12 @@ void WorldSystem::handle_collisions()
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - Sword collision
+			// Checking Player - Collectable collision
 			else if (registry.collectables.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
 				{
-					if (!registry.players.get(player_hero).hasWeapon && registry.swords.has(entity_other)) {
-						registry.collectables.remove(entity_other);
-						registry.gravities.remove(entity_other);
-						registry.motions.get(entity_other).scale *= 1.3;
-						registry.motions.get(entity_other).positionOffset.y = -50.f;
-						registry.weapons.emplace(entity_other);
-						registry.players.get(player_hero).hasWeapon = 1;
-					} else if (registry.players.get(player_hero).hasWeapon) {
-						registry.remove_all_components_of(entity_other);
-					}
+					collect_weapon(entity_other, player_hero);
 				}
 			}
 			else if (registry.blocks.has(entity_other))

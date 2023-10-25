@@ -9,11 +9,44 @@ const size_t MAX_COLLECTABLES = 3;
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
 
+void collect_weapon(Entity weapon, Entity hero) {
+	if (!registry.deathTimers.has(hero)) {
+		if (registry.players.get(hero).hasWeapon) {
+			registry.remove_all_components_of(registry.players.get(hero).weapon);
+		}
+		
+		registry.collectables.remove(weapon);
+		registry.gravities.remove(weapon);
+		registry.weapons.emplace(weapon);
+		registry.players.get(hero).hasWeapon = 1;
+		registry.players.get(hero).weapon = weapon;
+		
+		if (registry.swords.has(weapon)) {
+			registry.motions.get(weapon).scale *= 1.3;
+			registry.motions.get(weapon).positionOffset.y = -50.f;
+		} else if (registry.guns.has(weapon)) {
+			registry.motions.get(weapon).scale *= 1.3;
+			registry.motions.get(weapon).positionOffset.x = 30.f;
+		}
+	}
+}
+
 void rotate_weapon(Entity weapon, vec2 mouse_pos) {
+	Motion &motion = registry.motions.get(weapon);
 	if (!registry.swords.has(weapon) || registry.swords.get(weapon).swing == 0) {
-		Motion &motion = registry.motions.get(weapon);
-		motion.angle = atan2(mouse_pos.y - motion.position.y, mouse_pos.x - motion.position.x) + M_PI / 2;
+		motion.angle = atan2(mouse_pos.y - motion.position.y, mouse_pos.x - motion.position.x);
+		
+		if (registry.swords.has(weapon))
+			motion.angle += M_PI/2;
 		motion.angleBackup = motion.angle;
+		
+		if (registry.guns.has(weapon)) {
+			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
+				motion.scale.y = -1*abs(motion.scale.x);
+			} else {
+				motion.scale.y = abs(motion.scale.x);
+			}
+		}
 	}
 }
 
@@ -53,10 +86,14 @@ void update_weapon_pos(Entity weapon, Entity hero) {
 }
 
 float spawn_weapon(RenderSystem* renderer) {
-	float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
-	float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
+	float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
-	createSword(renderer, {sword_x, sword_y});
+	float rand = uniform_dist(rng);
+	if (rand < 0)
+		createSword(renderer, {x_pos, y_pos});
+	else
+		createGun(renderer, {x_pos, y_pos});
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -73,6 +110,7 @@ void do_weapon_action(Entity weapon) {
 		if (swingState == 0) {
 			float weaponAngle = registry.motions.get(weapon).angle;
 			swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 3 : 1;
+			printf("");
 		}
 	}
 }

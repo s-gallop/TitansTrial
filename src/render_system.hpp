@@ -34,6 +34,7 @@ class RenderSystem
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
 		textures_path("sword.png"),
+		textures_path("pistol.png"),
 		textures_path("background.png")};
 
 	std::array<GLuint, effect_count> effects;
