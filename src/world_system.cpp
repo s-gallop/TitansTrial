@@ -563,11 +563,17 @@ bool WorldSystem::is_over() const
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Motion &playerMotion)
+void WorldSystem::motion_helper(Motion &playerMotion)
 {
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
+	if (!pause) {
+		if (playerMotion.velocity.x < 0)
+			playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+		else if (playerMotion.velocity.x > 0)
+			playerMotion.scale.x = abs(playerMotion.scale.x);
+	}
 }
 
 // On key callback
@@ -585,29 +591,23 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(0);
-			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
-			if (motionKeyStatus.test(1))
-				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(1);
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
-			if (motionKeyStatus.test(0))
-				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
 		motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
 		{
 			if (registry.players.get(player_hero).jumps > 0)
 			{
@@ -617,7 +617,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE)
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause)
 		{
 			for (Entity entity : registry.weapons.entities)
 			{
