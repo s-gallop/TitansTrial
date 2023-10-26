@@ -23,11 +23,11 @@ class RenderSystem
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	// Associated id with .obj path
-	// const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
-	// {
-	// 	  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite.obj"))
-	// 	  // specify meshes of other assets here
-	// };
+	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
+	{
+		  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
+		  // specify meshes of other assets here
+	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
@@ -43,6 +43,7 @@ class RenderSystem
 		shader_path("coloured"),
 		shader_path("textured"),
 		shader_path("animated"),
+		shader_path("bullet"),
 		shader_path("water")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;

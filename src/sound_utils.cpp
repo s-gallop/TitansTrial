@@ -20,6 +20,8 @@ uint init_sound() {
 	sound_effects.push_back(Mix_LoadWAV(audio_path("salmon_dead.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_jump.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("sword_swing.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("bullet_shoot.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("gun_lever.wav").c_str()));
 
 
 	if (background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk* effect){return effect == nullptr;}))
@@ -28,7 +30,9 @@ uint init_sound() {
 				audio_path("music.wav").c_str(),
 				audio_path("salmon_dead.wav").c_str(),
 				audio_path("sword_swing.wav").c_str(),
-				audio_path("hero_jump.wav").c_str());
+				audio_path("hero_jump.wav").c_str(),
+				audio_path("bullet_shoot.wav").c_str(),
+				audio_path("gun_lever.wav").c_str());
 		return 1;
 	}
 

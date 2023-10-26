@@ -4,29 +4,39 @@
 #include "sound_utils.hpp"
 
 float next_collectable_spawn = 1000.f;
-const size_t COLLECTABLE_DELAY_MS = 8000 * 3;
+
+const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
+const size_t GUN_COOLDOWN = 1000;
+
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
 
 void collect_weapon(Entity weapon, Entity hero) {
 	if (!registry.deathTimers.has(hero)) {
-		if (registry.players.get(hero).hasWeapon) {
-			registry.remove_all_components_of(registry.players.get(hero).weapon);
-		}
-		
-		registry.collectables.remove(weapon);
-		registry.gravities.remove(weapon);
-		registry.weapons.emplace(weapon);
-		registry.players.get(hero).hasWeapon = 1;
-		registry.players.get(hero).weapon = weapon;
-		
-		if (registry.swords.has(weapon)) {
-			registry.motions.get(weapon).scale *= 1.3;
-			registry.motions.get(weapon).positionOffset.y = -50.f;
-		} else if (registry.guns.has(weapon)) {
-			registry.motions.get(weapon).scale *= 1.3;
-			registry.motions.get(weapon).positionOffset.x = 30.f;
+		if (registry.players.get(hero).hasWeapon && registry.weapons.get(registry.players.get(hero).weapon).type == registry.collectables.get(weapon).type) {
+			registry.remove_all_components_of(weapon);
+		} else {
+			if (registry.players.get(hero).hasWeapon)
+				registry.remove_all_components_of(registry.players.get(hero).weapon);
+			registry.collectables.remove(weapon);
+			registry.gravities.remove(weapon);
+			registry.players.get(hero).hasWeapon = 1;
+			registry.players.get(hero).weapon = weapon;
+			
+			Weapon& weapon_comp = registry.weapons.emplace(weapon);
+			Motion& motion = registry.motions.get(weapon);
+			if (registry.swords.has(weapon)) {
+				motion.position = registry.motions.get(hero).position;
+				motion.scale *= 1.3;
+				motion.positionOffset.y = -50.f;
+				weapon_comp.type = WEAPON_TYPE::SWORD;
+			} else if (registry.guns.has(weapon)) {
+				motion.position = registry.motions.get(hero).position;
+				motion.scale *= 1.3;
+				motion.positionOffset.x = 30.f;
+				weapon_comp.type = WEAPON_TYPE::GUN;
+			}
 		}
 	}
 }
@@ -78,14 +88,24 @@ void swing_sword(Entity weapon) {
 	}
 }
 
-void update_weapon_pos(Entity weapon, Entity hero) {
+void update_weapon(float elapsed_ms, Entity weapon, Entity hero) {
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
 	if (registry.swords.has(weapon))
 		swing_sword(weapon);
+	else if (registry.guns.has(weapon)) {
+		Gun& gun = registry.guns.get(weapon);
+		if (!gun.loaded) {
+			gun.cooldown -= elapsed_ms;
+			if (gun.cooldown <= 0) {
+				play_sound(SOUND_EFFECT::GUN_LEVER);
+				gun.loaded = true;
+			}
+		}
+	}
 }
 
-float spawn_weapon(RenderSystem* renderer) {
+float spawn_collectable(RenderSystem* renderer) {
 	float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
@@ -98,19 +118,27 @@ float spawn_weapon(RenderSystem* renderer) {
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
 
-void update_weapon_timer(float elapsed_ms, RenderSystem* renderer) {
+void update_collectable_timer(float elapsed_ms, RenderSystem* renderer) {
 	next_collectable_spawn -= elapsed_ms;
 	if (registry.collectables.components.size() <= MAX_COLLECTABLES && next_collectable_spawn < 0.f)
-		next_collectable_spawn = spawn_weapon(renderer);
+		next_collectable_spawn = spawn_collectable(renderer);
 }
 
-void do_weapon_action(Entity weapon) {
+void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 	if (registry.swords.has(weapon)) {
 		int &swingState = registry.swords.get(weapon).swing;
 		if (swingState == 0) {
 			float weaponAngle = registry.motions.get(weapon).angle;
 			swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 3 : 1;
 			printf("");
+		}
+	} else if (registry.guns.has(weapon)) {
+		Gun& gun = registry.guns.get(weapon);
+		if (gun.loaded) {
+			createBullet(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
+			play_sound(SOUND_EFFECT::BULLET_SHOOT);
+			gun.cooldown = GUN_COOLDOWN;
+			gun.loaded = false;
 		}
 	}
 }

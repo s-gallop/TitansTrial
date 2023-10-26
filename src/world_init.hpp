@@ -22,6 +22,8 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 Entity createSword(RenderSystem *renderer, vec2 position);
 // the gun
 Entity createGun(RenderSystem* renderer, vec2 position);
+// the bullet
+Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
 // the background
 Entity createBackground();
 

@@ -4,6 +4,12 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+enum class WEAPON_TYPE
+{
+	SWORD = 0,
+	GUN = SWORD + 1
+};
+
 // Player component
 struct Player
 {
@@ -25,6 +31,7 @@ struct Enemies
 
 struct Collectable
 {
+	WEAPON_TYPE type;
 };
 
 struct Sword
@@ -34,6 +41,11 @@ struct Sword
 };
 
 struct Gun{
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Bullet {
 
 };
 
@@ -41,6 +53,7 @@ struct Gun{
 struct Weapon
 {
 	std::vector<Entity> hitBoxes;
+	WEAPON_TYPE type;
 };
 
 struct WeaponHitBox
@@ -178,7 +191,8 @@ enum class EFFECT_ASSET_ID
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
 	ANIMATED = TEXTURED + 1,
-	WATER = ANIMATED + 1,
+	BULLET = ANIMATED + 1,
+	WATER = BULLET + 1,
 	EFFECT_COUNT = WATER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -186,7 +200,8 @@ const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID
 {
 	SPRITE = 0,
-	DEBUG_LINE = SPRITE + 1,
+	BULLET = SPRITE + 1,
+	DEBUG_LINE = BULLET + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };

@@ -14,7 +14,6 @@
 const size_t MAX_ENEMIES = 15;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const uint MAX_JUMPS = 2;
-
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
@@ -134,11 +133,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
 	{
 		Motion &motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
-		{
-			if (!registry.players.has(motion_container.entities[i])) // only remove enemies
-				registry.remove_all_components_of(motion_container.entities[i]);
-		}
 
 		if (motion.position.y > window_height_px - 5)
 		{
@@ -159,11 +153,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 		}
+
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
+		{
+			if (!registry.players.has(motion_container.entities[i]) && !registry.weapons.has(motion_container.entities[i]) && !registry.blocks.has(motion_container.entities[i])) // only remove enemies
+				registry.remove_all_components_of(motion_container.entities[i]);
+		}
 	}
 
 	// Keep weapons centred on player
 	for (Entity weapon: registry.weapons.entities)
-		update_weapon_pos(weapon, player_hero);
+		update_weapon(elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
@@ -237,7 +237,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
 
-	update_weapon_timer(elapsed_ms_since_last_update * current_speed * 2, renderer);
+	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -302,11 +302,11 @@ void WorldSystem::restart_game()
 	// bottom line
 	createBlock({window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
-	createBlock({-base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	createBlock({-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// right line
-	createBlock({window_width_px + base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	createBlock({window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// top line
-	createBlock({window_width_px / 2, 0}, {window_width_px, base_height / 2});
+	createBlock({window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
 
 	// left middle platform
 	createBlock({base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
@@ -410,8 +410,12 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(player_hero))
 				{
 					registry.remove_all_components_of(entity_other);
+					if (registry.bullets.has(entity))
+						registry.remove_all_components_of(entity);
 					++points;
 				}
+			} else if (registry.blocks.has(entity_other) && registry.bullets.has(entity)) {
+				registry.remove_all_components_of(entity);
 			}
 		}
 	}
@@ -476,9 +480,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE)
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 			for (Entity weapon : registry.weapons.entities)
-				do_weapon_action(weapon);
+				do_weapon_action(renderer, weapon);
 	}
 
 	// Resetting game

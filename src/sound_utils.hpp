@@ -15,7 +15,9 @@ void destroy_sound();
 enum class SOUND_EFFECT {
     HERO_DEAD = 0,
     HERO_JUMP = HERO_DEAD + 1,
-    SWORD_SWING = HERO_JUMP + 1
+    SWORD_SWING = HERO_JUMP + 1,
+    BULLET_SHOOT = SWORD_SWING + 1,
+    GUN_LEVER = BULLET_SHOOT + 1
 };
 
 void play_music();
