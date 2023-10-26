@@ -30,7 +30,8 @@ std::bitset<2> motionKeyStatus("00");
 * ddl = Dynamic Difficulty Level
 * (0 <= ddf < 139) -> (ddl = 0)
 * (130 <= ddf < 260) -> (ddl = 1)
-* (260 <= ddf < INF) -> (ddl = 2)
+* (260 <= ddf <= MAX) -> (ddl = 2)
+* Now MAX is 300
 */
 int ddl = 0; 
 
@@ -183,7 +184,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
 	absolute_time += elapsed_ms_since_last_update;
-	ddf = points * 10 + absolute_time / 1000;
+	ddf = min(points * 10 + absolute_time / 1000, 300.0f);
 	if (ddf >= 260) ddl = 2;
 	else if (ddf >= 130 && ddf < 260) ddl = 1;
 	else ddl = 0;
@@ -193,6 +194,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
+	title_ss << "; Total Enemy Numbers: " << registry.enemies.components.size();
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -319,6 +321,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		playerAnimation.curState = 0;
 	}
 
+	if (ddl == 0) current_enemy_spawning_speed = 1.f;
+	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
+	else current_enemy_spawning_speed = 10.f;
+
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
@@ -360,8 +366,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
 
-	// !!! TODO A1: update LightUp timers and remove if time drops below zero, similar to the death timer
-
 	return true;
 }
 
@@ -369,7 +373,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 {
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.enemies.components.size() < MAX_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
@@ -379,19 +383,19 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
 		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
-		TestAI& enemyTestAI = registry.testAIs.get(newEnemy);
+		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
 		enemyTestAI.b = curveParameter;
 		enemyTestAI.c = (float)leftHeight;
 	}
 
-	auto& testAI_container = registry.testAIs;
+	auto &testAI_container = registry.testAIs;
 	for (uint i = 0; i < testAI_container.size(); i++)
 	{
-		TestAI& testAI = testAI_container.components[i];
+		TestAI &testAI = testAI_container.components[i];
 		Entity entity = testAI_container.entities[i];
-		Motion& motion = registry.motions.get(entity);
+		Motion &motion = registry.motions.get(entity);
 		if (testAI.departFromRight && motion.position[0] < 0)
 		{
 			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
