@@ -62,9 +62,12 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 	return entity;
 }
 
-Entity createBackground()
+Entity createBackground(RenderSystem* renderer)
 {
 	Entity entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+	
 	auto &motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
@@ -166,9 +169,11 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	return entity;
 }
 
-Entity createBlock(vec2 pos, vec2 size)
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -186,9 +191,11 @@ Entity createBlock(vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createWeaponHitBox(vec2 pos, vec2 size)
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;

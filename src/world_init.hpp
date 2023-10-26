@@ -25,8 +25,8 @@ Entity createGun(RenderSystem* renderer, vec2 position);
 // the bullet
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
 // the background
-Entity createBackground();
+Entity createBackground(RenderSystem* renderer);
 
-Entity createBlock(vec2 pos, vec2 size);
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 
-Entity createWeaponHitBox(vec2 pos, vec2 size);
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);

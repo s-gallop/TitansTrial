@@ -60,7 +60,7 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 	}
 }
 
-void swing_sword(Entity weapon) {
+void swing_sword(RenderSystem* renderer, Entity weapon) {
 	Motion &weaponMot = registry.motions.get(weapon);
 	int &swingState = registry.swords.get(weapon).swing;
 	if (swingState != 0 && swingState % 2 == 0) {
@@ -79,7 +79,7 @@ void swing_sword(Entity weapon) {
 			float angleBackup = weaponMot.angleBackup;
 			vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 			float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
+			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}));
 			if (!registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed) {
 				registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed = true;
 				play_sound(SOUND_EFFECT::SWORD_SWING);
@@ -88,11 +88,11 @@ void swing_sword(Entity weapon) {
 	}
 }
 
-void update_weapon(float elapsed_ms, Entity weapon, Entity hero) {
+void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
 	if (registry.swords.has(weapon))
-		swing_sword(weapon);
+		swing_sword(renderer, weapon);
 	else if (registry.guns.has(weapon)) {
 		Gun& gun = registry.guns.get(weapon);
 		if (!gun.loaded) {

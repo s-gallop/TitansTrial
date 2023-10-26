@@ -163,7 +163,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Keep weapons centred on player
 	for (Entity weapon: registry.weapons.entities)
-		update_weapon(elapsed_ms_since_last_update * current_speed, weapon, player_hero);
+		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
@@ -289,7 +289,7 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	// add bg
-	createBackground();
+	createBackground(renderer);
 	// Create a new hero
 	player_hero = createHero(renderer, {100, 200});
 	registry.colors.insert(player_hero, {1, 0.8f, 0.8f});
@@ -300,37 +300,37 @@ void WorldSystem::restart_game()
 	int base_width = ceil(16 * window_width_px / background_pixels_width);
 
 	// bottom line
-	createBlock({window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
-	createBlock({-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
+	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// right line
-	createBlock({window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
+	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// top line
-	createBlock({window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
 
 	// left middle platform
-	createBlock({base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// top middle platform
-	createBlock({window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
 
 	// right middle platform
-	createBlock({window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// bottom middle left platform
-	createBlock({base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
 
 	// bottom middle right platform
-	createBlock({window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
 
 	// bottom left padding platform
-	createBlock({base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
 
 	// bottom right padding platform
-	createBlock({window_width_px - base_width * 7 + 16, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {window_width_px - base_width * 7 + 16, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
 
 	// bottom center padding platform
-	createBlock({window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
 }
 
 // Compute collisions between entities
