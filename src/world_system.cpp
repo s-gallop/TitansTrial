@@ -21,11 +21,25 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
+// Global Variables (?)
 vec2 mouse_pos = {0,0};
-
 bool WorldSystem::pause = false;
-
 std::bitset<2> motionKeyStatus("00");
+
+/* 
+* ddl = Dynamic Difficulty Level
+* (0 <= ddf < 139) -> (ddl = 0)
+* (130 <= ddf < 260) -> (ddl = 1)
+* (260 <= ddf < INF) -> (ddl = 2)
+*/
+int ddl = 0; 
+
+/*
+* ddf = Dynamic Difficulty Factor
+* formula: (points * 10 + absolute_time / 1000)
+*/
+float ddf = 0.0f;
+float absolute_time = 0.0f; // absolute time since game starts (ms)
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -167,9 +181,18 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-	// Updating window title with points
+	// internal data update section
+	absolute_time += elapsed_ms_since_last_update;
+	ddf = points * 10 + absolute_time / 1000;
+	if (ddf >= 260) ddl = 2;
+	else if (ddf >= 130 && ddf < 260) ddl = 1;
+	else ddl = 0;
+
+	// Updating window title
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
+	title_ss << "; Dynamic Difficulty Level: " << ddl;
+	title_ss << "; Dynamic Difficulty Factor: " << ddf;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -296,57 +319,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		playerAnimation.curState = 0;
 	}
 
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f)
-	{
-		// Reset timer
-		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		srand(time(0));
-		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
-		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
-		enemyTestAI.departFromRight = true;
-		enemyTestAI.a = (float)squareFactor;
-		enemyTestAI.b = curveParameter;
-		enemyTestAI.c = (float)leftHeight;
-	}
-
-	auto &testAI_container = registry.testAIs;
-	for (uint i = 0; i < testAI_container.size(); i++)
-	{
-		TestAI &testAI = testAI_container.components[i];
-		Entity entity = testAI_container.entities[i];
-		Motion &motion = registry.motions.get(entity);
-		if (testAI.departFromRight && motion.position[0] < 0)
-		{
-			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-			int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-			motion.position = vec2(0.0, testAI.c);
-			float curveParameter = (float)(rightHeight - testAI.c - window_width_px * window_width_px * squareFactor) / window_width_px;
-			testAI.departFromRight = false;
-			testAI.a = (float)squareFactor;
-			testAI.b = curveParameter;
-		}
-		else if (!testAI.departFromRight && motion.position[0] > window_width_px)
-		{
-			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-			int rightHeight = testAI.a * window_width_px * window_width_px + testAI.b * window_width_px + testAI.c;
-			int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-			motion.position = vec2(window_width_px, rightHeight);
-			float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-			testAI.departFromRight = true;
-			testAI.a = (float)squareFactor;
-			testAI.b = curveParameter;
-			testAI.c = (float)leftHeight;
-		}
-		float gradient = 2 * testAI.a * motion.position[0] + testAI.b;
-		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
-		float direction = testAI.departFromRight ? -1.0 : 1.0;
-		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
-	}
+	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 
 	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
 	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
@@ -392,15 +365,77 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	return true;
 }
 
+// deal with normal eneimies' spawning and moving
+void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
+{
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f)
+	{
+		// Reset timer
+		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		srand(time(0));
+		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		TestAI& enemyTestAI = registry.testAIs.get(newEnemy);
+		enemyTestAI.departFromRight = true;
+		enemyTestAI.a = (float)squareFactor;
+		enemyTestAI.b = curveParameter;
+		enemyTestAI.c = (float)leftHeight;
+	}
+
+	auto& testAI_container = registry.testAIs;
+	for (uint i = 0; i < testAI_container.size(); i++)
+	{
+		TestAI& testAI = testAI_container.components[i];
+		Entity entity = testAI_container.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		if (testAI.departFromRight && motion.position[0] < 0)
+		{
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(0.0, testAI.c);
+			float curveParameter = (float)(rightHeight - testAI.c - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = false;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+		}
+		else if (!testAI.departFromRight && motion.position[0] > window_width_px)
+		{
+			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+			int rightHeight = testAI.a * window_width_px * window_width_px + testAI.b * window_width_px + testAI.c;
+			int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+			motion.position = vec2(window_width_px, rightHeight);
+			float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+			testAI.departFromRight = true;
+			testAI.a = (float)squareFactor;
+			testAI.b = curveParameter;
+			testAI.c = (float)leftHeight;
+		}
+		float gradient = 2 * testAI.a * motion.position[0] + testAI.b;
+		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
+		float direction = testAI.departFromRight ? -1.0 : 1.0;
+		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
+	}
+}
+
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
+	absolute_time = 0.0f;
+	ddl = 0;
+	ddf = 0.0f;
+
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
 
 	// Reset the game speed
+	current_enemy_spawning_speed = 1.f;
 	current_speed = 1.f;
 	points = 0;
 
@@ -650,6 +685,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	// Control the current speed with `<` `>`
+	/*
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
 	{
 		current_speed -= 0.1f;
@@ -659,6 +695,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		current_speed += 0.1f;
 	}
 	current_speed = fmax(0.f, current_speed);
+	*/
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
