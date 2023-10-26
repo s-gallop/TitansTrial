@@ -11,7 +11,6 @@
 #include "world_system.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
-
 // Entry point
 int main()
 {
@@ -40,17 +39,17 @@ int main()
 		glfwPollEvents();
 
 		// Calculating elapsed times in milliseconds from the previous iteration
-		auto now = Clock::now();
-		float elapsed_ms =
-			(float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
-		t = now;
+        auto now = Clock::now();
+        if (!world_system.pause) {
+            float elapsed_ms =
+                    (float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
+            world_system.step(elapsed_ms);
+            physics_system.step(elapsed_ms);
+            world_system.handle_collisions();
+        }
+        t = now;
 
-		world_system.step(elapsed_ms);
-		physics_system.step(elapsed_ms);
-
-		world_system.handle_collisions();
-
-		render_system.draw();
+		render_system.draw(world_system.pause);
 	}
 
 	return EXIT_SUCCESS;

@@ -22,7 +22,11 @@ Entity createSword(RenderSystem *renderer, vec2 position);
 Entity createWeaponSword(RenderSystem *renderer);
 // the background
 Entity createBackground();
+// the helper text during pause
+Entity createHelperText();
 
 Entity createBlock(vec2 pos, vec2 size);
+// the ui button
+Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 
 Entity createWeaponHitBox(vec2 pos, vec2 size);

@@ -21,6 +21,10 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
+vec2 mouse_pos = {0,0};
+
+bool WorldSystem::pause = false;
+
 std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
@@ -40,6 +44,12 @@ WorldSystem::~WorldSystem()
 		Mix_FreeChunk(hero_dead_sound);
 	if (hero_kill_sound != nullptr)
 		Mix_FreeChunk(hero_kill_sound);
+    if (sword_swing_sound != nullptr)
+        Mix_FreeChunk(sword_swing_sound);
+    if (hero_jump_sound != nullptr)
+        Mix_FreeChunk(hero_jump_sound);
+    if (button_click_sound != nullptr)
+        Mix_FreeChunk(button_click_sound);
 	Mix_CloseAudio();
 
 	// Destroy all created components
@@ -100,8 +110,11 @@ GLFWwindow *WorldSystem::create_window()
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow *wnd, double _0, double _1)
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_move({_0, _1}); };
+    auto cursor_click_redirect = [](GLFWwindow *wnd, int _0, int _1, int _2)
+    { ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+    glfwSetMouseButtonCallback(window, cursor_click_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -121,16 +134,19 @@ GLFWwindow *WorldSystem::create_window()
 	hero_kill_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
 	sword_swing_sound = Mix_LoadWAV(audio_path("sword_swing.wav").c_str());
 	hero_jump_sound = Mix_LoadWAV(audio_path("hero_jump.wav").c_str());
+    button_click_sound = Mix_LoadWAV(audio_path("button_click.wav").c_str());
 
 
-	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr)
+	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr || button_click_sound ==
+                                                                                                                                                                         nullptr)
 	{
-		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
+		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n %s\n %s\n %s\n make sure the data directory is present",
 				audio_path("music.wav").c_str(),
 				audio_path("salmon_dead.wav").c_str(),
 				audio_path("salmon_eat.wav").c_str(),
 				audio_path("sword_swing.wav").c_str(),
-				audio_path("hero_jump.wav").c_str());
+				audio_path("hero_jump.wav").c_str(),
+                audio_path("button_click.wav").c_str());
 		return nullptr;
 	}
 
@@ -438,6 +454,15 @@ void WorldSystem::restart_game()
 
 	// bottom center padding platform
 	createBlock({window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+
+    create_pause_screen();
+}
+
+// Adds whatever's needed in the pause screen
+void WorldSystem::create_pause_screen() {
+    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
+    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
+    createHelperText();
 }
 
 // Compute collisions between entities
@@ -548,6 +573,10 @@ void motion_helper(Motion &playerMotion)
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        change_pause();
+        Mix_PlayChannel(-1, button_click_sound, 0);
+    }
 
 	if (!registry.deathTimers.has(player_hero))
 	{
@@ -634,7 +663,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	if (!registry.deathTimers.has(player_hero))
+	if (!registry.deathTimers.has(player_hero) && !pause)
 	{
 		for (Entity entity : registry.weapons.entities)
 		{
@@ -646,4 +675,31 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			}
 		}
 	}
+    mouse_pos = mouse_position;
+}
+void WorldSystem::on_mouse_click(int key, int action, int mods){
+    // button click check
+    for(Entity entity : registry.buttons.entities) {
+        Motion &button = registry.motions.get(entity);
+        Button &buttonInfo = registry.buttons.get(entity);
+        RenderRequest &buttonRender = registry.renderRequests.get(entity);
+        if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
+            buttonInfo.clicked = false;
+            buttonInfo.callback();
+        }
+        if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
+            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS && buttonRender.visibility) {
+                buttonInfo.clicked = true;
+                Mix_PlayChannel(-1, button_click_sound, 0);
+            }
+        }
+    }
+}
+
+// pause/unpauses game and show pause screen entities
+void WorldSystem::change_pause() {
+    pause = !pause;
+    for (Entity e : registry.showWhenPaused.entities) {
+        registry.renderRequests.get(e).visibility = pause;
+    }
 }

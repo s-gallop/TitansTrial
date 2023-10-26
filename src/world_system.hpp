@@ -19,6 +19,8 @@ class WorldSystem
 {
 public:
 	WorldSystem();
+    // somehow pause it activated once
+    static bool pause;
 
 	// Creates a window
 	GLFWwindow *create_window();
@@ -38,14 +40,19 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
+    static void change_pause();
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
 	void on_mouse_move(vec2 pos);
+    void on_mouse_click(int button, int action, int mods);
 
 	// restart level
 	void restart_game();
 
+    // creates pause gui
+    static void create_pause_screen();
 	// OpenGL window handle
 	GLFWwindow *window;
 
@@ -65,6 +72,7 @@ private:
 	Mix_Chunk *hero_kill_sound;
 	Mix_Chunk *sword_swing_sound;
 	Mix_Chunk *hero_jump_sound;
+    Mix_Chunk *button_click_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;

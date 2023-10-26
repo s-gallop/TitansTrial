@@ -29,6 +29,8 @@ public:
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<AnimationInfo> animated;
+    ComponentContainer<Button> buttons;
+    ComponentContainer<ShowWhenPaused> showWhenPaused;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -51,6 +53,9 @@ public:
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
+        registry_list.push_back(&animated);
+        registry_list.push_back(&buttons);
+        registry_list.push_back(&showWhenPaused);
 	}
 
 	void clear_all_components()

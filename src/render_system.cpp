@@ -4,8 +4,7 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::drawTexturedMesh(Entity entity,
-									const mat3 &projection)
+void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool pause)
 {
 	Motion &motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
@@ -56,7 +55,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			(void *)sizeof(
 				vec3)); // note the stride to skip the preceeding vertex position
 
-		if (registry.animated.has(entity) && !registry.deathTimers.has(entity))
+        // does animation if texture has animation and is not DEAD
+		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && !pause)
 		{
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
@@ -64,14 +64,22 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			GLint scale_loc = glGetUniformLocation(program, "scale");
 			glUniform2f(scale_loc, 9.0, 4.0);
 		}
+
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		assert(registry.renderRequests.has(entity));
-		GLuint texture_id =
-			texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+		GLuint texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
 
+        assert(registry.renderRequests.has(entity));
+        if (registry.buttons.has(entity))
+        {
+            Button &button = registry.buttons.get(entity);
+            if (button.clicked) {
+                // pressed texture must be +1 of the unpressed texture
+                texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture+1];
+            }
+        }
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 	}
@@ -119,11 +127,11 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
-void RenderSystem::drawToScreen()
+void RenderSystem::drawToScreen(bool pause)
 {
 	// Setting shaders
 	// get the water texture, sprite mesh, and program
-	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::WATER]);
+	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::SCREEN]);
 	gl_has_errors();
 	// Clearing backbuffer
 	int w, h;
@@ -136,7 +144,7 @@ void RenderSystem::drawToScreen()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
 	// Enabling alpha channel for textures
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 
@@ -147,13 +155,15 @@ void RenderSystem::drawToScreen()
 		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]); // Note, GL_ELEMENT_ARRAY_BUFFER associates
 																	 // indices to the bound GL_ARRAY_BUFFER
 	gl_has_errors();
-	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::WATER];
+	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::SCREEN];
 	// Set clock
 	GLuint time_uloc = glGetUniformLocation(water_program, "time");
 	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "screen_darken_factor");
+    GLuint pause_uloc = glGetUniformLocation(water_program, "pause");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
 	ScreenState &screen = registry.screenStates.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.screen_darken_factor);
+    glUniform1i(pause_uloc, pause);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
 	// same VBO)
@@ -177,7 +187,7 @@ void RenderSystem::drawToScreen()
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
-void RenderSystem::draw()
+void RenderSystem::draw(bool pause)
 {
 	// Getting size of window
 	int w, h;
@@ -193,24 +203,31 @@ void RenderSystem::draw()
 	glClearDepth(10.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
 							  // and alpha blending, one would have to sort
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
-	// Draw all textured meshes that have a position and size component
+    std::vector<Entity> beyonders;
+    // separates what needs the screen effects and what doesn't need screen effect, Not the most efficient, could look into it later
 	for (Entity entity : registry.renderRequests.entities)
 	{
-		if (!registry.motions.has(entity))
+        RenderRequest &render_request = registry.renderRequests.get(entity);
+		if (!registry.motions.has(entity) || !render_request.visibility)
 			continue;
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
-		drawTexturedMesh(entity, projection_2D);
+		if (render_request.on_top_screen) {
+            beyonders.push_back(entity);
+        } else {
+            drawTexturedMesh(entity, projection_2D, pause);
+        }
 	}
-
 	// Truely render to the screen
-	drawToScreen();
+	drawToScreen(pause);
+    //draws whatever is filtered out as on top of the screen effects.
+    for (Entity e : beyonders) {
+        drawTexturedMesh(e, projection_2D, pause);
+    }
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
