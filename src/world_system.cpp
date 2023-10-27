@@ -20,6 +20,7 @@ const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
+const float DDF_PUNISHMENT = 30.0;
 
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
@@ -40,7 +41,9 @@ int ddl = 0;
 * formula: (points * 10 + absolute_time / 1000)
 */
 float ddf = 0.0f;
-float absolute_time = 0.0f; // absolute time since game starts (ms)
+
+// When player hits the enemies, set it to 3000.0f
+float invlunerable_timer = 0.0f;
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -183,8 +186,8 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
-	absolute_time += elapsed_ms_since_last_update;
-	ddf = min(points * 10 + absolute_time / 1000, 300.0f);
+	if (invlunerable_timer > 0.0f) invlunerable_timer = max(invlunerable_timer - elapsed_ms_since_last_update, 0.0f);
+	ddf += elapsed_ms_since_last_update / 1000.0f;
 	if (ddf >= 260) ddl = 2;
 	else if (ddf >= 130 && ddf < 260) ddl = 1;
 	else ddl = 0;
@@ -194,7 +197,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
-	title_ss << "; Total Enemy Numbers: " << registry.enemies.components.size();
+	title_ss << "; Player HP: " << registry.players.get(player_hero).hp;
+	title_ss << "; Invlunerable Time: " << invlunerable_timer / 1000.0f;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -430,9 +434,9 @@ void WorldSystem::restart_game()
 {
 	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
-	absolute_time = 0.0f;
 	ddl = 0;
 	ddf = 0.0f;
+	invlunerable_timer = 0.0f;
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
@@ -517,20 +521,25 @@ void WorldSystem::handle_collisions()
 
 		if (registry.players.has(entity))
 		{
-			// Player& player = registry.players.get(entity);
+			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (registry.enemies.has(entity_other))
+			if (registry.enemies.has(entity_other) && invlunerable_timer <= 0.0f)
 			{
+				// remove 1 hp
+				player.hp -= 1;
+				invlunerable_timer = 3000.0f;
+				Mix_PlayChannel(-1, hero_dead_sound, 0);
+				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
+
 				// initiate death unless already dying
-				if (!registry.deathTimers.has(entity))
+				if (player.hp == 0 && !registry.deathTimers.has(entity))
 				{
 					registry.deathTimers.emplace(entity);
 					for (Entity weapon : registry.weapons.entities)
 					{
 						registry.remove_all_components_of(weapon);
 					}
-					Mix_PlayChannel(-1, hero_dead_sound, 0);
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -538,7 +547,7 @@ void WorldSystem::handle_collisions()
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - Sword collusion
+			// Checking Player - Sword collision
 			else if (registry.swords.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
@@ -587,6 +596,7 @@ void WorldSystem::handle_collisions()
 				{
 					registry.remove_all_components_of(entity_other);
 					++points;
+					ddf += 10.0f;
 				}
 			}
 		}
