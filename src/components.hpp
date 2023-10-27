@@ -19,6 +19,8 @@ struct Player
 	uint hasWeapon = 0;
 	Entity weapon;
 	uint jumps = 2;
+	int hp_max = 5;
+	int hp = 5;
 };
 
 struct Block
