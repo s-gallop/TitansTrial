@@ -32,7 +32,10 @@ public:
 	~WorldSystem();
 
 	// Steps the game ahead by ms milliseconds
-	bool step(float elapsed_ms);
+	bool step(float elapsed_ms_since_last_update);
+
+	// spawn normal enemies (refactor)
+	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
 
 	// Check for collisions
 	void handle_collisions();
@@ -63,6 +66,7 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
+	float current_enemy_spawning_speed;
 	float current_speed;
 	float next_enemy_spawn;
 	float next_sword_spawn;

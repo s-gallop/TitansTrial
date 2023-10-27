@@ -20,12 +20,30 @@ const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
+const float DDF_PUNISHMENT = 30.0;
 
+// Global Variables (?)
 vec2 mouse_pos = {0,0};
-
 bool WorldSystem::pause = false;
-
 std::bitset<2> motionKeyStatus("00");
+
+/* 
+* ddl = Dynamic Difficulty Level
+* (0 <= ddf < 139) -> (ddl = 0)
+* (130 <= ddf < 260) -> (ddl = 1)
+* (260 <= ddf <= MAX) -> (ddl = 2)
+* Now MAX is 300
+*/
+int ddl = 0; 
+
+/*
+* ddf = Dynamic Difficulty Factor
+* formula: (points * 10 + absolute_time / 1000)
+*/
+float ddf = 0.0f;
+
+// When player hits the enemies, set it to 3000.0f
+float invlunerable_timer = 0.0f;
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -167,9 +185,20 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-	// Updating window title with points
+	// internal data update section
+	if (invlunerable_timer > 0.0f) invlunerable_timer = max(invlunerable_timer - elapsed_ms_since_last_update, 0.0f);
+	ddf += elapsed_ms_since_last_update / 1000.0f;
+	if (ddf >= 260) ddl = 2;
+	else if (ddf >= 130 && ddf < 260) ddl = 1;
+	else ddl = 0;
+
+	// Updating window title
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
+	title_ss << "; Dynamic Difficulty Level: " << ddl;
+	title_ss << "; Dynamic Difficulty Factor: " << ddf;
+	title_ss << "; Player HP: " << registry.players.get(player_hero).hp;
+	title_ss << "; Invlunerable Time: " << invlunerable_timer / 1000.0f;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -296,8 +325,59 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		playerAnimation.curState = 0;
 	}
 
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_speed;
-	if (registry.enemies.components.size() <= MAX_ENEMIES && next_enemy_spawn < 0.f)
+	if (ddl == 0) current_enemy_spawning_speed = 1.f;
+	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
+	else current_enemy_spawning_speed = 10.f;
+
+	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+
+	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
+	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
+	{
+		// Reset timer
+		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
+		// Create sword at random position
+		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
+
+		createSword(renderer, {sword_x, sword_y});
+	}
+
+	// Processing the hero state
+	assert(registry.screenStates.components.size() <= 1);
+	ScreenState &screen = registry.screenStates.components[0];
+
+	float min_timer_ms = 3000.f;
+	for (Entity entity : registry.deathTimers.entities)
+	{
+		// progress timer
+		DeathTimer &timer = registry.deathTimers.get(entity);
+		timer.timer_ms -= elapsed_ms_since_last_update;
+		if (timer.timer_ms < min_timer_ms)
+		{
+			min_timer_ms = timer.timer_ms;
+		}
+
+		// restart the game once the death timer expired
+		if (timer.timer_ms < 0)
+		{
+			registry.deathTimers.remove(entity);
+			screen.screen_darken_factor = 0;
+			restart_game();
+			return true;
+		}
+	}
+
+	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
+
+	return true;
+}
+
+// deal with normal eneimies' spawning and moving
+void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
+{
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	if (registry.enemies.components.size() < MAX_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
@@ -347,60 +427,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
-
-	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
-	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
-	{
-		// Reset timer
-		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
-		// Create sword at random position
-		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
-
-		createSword(renderer, {sword_x, sword_y});
-	}
-
-	// Processing the hero state
-	assert(registry.screenStates.components.size() <= 1);
-	ScreenState &screen = registry.screenStates.components[0];
-
-	float min_timer_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities)
-	{
-		// progress timer
-		DeathTimer &timer = registry.deathTimers.get(entity);
-		timer.timer_ms -= elapsed_ms_since_last_update;
-		if (timer.timer_ms < min_timer_ms)
-		{
-			min_timer_ms = timer.timer_ms;
-		}
-
-		// restart the game once the death timer expired
-		if (timer.timer_ms < 0)
-		{
-			registry.deathTimers.remove(entity);
-			screen.screen_darken_factor = 0;
-			restart_game();
-			return true;
-		}
-	}
-
-	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
-	// !!! TODO A1: update LightUp timers and remove if time drops below zero, similar to the death timer
-
-	return true;
 }
 
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
+	ddl = 0;
+	ddf = 0.0f;
+	invlunerable_timer = 0.0f;
+
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
 
 	// Reset the game speed
+	current_enemy_spawning_speed = 1.f;
 	current_speed = 1.f;
 	points = 0;
 
@@ -478,20 +521,25 @@ void WorldSystem::handle_collisions()
 
 		if (registry.players.has(entity))
 		{
-			// Player& player = registry.players.get(entity);
+			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (registry.enemies.has(entity_other))
+			if (registry.enemies.has(entity_other) && invlunerable_timer <= 0.0f)
 			{
+				// remove 1 hp
+				player.hp -= 1;
+				invlunerable_timer = 3000.0f;
+				Mix_PlayChannel(-1, hero_dead_sound, 0);
+				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
+
 				// initiate death unless already dying
-				if (!registry.deathTimers.has(entity))
+				if (player.hp == 0 && !registry.deathTimers.has(entity))
 				{
 					registry.deathTimers.emplace(entity);
 					for (Entity weapon : registry.weapons.entities)
 					{
 						registry.remove_all_components_of(weapon);
 					}
-					Mix_PlayChannel(-1, hero_dead_sound, 0);
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -499,7 +547,7 @@ void WorldSystem::handle_collisions()
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - Sword collusion
+			// Checking Player - Sword collision
 			else if (registry.swords.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
@@ -548,6 +596,7 @@ void WorldSystem::handle_collisions()
 				{
 					registry.remove_all_components_of(entity_other);
 					++points;
+					ddf += 10.0f;
 				}
 			}
 		}
@@ -650,6 +699,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	// Control the current speed with `<` `>`
+	/*
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
 	{
 		current_speed -= 0.1f;
@@ -659,6 +709,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		current_speed += 0.1f;
 	}
 	current_speed = fmax(0.f, current_speed);
+	*/
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)

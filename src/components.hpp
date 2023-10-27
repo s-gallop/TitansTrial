@@ -12,6 +12,8 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	uint jumps = 2;
+	int hp_max = 5;
+	int hp = 5;
 };
 
 struct Block
