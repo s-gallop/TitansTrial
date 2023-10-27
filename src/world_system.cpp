@@ -12,11 +12,8 @@
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
-const size_t MAX_SWORDS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
-const size_t SWORD_DELAY_MS = 8000 * 3;
 const uint MAX_JUMPS = 2;
-
 const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
@@ -47,7 +44,7 @@ float invlunerable_timer = 0.0f;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_sword_spawn(1000.f)
+	: points(0), next_enemy_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -55,20 +52,8 @@ WorldSystem::WorldSystem()
 
 WorldSystem::~WorldSystem()
 {
-	// Destroy music components
-	if (background_music != nullptr)
-		Mix_FreeMusic(background_music);
-	if (hero_dead_sound != nullptr)
-		Mix_FreeChunk(hero_dead_sound);
-	if (hero_kill_sound != nullptr)
-		Mix_FreeChunk(hero_kill_sound);
-    if (sword_swing_sound != nullptr)
-        Mix_FreeChunk(sword_swing_sound);
-    if (hero_jump_sound != nullptr)
-        Mix_FreeChunk(hero_jump_sound);
-    if (button_click_sound != nullptr)
-        Mix_FreeChunk(button_click_sound);
-	Mix_CloseAudio();
+	// Destroy all sound
+	destroy_sound();
 
 	// Destroy all created components
 	registry.clear_all_components();
@@ -134,39 +119,9 @@ GLFWwindow *WorldSystem::create_window()
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
     glfwSetMouseButtonCallback(window, cursor_click_redirect);
 
-	//////////////////////////////////////
-	// Loading music and sounds with SDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0)
-	{
-		fprintf(stderr, "Failed to initialize SDL Audio");
+	// Initialize all sound
+	if (init_sound())
 		return nullptr;
-	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
-	{
-		fprintf(stderr, "Failed to open audio device");
-		return nullptr;
-	}
-
-	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
-	hero_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
-	hero_kill_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
-	sword_swing_sound = Mix_LoadWAV(audio_path("sword_swing.wav").c_str());
-	hero_jump_sound = Mix_LoadWAV(audio_path("hero_jump.wav").c_str());
-    button_click_sound = Mix_LoadWAV(audio_path("button_click.wav").c_str());
-
-
-	if (background_music == nullptr || hero_dead_sound == nullptr || hero_kill_sound == nullptr || sword_swing_sound == nullptr || hero_jump_sound == nullptr || button_click_sound ==
-                                                                                                                                                                         nullptr)
-	{
-		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n %s\n %s\n %s\n make sure the data directory is present",
-				audio_path("music.wav").c_str(),
-				audio_path("salmon_dead.wav").c_str(),
-				audio_path("salmon_eat.wav").c_str(),
-				audio_path("sword_swing.wav").c_str(),
-				audio_path("hero_jump.wav").c_str(),
-                audio_path("button_click.wav").c_str());
-		return nullptr;
-	}
 
 	return window;
 }
@@ -174,9 +129,9 @@ GLFWwindow *WorldSystem::create_window()
 void WorldSystem::init(RenderSystem *renderer_arg)
 {
 	this->renderer = renderer_arg;
-	// Playing background music indefinitely
-	Mix_PlayMusic(background_music, -1);
-	fprintf(stderr, "Loaded music\n");
+	
+	// Play background music
+	play_music();
 
 	// Set all states to default
 	restart_game();
@@ -214,11 +169,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
 	{
 		Motion &motion = motion_container.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px)
-		{
-			if (!registry.players.has(motion_container.entities[i])) // only remove enemies
-				registry.remove_all_components_of(motion_container.entities[i]);
-		}
 
 		if (motion.position.y > window_height_px - 5)
 		{
@@ -231,7 +181,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 					{
 						registry.remove_all_components_of(weapon);
 					}
-					Mix_PlayChannel(-1, hero_dead_sound, 0);
+					play_sound(SOUND_EFFECT::HERO_DEAD);
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -239,73 +189,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 		}
+
+		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
+		{
+			if (!registry.players.has(motion_container.entities[i]) && !registry.weapons.has(motion_container.entities[i]) && !registry.blocks.has(motion_container.entities[i])) // only remove enemies
+				registry.remove_all_components_of(motion_container.entities[i]);
+		}
 	}
 
 	// Keep weapons centred on player
-	for (Entity entity : registry.weapons.entities)
-	{
-		Motion &weaponMot = registry.motions.get(entity);
-		weaponMot.position = registry.motions.get(player_hero).position;
-		uint &swingState = registry.weapons.get(entity).swing;
-		switch (swingState)
-		{
-		case 1:
-			weaponMot.angle -= M_PI / 32;
-			if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4)
-			{
-				swingState = 3;
-				float angleBackup = weaponMot.angleBackup;
-				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
-				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
-				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
-					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					Mix_PlayChannel(-1, sword_swing_sound, 0);
-				}
-			}
-			break;
-		case 2:
-			weaponMot.angle += M_PI / 32;
-			if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4)
-			{
-				swingState = 4;
-				float angleBackup = weaponMot.angleBackup;
-				vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
-				float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-				registry.weapons.get(entity).hitBoxes.push_back(createWeaponHitBox(hitBoxPos, {hbScale, hbScale}));
-				if (!registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed) {
-					registry.weaponHitBoxes.get(registry.weapons.get(entity).hitBoxes.front()).soundPlayed = true;
-					Mix_PlayChannel(-1, sword_swing_sound, 0);
-				}
-			}
-			break;
-		case 3:
-			weaponMot.angle += M_PI / 16;
-			if (weaponMot.angle >= weaponMot.angleBackup + M_PI / 4)
-			{
-				swingState = 0;
-				weaponMot.angleBackup = weaponMot.angle;
-				for (Entity hitBox : registry.weapons.get(entity).hitBoxes)
-				{
-					registry.remove_all_components_of(hitBox);
-				}
-				registry.weapons.get(entity).hitBoxes.clear();
-			}
-			break;
-		case 4:
-			weaponMot.angle -= M_PI / 16;
-			if (weaponMot.angle <= weaponMot.angleBackup - M_PI / 4)
-			{
-				swingState = 0;
-				weaponMot.angleBackup = weaponMot.angle;
-				for (Entity hitBox : registry.weapons.get(entity).hitBoxes)
-				{
-					registry.remove_all_components_of(hitBox);
-				}
-				registry.weapons.get(entity).hitBoxes.clear();
-			}
-		}
-	}
+	for (Entity weapon: registry.weapons.entities)
+		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
+
+	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
@@ -331,17 +227,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 
-	next_sword_spawn -= elapsed_ms_since_last_update * current_speed * 2;
-	if (registry.swords.components.size() <= MAX_SWORDS && next_sword_spawn < 0.f)
-	{
-		// Reset timer
-		next_sword_spawn = (SWORD_DELAY_MS / 2) + uniform_dist(rng) * (SWORD_DELAY_MS / 2);
-		// Create sword at random position
-		float sword_x = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float sword_y = uniform_dist(rng) * (window_height_px - 350) + 50;
-
-		createSword(renderer, {sword_x, sword_y});
-	}
+	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -455,7 +341,7 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	// add bg
-	createBackground();
+	createBackground(renderer);
 	// Create a new hero
 	player_hero = createHero(renderer, {100, 200});
 	registry.colors.insert(player_hero, {1, 0.8f, 0.8f});
@@ -466,46 +352,45 @@ void WorldSystem::restart_game()
 	int base_width = ceil(16 * window_width_px / background_pixels_width);
 
 	// bottom line
-	createBlock({window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
-	createBlock({-base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// right line
-	createBlock({window_width_px + base_width, window_height_px / 2}, {base_width * 6, window_height_px});
+	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
 	// top line
-	createBlock({window_width_px / 2, 0}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
 
 	// left middle platform
-	createBlock({base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// top middle platform
-	createBlock({window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
 
 	// right middle platform
-	createBlock({window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// bottom middle left platform
-	createBlock({base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
 
 	// bottom middle right platform
-	createBlock({window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
 
 	// bottom left padding platform
-	createBlock({base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
 
 	// bottom right padding platform
-	createBlock({window_width_px - base_width * 7 + 16, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {window_width_px - base_width * 7 + 16, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
 
 	// bottom center padding platform
-	createBlock({window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
-
-    create_pause_screen();
+	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+	// Adds whatever's needed in the pause screen
+	create_pause_screen();
 }
 
-// Adds whatever's needed in the pause screen
 void WorldSystem::create_pause_screen() {
-    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
-    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
-    createHelperText();
+    createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
+    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
+    createHelperText(renderer);
 }
 
 // Compute collisions between entities
@@ -529,17 +414,16 @@ void WorldSystem::handle_collisions()
 				// remove 1 hp
 				player.hp -= 1;
 				invlunerable_timer = 3000.0f;
-				Mix_PlayChannel(-1, hero_dead_sound, 0);
+				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
 
 				// initiate death unless already dying
 				if (player.hp == 0 && !registry.deathTimers.has(entity))
 				{
 					registry.deathTimers.emplace(entity);
+					
 					for (Entity weapon : registry.weapons.entities)
-					{
 						registry.remove_all_components_of(weapon);
-					}
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -547,17 +431,12 @@ void WorldSystem::handle_collisions()
 					registry.colors.get(player_hero) = vec3(1, 0, 0);
 				}
 			}
-			// Checking Player - Sword collision
-			else if (registry.swords.has(entity_other))
+			// Checking Player - Collectable collision
+			else if (registry.collectables.has(entity_other))
 			{
 				if (!registry.deathTimers.has(entity))
 				{
-					registry.remove_all_components_of(entity_other);
-					if (!registry.players.get(player_hero).hasWeapon)
-					{
-						createWeaponSword(renderer);
-						registry.players.get(player_hero).hasWeapon = 1;
-					}
+					collect_weapon(entity_other, player_hero);
 				}
 			}
 			else if (registry.blocks.has(entity_other))
@@ -570,7 +449,7 @@ void WorldSystem::handle_collisions()
 				}
 			}
 		}
-		else if (registry.swords.has(entity))
+		else if (registry.collectables.has(entity))
 		{
 
 			if (registry.blocks.has(entity_other))
@@ -595,9 +474,13 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(player_hero))
 				{
 					registry.remove_all_components_of(entity_other);
+					if (registry.bullets.has(entity))
+						registry.remove_all_components_of(entity);
 					++points;
 					ddf += 10.0f;
 				}
+			} else if (registry.blocks.has(entity_other) && registry.bullets.has(entity)) {
+				registry.remove_all_components_of(entity);
 			}
 		}
 	}
@@ -612,11 +495,17 @@ bool WorldSystem::is_over() const
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Motion &playerMotion)
+void WorldSystem::motion_helper(Motion &playerMotion)
 {
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
+	if (!pause) {
+		if (playerMotion.velocity.x < 0)
+			playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+		else if (playerMotion.velocity.x > 0)
+			playerMotion.scale.x = abs(playerMotion.scale.x);
+	}
 }
 
 // On key callback
@@ -624,7 +513,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         change_pause();
-        Mix_PlayChannel(-1, button_click_sound, 0);
+		play_sound(SOUND_EFFECT::BUTTON_CLICK);
     }
 
 	if (!registry.deathTimers.has(player_hero))
@@ -634,50 +523,35 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(0);
-			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
-			if (motionKeyStatus.test(1))
-				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(1);
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
-			if (motionKeyStatus.test(0))
-				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
 		motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
 		{
 			if (registry.players.get(player_hero).jumps > 0)
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;
-				Mix_PlayChannel(-1, hero_jump_sound, 0);
+				play_sound(SOUND_EFFECT::HERO_JUMP);
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE)
-		{
-			for (Entity entity : registry.weapons.entities)
-			{
-				uint &swingState = registry.weapons.get(entity).swing;
-				if (swingState == 0)
-				{
-					float weaponAngle = registry.motions.get(entity).angle;
-					swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 2 : 1;
-				}
-			}
-		}
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause)
+			for (Entity weapon : registry.weapons.entities)
+				do_weapon_action(renderer, weapon);
 	}
 
 	// Resetting game
@@ -685,7 +559,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	{
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
-
+        pause = false;
 		restart_game();
 	}
 
@@ -715,19 +589,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!registry.deathTimers.has(player_hero) && !pause)
-	{
-		for (Entity entity : registry.weapons.entities)
-		{
-			if (registry.weapons.get(entity).swing == 0)
-			{
-				Motion &motion = registry.motions.get(entity);
-				motion.angle = atan2(mouse_position.y - motion.position.y, mouse_position.x - motion.position.x) + M_PI / 2;
-				motion.angleBackup = motion.angle;
-			}
-		}
-	}
-    mouse_pos = mouse_position;
+		for (Entity weapon : registry.weapons.entities)
+			rotate_weapon(weapon, mouse_position);
+	mouse_pos = mouse_position;
 }
+
 void WorldSystem::on_mouse_click(int key, int action, int mods){
     // button click check
     for(Entity entity : registry.buttons.entities) {
@@ -741,7 +607,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
         if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
             if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS && buttonRender.visibility) {
                 buttonInfo.clicked = true;
-                Mix_PlayChannel(-1, button_click_sound, 0);
+                play_sound(SOUND_EFFECT::BUTTON_CLICK);
             }
         }
     }

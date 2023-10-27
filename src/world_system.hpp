@@ -7,11 +7,13 @@
 #include <vector>
 #include <random>
 
-#define SDL_MAIN_HANDLED
-#include <SDL.h>
-#include <SDL_mixer.h>
+// #define SDL_MAIN_HANDLED
+// #include <SDL.h>
+// #include <SDL_mixer.h>
 
 #include "render_system.hpp"
+#include "sound_utils.hpp"
+#include "weapon_utils.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -51,11 +53,13 @@ private:
 	void on_mouse_move(vec2 pos);
     void on_mouse_click(int button, int action, int mods);
 
+	void motion_helper(Motion& playerMotion);
+
 	// restart level
 	void restart_game();
 
     // creates pause gui
-    static void create_pause_screen();
+    void create_pause_screen();
 	// OpenGL window handle
 	GLFWwindow *window;
 
@@ -67,16 +71,7 @@ private:
 	float current_enemy_spawning_speed;
 	float current_speed;
 	float next_enemy_spawn;
-	float next_sword_spawn;
 	Entity player_hero;
-
-	// music references
-	Mix_Music *background_music;
-	Mix_Chunk *hero_dead_sound;
-	Mix_Chunk *hero_kill_sound;
-	Mix_Chunk *sword_swing_sound;
-	Mix_Chunk *hero_jump_sound;
-    Mix_Chunk *button_click_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;

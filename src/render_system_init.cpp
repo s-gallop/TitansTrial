@@ -120,20 +120,20 @@ void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices
 
 void RenderSystem::initializeGlMeshes()
 {
-	// for (uint i = 0; i < mesh_paths.size(); i++)
-	// {
-	// 	// Initialize meshes
-	// 	GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
-	// 	std::string name = mesh_paths[i].second;
-	// 	Mesh::loadFromOBJFile(name,
-	// 		meshes[(int)geom_index].vertices,
-	// 		meshes[(int)geom_index].vertex_indices,
-	// 		meshes[(int)geom_index].original_size);
+	for (uint i = 0; i < mesh_paths.size(); i++)
+	{
+		// Initialize meshes
+		GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
+		std::string name = mesh_paths[i].second;
+		Mesh::loadFromOBJFile(name,
+			meshes[(int)geom_index].vertices,
+			meshes[(int)geom_index].vertex_indices,
+			meshes[(int)geom_index].original_size);
 
-	// 	bindVBOandIBO(geom_index,
-	// 		meshes[(int)geom_index].vertices,
-	// 		meshes[(int)geom_index].vertex_indices);
-	// }
+		bindVBOandIBO(geom_index,
+			meshes[(int)geom_index].vertices,
+			meshes[(int)geom_index].vertex_indices);
+	}
 }
 
 void RenderSystem::initializeGlGeometryBuffers()

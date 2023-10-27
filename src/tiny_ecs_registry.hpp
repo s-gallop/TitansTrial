@@ -23,7 +23,10 @@ public:
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<Enemies> enemies;
+	ComponentContainer<Collectable> collectables;
 	ComponentContainer<Sword> swords;
+	ComponentContainer<Gun> guns;
+	ComponentContainer<Bullet> bullets;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
@@ -48,7 +51,10 @@ public:
 		registry_list.push_back(&renderRequests);
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&enemies);
+		registry_list.push_back(&collectables);
 		registry_list.push_back(&swords);
+		registry_list.push_back(&guns);
+		registry_list.push_back(&bullets);
 		registry_list.push_back(&weapons);
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);

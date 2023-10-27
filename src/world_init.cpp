@@ -74,9 +74,12 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 	return entity;
 }
 
-Entity createBackground()
+Entity createBackground(RenderSystem* renderer)
 {
 	Entity entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+	
 	auto &motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
@@ -92,9 +95,12 @@ Entity createBackground()
 	return entity;
 }
 
-Entity createHelperText()
+Entity createHelperText(RenderSystem* renderer)
 {
     Entity entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
@@ -129,6 +135,8 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	motion.scale = vec2({SWORD_BB_WIDTH, SWORD_BB_HEIGHT});
 
 	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = WEAPON_TYPE::SWORD;
 	registry.swords.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
@@ -140,7 +148,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
-Entity createWeaponSword(RenderSystem *renderer)
+Entity createGun(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
 
@@ -152,24 +160,56 @@ Entity createWeaponSword(RenderSystem *renderer)
 	auto &motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
-	motion.position = {0.f, 0.f};
-	motion.scale = {1.3 * SWORD_BB_WIDTH, 1.3 * SWORD_BB_HEIGHT};
-	motion.positionOffset = {0.f, -50.f};
+	motion.position = position;
+	motion.scale = vec2({GUN_BB_WIDTH, GUN_BB_HEIGHT});
 
-	// Add to weapons and renderRequests
-	registry.weapons.emplace(entity);
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = WEAPON_TYPE::GUN;
+	registry.guns.emplace(entity);
+	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{TEXTURE_ASSET_ID::SWORD,
+		{TEXTURE_ASSET_ID::GUN,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;
 }
 
-Entity createBlock(vec2 pos, vec2 size)
+Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::BULLET);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = mesh.original_size * 4.f;
+	
+	vec3& colour = registry.colors.emplace(entity);
+	colour = {.47, .47, .47};
+
+	registry.bullets.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
+			EFFECT_ASSET_ID::BULLET,
+			GEOMETRY_BUFFER_ID::BULLET });
+
+	return entity;
+}
+
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -187,9 +227,11 @@ Entity createBlock(vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createWeaponHitBox(vec2 pos, vec2 size)
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -204,9 +246,10 @@ Entity createWeaponHitBox(vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
-
+Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
     auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
