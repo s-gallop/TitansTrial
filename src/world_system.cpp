@@ -559,7 +559,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	{
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
-
+        pause = false;
 		restart_game();
 	}
 
