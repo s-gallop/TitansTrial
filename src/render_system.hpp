@@ -34,8 +34,13 @@ class RenderSystem
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
 		textures_path("sword.png"),
-		textures_path("pistol.png"),
-		textures_path("background.png")};
+        textures_path("pistol.png"),
+		textures_path("background.png"),
+        textures_path("buttons/quit.png"),
+        textures_path("buttons/quit_pressed.png"),
+        textures_path("buttons/menu.png"),
+        textures_path("buttons/menu_pressed.png"),
+        textures_path("helper.png")};
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -44,7 +49,7 @@ class RenderSystem
 		shader_path("textured"),
 		shader_path("animated"),
 		shader_path("bullet"),
-		shader_path("water")};
+		shader_path("screen")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
@@ -74,14 +79,14 @@ public:
 	~RenderSystem();
 
 	// Draw all entities
-	void draw();
+	void draw(bool pause);
 
 	mat3 createProjectionMatrix();
 
 private:
 	// Internal drawing functions for each entity type
-	void drawTexturedMesh(Entity entity, const mat3 &projection);
-	void drawToScreen();
+	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause);
+	void drawToScreen(bool pause);
 
 	// Window handle
 	GLFWwindow *window;

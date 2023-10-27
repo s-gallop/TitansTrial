@@ -18,6 +18,10 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 
+vec2 mouse_pos = {0,0};
+
+bool WorldSystem::pause = false;
+
 std::bitset<2> motionKeyStatus("00");
 
 // Create the fish world
@@ -91,8 +95,11 @@ GLFWwindow *WorldSystem::create_window()
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow *wnd, double _0, double _1)
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_move({_0, _1}); };
+    auto cursor_click_redirect = [](GLFWwindow *wnd, int _0, int _1, int _2)
+    { ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+    glfwSetMouseButtonCallback(window, cursor_click_redirect);
 
 	// Initialize all sound
 	if (init_sound())
@@ -331,6 +338,11 @@ void WorldSystem::restart_game()
 
 	// bottom center padding platform
 	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+	// Adds whatever's needed in the pause screen
+void WorldSystem::create_pause_screen() {
+    createButton({18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
+    createButton({window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
+    createHelperText();
 }
 
 // Compute collisions between entities
@@ -430,16 +442,26 @@ bool WorldSystem::is_over() const
 	return bool(glfwWindowShouldClose(window));
 }
 
-void motion_helper(Motion &playerMotion)
+void WorldSystem::motion_helper(Motion &playerMotion)
 {
 	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
+	if (!pause) {
+		if (playerMotion.velocity.x < 0)
+			playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+		else if (playerMotion.velocity.x > 0)
+			playerMotion.scale.x = abs(playerMotion.scale.x);
+	}
 }
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        change_pause();
+        Mix_PlayChannel(-1, button_click_sound, 0);
+    }
 
 	if (!registry.deathTimers.has(player_hero))
 	{
@@ -448,29 +470,23 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(0);
-			playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
-			if (motionKeyStatus.test(1))
-				playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
 			motionKeyStatus.set(1);
-			playerMotion.scale.x = -abs(playerMotion.scale.x);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
-			if (motionKeyStatus.test(0))
-				playerMotion.scale.x = abs(playerMotion.scale.x);
 		}
 
 		motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
 		{
 			if (registry.players.get(player_hero).jumps > 0)
 			{
@@ -480,7 +496,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause)
 			for (Entity weapon : registry.weapons.entities)
 				do_weapon_action(renderer, weapon);
 	}
@@ -517,7 +533,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	if (!registry.deathTimers.has(player_hero))
+	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
 			rotate_weapon(weapon, mouse_position);
 }

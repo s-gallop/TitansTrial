@@ -141,6 +141,15 @@ struct AnimationInfo
 	std::vector<int> stateFrameLength;
 	int curState;
 };
+
+struct ShowWhenPaused {
+};
+
+struct Button {
+    int clicked;
+    std::function<void ()> callback;
+};
+
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
@@ -181,9 +190,15 @@ enum class TEXTURE_ASSET_ID
 	SWORD = ENEMY + 1,
 	GUN = SWORD + 1,
 	BACKGROUND = GUN + 1,
-	TEXTURE_COUNT = BACKGROUND + 1
+    QUIT = BACKGROUND + 1,
+	QUIT_PRESSED = QUIT + 1,
+    MENU = QUIT_PRESSED + 1,
+    MENU_PRESSED = MENU + 1,
+    HELPER = MENU_PRESSED + 1,
+	TEXTURE_COUNT = HELPER + 1
 
 };
+
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 enum class EFFECT_ASSET_ID
@@ -192,8 +207,8 @@ enum class EFFECT_ASSET_ID
 	TEXTURED = COLOURED + 1,
 	ANIMATED = TEXTURED + 1,
 	BULLET = ANIMATED + 1,
-	WATER = BULLET + 1,
-	EFFECT_COUNT = WATER + 1
+	SCREEN = BULLET + 1,
+	EFFECT_COUNT = SCREEN + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -212,4 +227,6 @@ struct RenderRequest
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+    bool on_top_screen = false;
+    bool visibility = true;
 };
