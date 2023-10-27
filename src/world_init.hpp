@@ -27,8 +27,8 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
 // the background
 Entity createBackground(RenderSystem* renderer);
 // the helper text during pause
-Entity createHelperText();
+Entity createHelperText(RenderSystem* renderer);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 // the ui button
-Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
+Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);

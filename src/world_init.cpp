@@ -95,9 +95,12 @@ Entity createBackground(RenderSystem* renderer)
 	return entity;
 }
 
-Entity createHelperText()
+Entity createHelperText(RenderSystem* renderer)
 {
     Entity entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
@@ -243,9 +246,10 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createButton(vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
-
+Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
     auto entity = Entity();
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;

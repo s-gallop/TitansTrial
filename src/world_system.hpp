@@ -56,7 +56,7 @@ private:
 	void restart_game();
 
     // creates pause gui
-    static void create_pause_screen();
+    void create_pause_screen();
 	// OpenGL window handle
 	GLFWwindow *window;
 

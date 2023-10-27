@@ -17,7 +17,8 @@ enum class SOUND_EFFECT {
     HERO_JUMP = HERO_DEAD + 1,
     SWORD_SWING = HERO_JUMP + 1,
     BULLET_SHOOT = SWORD_SWING + 1,
-    GUN_LEVER = BULLET_SHOOT + 1
+    GUN_LEVER = BULLET_SHOOT + 1,
+    BUTTON_CLICK = GUN_LEVER + 1
 };
 
 void play_music();
