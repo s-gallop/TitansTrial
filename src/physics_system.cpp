@@ -12,16 +12,38 @@ vec2 get_bounding_box(const Motion &motion)
     return {abs(motion.scale.x), abs(motion.scale.y)};
 }
 
-// assumes that the colliders are box shaped
+// assumes at least one collider is box shaped
 
-bool collides(const Motion &motion1, const Motion &motion2)
+bool collides(const Entity &entity1, const Entity &entity2)
 {
+    Motion& motion1 = registry.motions.get(entity1);
+    Motion& motion2 = registry.motions.get(entity2);
     vec2 scale1 = get_bounding_box(motion1) / 2.0f;
     vec2 scale2 = get_bounding_box(motion2) / 2.0f;
-    if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) &&
-        abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y))
-    {
-        return true;
+    Mesh* mesh1 = registry.meshPtrs.get(entity1);
+    Mesh* mesh2 = registry.meshPtrs.get(entity2);
+    if (!mesh1->vertices.empty()) {
+        for (ColoredVertex v: registry.meshPtrs.get(entity1)->vertices) {
+            if (abs(motion1.position.x + motion1.scale.x * v.position.x - motion2.position.x) < scale2.x && 
+                abs(motion1.position.y + motion1.scale.y * v.position.y - motion2.position.y) < scale2.y)
+            {
+                return true;
+            }
+        }
+    } else if (!mesh2->vertices.empty()) {
+        for (ColoredVertex v: registry.meshPtrs.get(entity2)->vertices) {
+            if (abs(motion2.position.x + motion2.scale.x * v.position.x - motion1.position.x) < scale1.x && 
+                abs(motion2.position.y + motion2.scale.y * v.position.y - motion1.position.y) < scale1.y)
+            {
+                return true;
+            }
+        }
+    } else {
+        if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) &&
+            abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y))
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -100,10 +122,10 @@ void PhysicsSystem::step(float elapsed_ms)
         for (uint j = i + 1; j < motion_container.components.size(); j++)
         {
             Motion &motion_j = motion_container.components[j];
+            Entity entity_j = motion_container.entities[j];
 
-            if (collides(motion_i, motion_j))
+            if (collides(entity_i, entity_j))
             {
-                Entity entity_j = motion_container.entities[j];
                 if (motion_i.isSolid && motion_j.isSolid)
                 {
 

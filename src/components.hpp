@@ -4,6 +4,12 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+enum class WEAPON_TYPE
+{
+	SWORD = 0,
+	GUN = SWORD + 1
+};
+
 // Player component
 struct Player
 {
@@ -11,6 +17,7 @@ struct Player
 	//  Only using 0 & 1 right now but other values available for more weapons
 	//  hasSword = 1
 	uint hasWeapon = 0;
+	Entity weapon;
 	uint jumps = 2;
 	int hp_max = 5;
 	int hp = 5;
@@ -24,16 +31,31 @@ struct Enemies
 {
 };
 
+struct Collectable
+{
+	WEAPON_TYPE type;
+};
+
 struct Sword
 {
+	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = swing right, 3 = wind-up left, 4 = swing left
+	int swing = 0;
+};
+
+struct Gun{
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Bullet {
+
 };
 
 // Weapon the player has picked up
 struct Weapon
 {
-	// Swing State: 0 = not swinging, 1 = wind-up right, 2 = wind-up left, 3 = swing right, 4 = swing left
-	uint swing = 0;
 	std::vector<Entity> hitBoxes;
+	WEAPON_TYPE type;
 };
 
 struct WeaponHitBox
@@ -168,9 +190,10 @@ enum class TEXTURE_ASSET_ID
 	HERO = 0,
 	ENEMY = HERO + 1,
 	SWORD = ENEMY + 1,
-	BACKGROUND = SWORD + 1,
+	GUN = SWORD + 1,
+	BACKGROUND = GUN + 1,
     QUIT = BACKGROUND + 1,
-    QUIT_PRESSED = QUIT + 1,
+	QUIT_PRESSED = QUIT + 1,
     MENU = QUIT_PRESSED + 1,
     MENU_PRESSED = MENU + 1,
     HELPER = MENU_PRESSED + 1,
@@ -185,7 +208,8 @@ enum class EFFECT_ASSET_ID
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
 	ANIMATED = TEXTURED + 1,
-	SCREEN = ANIMATED + 1,
+	BULLET = ANIMATED + 1,
+	SCREEN = BULLET + 1,
 	EFFECT_COUNT = SCREEN + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -193,7 +217,8 @@ const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID
 {
 	SPRITE = 0,
-	DEBUG_LINE = SPRITE + 1,
+	BULLET = SPRITE + 1,
+	DEBUG_LINE = BULLET + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };
