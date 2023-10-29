@@ -612,7 +612,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
     // button click check
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);
-        Button &buttonInfo = registry.buttons.get(entity);
+        GameButton &buttonInfo = registry.buttons.get(entity);
         RenderRequest &buttonRender = registry.renderRequests.get(entity);
         if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
             buttonInfo.clicked = false;
