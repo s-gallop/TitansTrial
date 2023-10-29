@@ -18,10 +18,10 @@ const float BASIC_SPEED = 200.0;
 const float JUMP_INITIAL_SPEED = 350.0;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 30.0;
-
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
+bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 
 /* 
@@ -54,7 +54,7 @@ WorldSystem::~WorldSystem()
 {
 	// Destroy all sound
 	destroy_sound();
-
+	
 	// Destroy all created components
 	registry.clear_all_components();
 
@@ -134,8 +134,48 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 	play_music();
 
 	// Set all states to default
-	restart_game();
+	if (isTitleScreen) {
+		create_title_screen();
+	}
+	
+	
 }
+
+
+void WorldSystem::create_help_screen() {
+	glfwSetWindowTitle(window, "Help");
+	
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.screen_darken_factor = 0;
+	isTitleScreen = true;
+	
+	pause = false;
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+	createSword(renderer, { 500,500 });
+	createHero(renderer, { 400,400 });
+	createButton(renderer, { window_width_px / 2, window_height_px * 0.825 }, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); });
+}
+void WorldSystem::create_title_screen() 
+{
+	glfwSetWindowTitle(window, "Titan's Trial");
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.screen_darken_factor = 0;
+	isTitleScreen = true;
+	
+	pause = false;
+	
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+	
+	createTitleText(renderer, { window_width_px / 2, window_height_px * 0.15 });
+	createButton(renderer, { window_width_px / 2, window_height_px * 0.425 }, TEXTURE_ASSET_ID::BATTLE_BUTTON, [&]() {restart_game(); });
+	createButton(renderer, { window_width_px / 2, window_height_px * 0.575 }, TEXTURE_ASSET_ID::HELP_BUTTON, [&]() {create_help_screen(); });
+	createButton(renderer, { window_width_px / 2, window_height_px * 0.725 }, TEXTURE_ASSET_ID::QUIT_BUTTON, [&]() {exit(0); });
+	
+}
+
+
 
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
@@ -195,6 +235,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			if (!registry.players.has(motion_container.entities[i]) && !registry.weapons.has(motion_container.entities[i]) && !registry.blocks.has(motion_container.entities[i])) // only remove enemies
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
+		
 	}
 
 	// Keep weapons centred on player
@@ -318,6 +359,8 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	
+	isTitleScreen = false;
 	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
 	ddl = 0;
@@ -337,10 +380,10 @@ void WorldSystem::restart_game()
 	// All that have a motion, we could also iterate over all, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
-
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	// add bg
+	
 	createBackground(renderer);
 	// Create a new hero
 	player_hero = createHero(renderer, {100, 200});
@@ -350,7 +393,7 @@ void WorldSystem::restart_game()
 
 	int base_height = ceil(16 * window_height_px / background_pixels_height);
 	int base_width = ceil(16 * window_width_px / background_pixels_width);
-
+	
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
@@ -384,18 +427,20 @@ void WorldSystem::restart_game()
 	// bottom center padding platform
 	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
 	// Adds whatever's needed in the pause screen
+	
 	create_pause_screen();
 }
 
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
-    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0);}, false);
+    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); }, false);
     createHelperText(renderer);
 }
 
 // Compute collisions between entities
 void WorldSystem::handle_collisions()
 {
+	
 	// Loop over all collisions detected by the physics system
 	auto &collisionsRegistry = registry.collisions;
 	for (uint i = 0; i < collisionsRegistry.components.size(); i++)
@@ -511,6 +556,10 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+	if (isTitleScreen) {
+		
+		return;
+	}
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         change_pause();
 		play_sound(SOUND_EFFECT::BUTTON_CLICK);

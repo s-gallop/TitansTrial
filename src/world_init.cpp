@@ -9,6 +9,15 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::MENU,{30, 32} },
         { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
         { TEXTURE_ASSET_ID::HELPER,{580, 162} },
+		{ TEXTURE_ASSET_ID::BATTLE_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::BATTLE_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::HELP_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::HELP_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::QUIT_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::QUIT_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
+		{ TEXTURE_ASSET_ID::TITLE_TEXT, {window_width_px * 0.6f, window_height_px * 0.2f}},
+
+		
 };
 
 
@@ -271,4 +280,25 @@ Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std
     }
 
     return entity;
+}
+
+Entity createTitleText(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::TITLE_TEXT);
+	motion.position = pos;
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::TITLE_TEXT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+	registry.showWhenPaused.emplace(entity);
+	return entity;
 }

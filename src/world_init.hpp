@@ -32,3 +32,4 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 // the ui button
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
+Entity createTitleText(RenderSystem* renderer, vec2 pos);

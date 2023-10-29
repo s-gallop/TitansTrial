@@ -23,13 +23,13 @@ public:
 	WorldSystem();
     // somehow pause it activated once
     static bool pause;
-
+	static bool isTitleScreen;
 	// Creates a window
 	GLFWwindow *create_window();
 
 	// starts the game
 	void init(RenderSystem *renderer);
-
+	
 	// Releases all associated resources
 	~WorldSystem();
 
@@ -58,8 +58,11 @@ private:
 	// restart level
 	void restart_game();
 
+
     // creates pause gui
     void create_pause_screen();
+	void create_title_screen();
+	void create_help_screen();
 	// OpenGL window handle
 	GLFWwindow *window;
 
