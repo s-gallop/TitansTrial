@@ -23,6 +23,7 @@ vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
+vec3 player_color;
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -181,7 +182,18 @@ void WorldSystem::create_title_screen()
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
-	if (invlunerable_timer > 0.0f) invlunerable_timer = max(invlunerable_timer - elapsed_ms_since_last_update, 0.0f);
+	if (invlunerable_timer > 0.0f)
+	{
+		float expectedTimer = invlunerable_timer - elapsed_ms_since_last_update;
+		if (expectedTimer <= 0.0f) {
+			invlunerable_timer = 0.0f;
+			registry.colors.get(player_hero) = player_color;
+		}
+		else
+		{
+			invlunerable_timer = expectedTimer;
+		}
+	}
 	ddf += elapsed_ms_since_last_update / 1000.0f;
 	if (ddf >= 260) ddl = 2;
 	else if (ddf >= 130 && ddf < 260) ddl = 1;
@@ -359,14 +371,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
-	
-	isTitleScreen = false;
-	// global variables at this .cpp to reset, don't forget it!
-	motionKeyStatus.reset();
-	ddl = 0;
-	ddf = 0.0f;
-	invlunerable_timer = 0.0f;
-
+  isTitleScreen = false;
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -393,7 +398,16 @@ void WorldSystem::restart_game()
 
 	int base_height = ceil(16 * window_height_px / background_pixels_height);
 	int base_width = ceil(16 * window_width_px / background_pixels_width);
-	
+
+
+	// global variables at this .cpp to reset, don't forget it!
+	motionKeyStatus.reset();
+	ddl = 0;
+	ddf = 0.0f;
+	invlunerable_timer = 0.0f;
+	player_color = registry.colors.get(player_hero);
+
+
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
@@ -459,6 +473,7 @@ void WorldSystem::handle_collisions()
 				// remove 1 hp
 				player.hp -= 1;
 				invlunerable_timer = 3000.0f;
+				registry.colors.get(player_hero) = vec3(1, 0, 0);
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
 
@@ -647,7 +662,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
     // button click check
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);
-        Button &buttonInfo = registry.buttons.get(entity);
+        GameButton &buttonInfo = registry.buttons.get(entity);
         RenderRequest &buttonRender = registry.renderRequests.get(entity);
         if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
             buttonInfo.clicked = false;

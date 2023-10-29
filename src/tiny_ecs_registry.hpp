@@ -32,7 +32,7 @@ public:
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<AnimationInfo> animated;
-    ComponentContainer<Button> buttons;
+    ComponentContainer<GameButton> buttons;
     ComponentContainer<ShowWhenPaused> showWhenPaused;
 
 	// constructor that adds all containers for looping over them

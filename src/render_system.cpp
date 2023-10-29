@@ -74,7 +74,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
         assert(registry.renderRequests.has(entity));
         if (registry.buttons.has(entity))
         {
-            Button &button = registry.buttons.get(entity);
+            GameButton &button = registry.buttons.get(entity);
             if (button.clicked) {
                 // pressed texture must be +1 of the unpressed texture
                 texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture+1];
