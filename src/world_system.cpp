@@ -395,7 +395,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
 				enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
 			}
-			else if (enemy_reg.path.size() <= 0) {
+			else if (enemy_reg.path.size() == 0) {
 				std::vector<std::vector<char>> vec = grid_vec;
 				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
 				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
