@@ -1,19 +1,19 @@
 // Header
 #include "world_system.hpp"
 #include "world_init.hpp"
+#include "physics_system.hpp"
+#include "ai_system.hpp"
 
 // stlib
 #include <cassert>
 #include <sstream>
 #include <bitset>
 #include <iostream>
-
-#include "physics_system.hpp"
 #include <map>
-#include <stack>
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
+const size_t MAX_FOLLOWING_ENEMIES = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.0;
@@ -26,6 +26,7 @@ bool WorldSystem::pause = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 vec3 player_color;
+std::vector<std::vector<char>> grid_vec = create_grid();
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -360,18 +361,16 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
 {
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.enemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		//int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		//int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		//Entity newEnemy = createEnemy(renderer, vec2(window_width_px / 2.f, window_height_px / 2.f + ENEMY_BB_HEIGHT), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
-		//registry.enemies.get(newEnemy).follows = true;
-		//registry.motions.get(newEnemy).isSolid = true;
-
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px/2.f, window_height_px/2.f), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		registry.enemies.get(newEnemy).follows = true;
+		std::vector<std::vector<char>> vec = grid_vec;
+		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
 		//std::map<short, std::pair<short, short>> map = bfs_follow_start(create_grid(registry.motions.get(newEnemy).position), registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position);
 		//printf("MAAAAAP === %d\n", map.size());
 	}
@@ -381,92 +380,53 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
 		Entity enemy = registry.enemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
+		Enemies enemy_reg = registry.enemies.get(enemy);
 
-		if (registry.enemies.get(enemy).follows)
-		{
-			vec2 following_direction;
-			if (i > 3)
-			{
-				following_direction = hero_motion.position - enemy_motion.position;
-				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+		if (enemy_reg.follows && hero_motion.velocity.x != 0) {
+			enemy_motion.velocity = vec2(0.f, 0.f);
+			if (enemy_reg.path.size() == 0) {
+				std::vector<std::vector<char>> vec = grid_vec;
+				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
 			}
-			else {
-				following_direction = hero_motion.position - enemy_motion.position;
-				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+		} else if (enemy_reg.follows) {
+			if (enemy_reg.cur_dest == vec2(0.f,0.f)) {
+				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				enemy_reg.path.pop_back();
+			}
+			float dist_sqrd = dot(enemy_reg.cur_dest - enemy_motion.position, enemy_reg.cur_dest - enemy_motion.position);
+			if (dist_sqrd < 20.f) {
+				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				enemy_reg.path.pop_back();
+			}	
+			
+			
+			printf("HELLOO: %f\n", enemy_reg.path.size());
 
-
-			} 
-			//printf("Position: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
-			//enemy_motion.velocity = following_direction * (BASIC_SPEED / 2.f);
-			enemy_motion.velocity = vec2(0, 0);
+			vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
+			following_direction = following_direction / sqrt(dist_sqrd);
+			enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
 		}
+
+		//if (registry.enemies.get(enemy).follows)
+		//{
+		//	vec2 following_direction;
+		//	if (i > 3)
+		//	{
+		//		following_direction = hero_motion.position - enemy_motion.position;
+		//		following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+		//	}
+		//	else {
+		//		following_direction = hero_motion.position - enemy_motion.position;
+		//		following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+
+
+		//	} 
+		//	//printf("Position: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
+		//	//enemy_motion.velocity = following_direction * (BASIC_SPEED / 2.f);
+		//	enemy_motion.velocity = vec2(0, 0);
+		//}
 	}
 
-}
-
-vec2 WorldSystem::find_map_index(vec2 pos) {
-	pos.x = (pos.x - 10.f) / 78.f;
-	pos.y = (pos.y + 25.f) / 90.f;
-
-	return round(pos)-1.f;
-}
-
-int WorldSystem::dfs_follow_start(std::vector<std::vector<char>> &vec, vec2 pos_chase, vec2 pos_prey) {
-	vec[pos_prey.y][pos_prey.x] = 'g';
-	printf("THIS IS PREY: %f, %f +======+ THIS IS chase: %f, %f\n", pos_prey.x, pos_prey.y, pos_chase.x, pos_chase.y);
-
-	return dfs_follow_helper(vec, pos_chase, 0);
-}
-
-int WorldSystem::dfs_follow_helper(std::vector<std::vector<char>> &vec, vec2 pos, int length) {
-	
-	if (vec[pos.y][pos.x] == 'g') 
-	{
-		printf("THIS IS ME: %f, %f\n", pos.x, pos.y);
-		return length;
-	}
-	vec[pos.y][pos.x] = 'v';
-	length++;
-	int ret_length = 100;
-	int temp_length = 100;
-
-	//visit right
-	if (pos.x + 1.f < vec[0].size() && pos.x - 1 >= 0 && vec[pos.y][pos.x + 1.f] != 'v' && vec[pos.y][pos.x + 1.f] != 'b') {
-		ret_length = dfs_follow_helper(vec, vec2(pos.x + 1.f, pos.y), length);
-	}
-	//visit left
-	if (pos.x - 1.f < vec[0].size() && pos.x - 1.f >= 0 && vec[pos.y][pos.x - 1.f] != 'v' && vec[pos.y][pos.x - 1.f] != 'b') {
-		temp_length = dfs_follow_helper(vec, vec2(pos.x - 1.f, pos.y), length);
-	}
-	ret_length = min(ret_length, temp_length);
-	//visit up
-	if (pos.y - 1.f < vec.size() && pos.y - 1.f >= 0 && vec[pos.y - 1.f][pos.x] != 'v' && vec[pos.y - 1.f][pos.x] != 'b') {
-		temp_length = dfs_follow_helper(vec, vec2(pos.x, pos.y - 1.f), length);
-	}
-	ret_length = min(ret_length, temp_length);
-	//visit down
-	if (pos.y + 1.f < vec.size() && pos.y + 1.f >= 0 && vec[pos.y + 1.f][pos.x] != 'v' && vec[pos.y + 1.f][pos.x] != 'b') {
-		temp_length = dfs_follow_helper(vec, vec2(pos.x, pos.y + 1.f), length);
-	}
-	ret_length = min(ret_length, temp_length);
-
-	return ret_length;
-}
-
-std::vector<std::vector<char>> WorldSystem::create_grid() {
-	std::vector <char> line(14, 'n');
-	std::vector<std::vector<char> > vect(9, line);
-
-	std::vector<char> temp = { 'n', 'n', 'n', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'n', 'n', 'n' };
-	vect[2] = temp;
-	temp = { 'b', 'b', 'b', 'b', 'n', 'n', 'n', 'n', 'n', 'n', 'b', 'b', 'b', 'b' };
-	vect[4] = temp;
-	temp = { 'n', 'n', 'b', 'b', 'b', 'n', 'n', 'n', 'n', 'b', 'b', 'b', 'n', 'n' };
-	vect[6] = temp;
-	temp = { 'b', 'b', 'b', 'n', 'n', 'b', 'b', 'b', 'b', 'n', 'n', 'b', 'b', 'b' };
-	vect[8] = temp;
-
-	return vect;
 }
 
 // Reset the world state to its initial state
@@ -546,11 +506,11 @@ void WorldSystem::restart_game()
 	create_pause_screen();
 
 	//testing screen dimensions
-	for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
-		for (int j = -25; j < window_height_px; j += ENEMY_BB_HEIGHT) {
-			createEnemy(renderer, vec2(i, j), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
-		}
-	}
+	//for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
+	//	for (int j = -25; j < window_height_px; j += ENEMY_BB_HEIGHT) {
+	//		createEnemy(renderer, vec2(i, j), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+	//	}
+	//}
 }
 
 void WorldSystem::create_pause_screen() {
@@ -747,7 +707,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
 		std::vector<std::vector<char>> vec = create_grid();
 		printf("BEFORE================: %f, %f\n", registry.motions.get(player_hero).position.x, registry.motions.get(player_hero).position.y);
-		int length = dfs_follow_start(vec, find_map_index(vec2((float)window_width_px / 2.f, (float)window_height_px / 2.f)), find_map_index(registry.motions.get(player_hero).position));
+		std::list<vec2> path = dfs_follow_start(vec, find_map_index(vec2((float)window_width_px / 2.f, (float)window_height_px / 2.f)), find_map_index(registry.motions.get(player_hero).position));
 
 
 		for (uint i = 0; i < vec.size(); i++) {
@@ -756,7 +716,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 			printf(" \n");
 		}
-		printf("MAP ========= %d\n", length);
+		printf("MAP ========= %d\n", path.size());
 	}
 
 	// Control the current speed with `<` `>`

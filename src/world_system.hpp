@@ -14,8 +14,8 @@
 #include "render_system.hpp"
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
+#include "ai_system.hpp"
 #include <map>
-#include <stack>
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -44,12 +44,6 @@ public:
 	// spawn following enemies (refactor)
 	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
 
-	vec2 WorldSystem::find_map_index(vec2 pos);
-	std::vector<std::vector<char>> WorldSystem::create_grid();
-	int WorldSystem::dfs_follow_helper(std::vector<std::vector<char>> &vec, vec2 pos, int length);
-	int WorldSystem::dfs_follow_start(std::vector<std::vector<char>> &vec, vec2 pos_chase, vec2 pos_prey);
-
-	// Check for collisions
 	void handle_collisions();
 
 	// Should the game be over ?
