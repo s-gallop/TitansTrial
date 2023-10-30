@@ -22,7 +22,7 @@ vec2 find_map_index(vec2 pos) {
 vec2 find_index_from_map(vec2 pos) {
 	//printf("before: %f, %f==========", pos.x, pos.y);
 	pos.x = (pos.x + 1) * RATIO_WIDTH + OFFSET_WIDTH;
-	pos.y = (pos.y) * RATIO_HEIGHT - OFFSET_HEIGHT;
+	pos.y = (pos.y + 1) * RATIO_HEIGHT - OFFSET_HEIGHT;
 	//printf("AFTER: %f, %f\n", pos.x, pos.y);
 
 	return pos;

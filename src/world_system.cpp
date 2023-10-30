@@ -266,7 +266,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
 	else current_enemy_spawning_speed = 10.f;
 
-	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	//spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_move_following_enemies(elapsed_ms_since_last_update);
 
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
@@ -367,7 +367,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH/2, ENEMY_BB_HEIGHT/2));
 		registry.enemies.get(newEnemy).follows = true;
 		registry.colors.emplace(newEnemy);
 		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
