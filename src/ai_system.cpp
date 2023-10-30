@@ -103,13 +103,13 @@ std::vector<std::vector<char>> create_grid() {
 	std::vector<std::vector<char> > vect(9, line);
 
 	std::vector<char> temp = { 'n', 'n', 'n', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'n', 'n', 'n'};
-	vect[2] = temp;
+	vect[1] = temp;
 	temp = { 'b', 'b', 'b', 'b', 'n', 'n', 'n', 'n', 'n', 'n', 'b', 'b', 'b', 'b' };
-	vect[4] = temp;
+	vect[3] = temp;
 	temp = {  'n', 'n', 'b', 'b', 'b', 'n', 'n', 'n', 'n', 'b', 'b', 'b', 'n', 'n' };
-	vect[6] = temp;
+	vect[5] = temp;
 	temp = {  'b', 'b', 'b', 'n', 'n', 'b', 'b', 'b', 'b', 'n', 'n', 'b', 'b', 'b' };
-	vect[8] = temp;
+	vect[7] = temp;
 
 	return vect;
 }
