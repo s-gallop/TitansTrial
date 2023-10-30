@@ -38,10 +38,11 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	animationInfo.states = 4;
 	animationInfo.curState = 0;
 	animationInfo.stateFrameLength = {9, 8, 4, 4};
+	animationInfo.stateCycleLength = 9;
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HERO,
-		 EFFECT_ASSET_ID::ANIMATED,
+		 EFFECT_ASSET_ID::HERO,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          true});
 
@@ -75,6 +76,78 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 
 	// registry.gravities.emplace(entity);
 	registry.testAIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion &motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.scale = {-SPITTER_BB_WIDTH, SPITTER_BB_HEIGHT};
+
+	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
+	// wait 1s for first shot
+	spitterEnemy.timeUntilNextShotMs = 1000.f;
+	spitterEnemy.bulletsRemaining = 10;
+
+	AnimationInfo &animationInfo = registry.animated.emplace(entity);
+	animationInfo.states = 2;
+	animationInfo.curState = 0;
+	animationInfo.stateFrameLength = {6, 7};
+	animationInfo.stateCycleLength = 11;
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::SPITTER_ENEMY,
+		 EFFECT_ASSET_ID::SPITTER_ENEMY,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	registry.gravities.emplace(entity);
+
+	return entity;
+}
+
+Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion &motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.angle = angle;
+	auto dir = []() -> int
+	{ return rand() % 2 == 0 ? 1 : -1; };
+	motion.velocity = {dir() * 300, dir() * (rand() % 300)};
+	motion.scale = {-SPITTER_BULLET_BB_WIDTH, SPITTER_BULLET_BB_HEIGHT};
+	motion.isProjectile = true;
+
+	SpitterBullet &bullet = registry.spitterBullets.emplace(entity);
+
+	bullet.mass = 1;
+
+	AnimationInfo &animationInfo = registry.animated.emplace(entity);
+	animationInfo.states = 1;
+	animationInfo.curState = 0;
+	animationInfo.stateFrameLength = {4};
+	animationInfo.stateCycleLength = 4;
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET,
+		 EFFECT_ASSET_ID::SPITTER_ENEMY_BULLET,
+		 GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;
 }

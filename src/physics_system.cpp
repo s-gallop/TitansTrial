@@ -204,6 +204,47 @@ void PhysicsSystem::step(float elapsed_ms)
                     }
                 }
 
+                else if ((motion_i.isProjectile && motion_j.isSolid) || (motion_j.isProjectile && motion_i.isSolid))
+                {
+                    vec2 scale1 = get_bounding_box(motion_i) / 2.0f;
+                    vec2 scale2 = get_bounding_box(motion_j) / 2.0f;
+
+                    float vCollisionDepth = (scale1.y + scale2.y) - abs(motion_i.position.y - motion_j.position.y) + COLLISION_THRESHOLD;
+                    float hCollisionDepth = (scale1.x + scale2.x) - abs(motion_i.position.x - motion_j.position.x) + COLLISION_THRESHOLD;
+
+                    if (vCollisionDepth > 0 && hCollisionDepth > 0)
+                    {
+                        if (vCollisionDepth < hCollisionDepth)
+                        {
+                            // Vertical collision
+                            if (motion_i.isProjectile)
+                            {
+                                motion_i.velocity.y = -motion_i.velocity.y;
+                                motion_i.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
+                            }
+                            else
+                            {
+                                motion_j.velocity.y = -motion_j.velocity.y;
+                                motion_j.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
+                            }
+                        }
+                        else
+                        {
+                            // Horizontal collision
+                            if (motion_i.isProjectile)
+                            {
+                                motion_i.velocity.x = -motion_i.velocity.x;
+                                motion_i.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
+                            }
+                            else
+                            {
+                                motion_j.velocity.x = -motion_j.velocity.x;
+                                motion_j.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
+                            }
+                        }
+                    }
+                }
+
                 // Create a collisions event
                 // We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
                 registry.collisions.emplace_with_duplicates(entity_i, entity_j);

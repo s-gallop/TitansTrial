@@ -44,6 +44,10 @@ public:
 	// spawn following enemies (refactor)
 	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
 
+	// spawn normal enemies (refactor)
+	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
+
+	// Check for collisions
 	void handle_collisions();
 
 	// Should the game be over ?

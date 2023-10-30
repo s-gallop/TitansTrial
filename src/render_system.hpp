@@ -33,6 +33,8 @@ class RenderSystem
 	const std::array<std::string, texture_count> texture_paths = {
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
+		textures_path("spitter.png"),
+		textures_path("spitter_bullet.png"),
 		textures_path("sword.png"),
 		textures_path("pistol.png"),
 		textures_path("background.png"),
@@ -50,9 +52,12 @@ class RenderSystem
 	const std::array<std::string, effect_count> effect_paths = {
 		shader_path("coloured"),
 		shader_path("textured"),
-		shader_path("animated"),
 		shader_path("bullet"),
-		shader_path("screen")};
+		shader_path("screen"),
+		shader_path("animated"),
+		shader_path("hero"),
+		shader_path("spitter"),
+		shader_path("spitter_bullet")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;

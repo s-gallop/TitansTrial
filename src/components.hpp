@@ -34,6 +34,17 @@ struct Enemies
 	vec2 cur_dest = vec2(0.f,0.f);
 };
 
+struct SpitterEnemy
+{
+	uint bulletsRemaining;
+	float timeUntilNextShotMs;
+};
+
+struct SpitterBullet 
+{
+	float mass; // this eventually decays to 0 and the bullet disappears
+};
+
 struct Collectable
 {
 	WEAPON_TYPE type;
@@ -76,6 +87,7 @@ struct Motion
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
+	bool isProjectile = false;
 };
 
 // just for milestone 1 sudden requirement
@@ -145,6 +157,7 @@ struct AnimationInfo
 	int states;
 	std::vector<int> stateFrameLength;
 	int curState;
+	int stateCycleLength;
 };
 
 struct ShowWhenPaused {
@@ -192,7 +205,9 @@ enum class TEXTURE_ASSET_ID
 {
 	HERO = 0,
 	ENEMY = HERO + 1,
-	SWORD = ENEMY + 1,
+	SPITTER_ENEMY = ENEMY + 1,
+	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
+	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
 	BACKGROUND = GUN + 1,
 	QUIT = BACKGROUND + 1,
@@ -212,10 +227,13 @@ enum class EFFECT_ASSET_ID
 {
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
-	ANIMATED = TEXTURED + 1,
-	BULLET = ANIMATED + 1,
+	BULLET = TEXTURED + 1,
 	SCREEN = BULLET + 1,
-	EFFECT_COUNT = SCREEN + 1
+	ANIMATED = SCREEN + 1,
+	HERO = ANIMATED + 1,
+	SPITTER_ENEMY = HERO + 1,
+	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
+	EFFECT_COUNT = SPITTER_ENEMY_BULLET + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

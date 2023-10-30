@@ -2,6 +2,61 @@
 
 Titan's Trial - A 2D Endless survival game
 
+## Write-up Milestone 2
+
+Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal document. The changes include:
+
+* Instead of adding a boulder as an enemy, we added 2 of them: The ghoul which follows the player and the spitter which shoots a bouncing projectile
+* Early and additional implementations
+  * Title screen
+  * Health system
+  * Dynamic difficulty system based on health, score and time since last damage was taken
+  
+## M2 Features
+* Button System
+  * world_init.cpp:
+    * func createButton
+  * render_system.cpp:
+    * func drawTextureMesh
+  * world_system.cpp:
+    * func on_mouse_click
+  * button.fs.glsl
+  * button.vs.glsl
+* Pause System
+  * world_init.cpp:
+    * func createHelperText
+  * world_system.cpp:
+    * func change_pause
+  * main.cpp:
+    * func main
+* screen.fs.glsl
+* screen.vs.glsl
+* Spitter Enemy
+  * world_system.cpp:
+    * func small_spitter_enemy
+  * world_init.cpp:
+    * func createSpitterEnemy
+    * func createSpitterEnemyBullet
+  * physics_system.cpp:
+    * func step *(at the bottom)
+* Main Menu
+  * world_init.cpp:
+    * func createTitleText
+  * world_system.cpp:
+    * func create_help_screen
+    * func create_title_screen
+* Projectile Weapon:
+  * weapon_utils.cpp
+    * everything
+  * physics_system.cpp
+    * func collides
+* Dynamic Difficulty System / Health Bar + Invulnerability
+  * world_system.cpp
+    * func step
+    * func handle_collision
+
+---
+
 ## Write-up Milestone 1
 
 There were few changes that we had to implement to our previous proposal, all changes can be seen highlighted in green in the M1_Proposal_V2 document. The changes include:
