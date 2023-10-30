@@ -21,51 +21,81 @@ vec2 find_map_index(vec2 pos) {
 
 vec2 find_index_from_map(vec2 pos) {
 	//printf("before: %f, %f==========", pos.x, pos.y);
-	pos.x = (int)pos.x * RATIO_WIDTH + OFFSET_WIDTH;
-	pos.y = (int)pos.y * RATIO_HEIGHT - OFFSET_HEIGHT;
+	pos.x = (pos.x + 1) * RATIO_WIDTH + OFFSET_WIDTH;
+	pos.y = (pos.y) * RATIO_HEIGHT - OFFSET_HEIGHT;
 	//printf("AFTER: %f, %f\n", pos.x, pos.y);
 
 	return pos;
 }
 
-std::list<vec2> dfs_follow_helper(std::vector<std::vector<char>>& vec, vec2 pos, std::list<vec2> path) {
-	if (vec[pos.y][pos.x] == 'g') return path;
-	path.push_front(vec2(pos));
-	vec[pos.y][pos.x] = 'v';
-	std::list<vec2> ret_path(300, vec2(1, 1));
-	std::list<vec2> temp_path(300, vec2(1, 1));
-
-	//visit right
-	if (pos.x + 1.f < vec[0].size() && pos.x - 1 >= 0 && vec[pos.y][pos.x + 1.f] != 'v' && vec[pos.y][pos.x + 1.f] != 'b') {
-		ret_path = dfs_follow_helper(vec, vec2(pos.x + 1.f, pos.y), path);
+std::list<vec2> bfs_follow_helper(std::vector<std::vector<char>>& vec, vec2 pos_prey, std::list<std::list<vec2>> buf, std::list<vec2> path) {
+	vec2 pos_chase = path.front();
+	if (pos_chase.x == pos_prey.x && pos_chase.y == pos_prey.y) return path;
+	std::list<vec2> temp;
+	vec[pos_chase.y][pos_chase.x] = 'v';
+	if (pos_chase.x + 1 < vec[0].size() && vec[pos_chase.y][pos_chase.x + 1] != 'b' && vec[pos_chase.y][pos_chase.x + 1] != 'v') {
+		temp = path;
+		temp.push_front(vec2(pos_chase.x + 1, pos_chase.y));
+		buf.push_back(temp);
 	}
-	//visit left
-	if (pos.x - 1.f < vec[0].size() && pos.x - 1.f >= 0 && vec[pos.y][pos.x - 1.f] != 'v' && vec[pos.y][pos.x - 1.f] != 'b') {
-		temp_path = dfs_follow_helper(vec, vec2(pos.x - 1.f, pos.y), path);
+	if (pos_chase.x - 1 >= 0 && vec[pos_chase.y][pos_chase.x - 1] != 'b' && vec[pos_chase.y][pos_chase.x - 1] != 'v') {
+		temp = path;
+		temp.push_front(vec2(pos_chase.x - 1, pos_chase.y));
+		buf.push_back(temp);
 	}
-	if (ret_path.size() == 0) ret_path = temp_path;
-	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
-	//visit up
-	if (pos.y - 1.f < vec.size() && pos.y - 1.f >= 0 && vec[pos.y - 1.f][pos.x] != 'v' && vec[pos.y - 1.f][pos.x] != 'b') {
-		temp_path = dfs_follow_helper(vec, vec2(pos.x, pos.y - 1.f), path);
+	if (pos_chase.y - 1 >= 0 && vec[pos_chase.y - 1][pos_chase.x] != 'b' && vec[pos_chase.y - 1][pos_chase.x] != 'v') {
+		temp = path;
+		temp.push_front(vec2(pos_chase.x, pos_chase.y - 1));
+		buf.push_back(temp);
 	}
-	if (ret_path.size() == 0) ret_path = temp_path;
-	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
-	//visit down
-	if (pos.y + 1.f < vec.size() && pos.y + 1.f >= 0 && vec[pos.y + 1.f][pos.x] != 'v' && vec[pos.y + 1.f][pos.x] != 'b') {
-		temp_path = dfs_follow_helper(vec, vec2(pos.x, pos.y + 1.f), path);
+	if (pos_chase.y + 1 < vec.size() && vec[pos_chase.y + 1][pos_chase.x] != 'b' && vec[pos_chase.y + 1][pos_chase.x] != 'v') {
+		temp = path;
+		temp.push_front(vec2(pos_chase.x, pos_chase.y + 1));
+		buf.push_back(temp);
 	}
-	if (ret_path.size() == 0) ret_path = temp_path;
-	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
-
-	return ret_path;
+	temp = buf.front();
+	buf.pop_front();
+	return bfs_follow_helper(vec, pos_prey, buf, temp);
 }
 
+// std::list<vec2> dfs_follow_helper(std::vector<std::vector<char>>& vec, vec2 pos, std::list<vec2> path) {
+// 	if (vec[pos.y][pos.x] == 'g') return path;
+// 	path.push_front(vec2(pos));
+// 	vec[pos.y][pos.x] = 'v';
+// 	std::list<vec2> ret_path(300, vec2(1, 1));
+// 	std::list<vec2> temp_path(300, vec2(1, 1));
+
+// 	//visit right
+// 	if (pos.x + 1.f < vec[0].size() && vec[pos.y][pos.x + 1.f] != 'v' && vec[pos.y][pos.x + 1.f] != 'b') {
+// 		ret_path = dfs_follow_helper(vec, vec2(pos.x + 1.f, pos.y), path);
+// 	}
+// 	//visit left
+// 	if ( pos.x - 1.f >= 0 && vec[pos.y][pos.x - 1.f] != 'v' && vec[pos.y][pos.x - 1.f] != 'b') {
+// 		temp_path = dfs_follow_helper(vec, vec2(pos.x - 1.f, pos.y), path);
+// 	}
+// 	if (ret_path.size() == 0) ret_path = temp_path;
+// 	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
+// 	//visit up
+// 	if (pos.y - 1.f >= 0 && vec[pos.y - 1.f][pos.x] != 'v' && vec[pos.y - 1.f][pos.x] != 'b') {
+// 		temp_path = dfs_follow_helper(vec, vec2(pos.x, pos.y - 1.f), path);
+// 	}
+// 	if (ret_path.size() == 0) ret_path = temp_path;
+// 	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
+// 	//visit down
+// 	if (pos.y + 1.f < vec.size() && vec[pos.y + 1.f][pos.x] != 'v' && vec[pos.y + 1.f][pos.x] != 'b') {
+// 		temp_path = dfs_follow_helper(vec, vec2(pos.x, pos.y + 1.f), path);
+// 	}
+// 	if (ret_path.size() == 0) ret_path = temp_path;
+// 	if (ret_path.size() > temp_path.size()) ret_path = temp_path;
+
+// 	return ret_path;
+// }
+
 std::list<vec2> dfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 pos_prey) {
-	vec[pos_prey.y][pos_prey.x] = 'g';
 	std::list<vec2> path;
-	path = dfs_follow_helper(vec, pos_chase, path);
-	return path;
+	path.push_back(pos_chase);
+	std::list<std::list<vec2>> buf;
+	return bfs_follow_helper(vec, pos_prey, buf, path);
 }
 
 std::vector<std::vector<char>> create_grid() {

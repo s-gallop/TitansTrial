@@ -110,7 +110,7 @@ float spawn_collectable(RenderSystem* renderer) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	if (rand < 0.9)
+	if (rand < 0)
 		createSword(renderer, {x_pos, y_pos});
 	else
 		createGun(renderer, {x_pos, y_pos});

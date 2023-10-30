@@ -367,7 +367,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px/2.f, window_height_px/2.f), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
 		registry.enemies.get(newEnemy).follows = true;
 		std::vector<std::vector<char>> vec = grid_vec;
 		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
