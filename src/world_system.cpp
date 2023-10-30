@@ -12,7 +12,9 @@
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
+const size_t MAX_SPITTERS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
+const size_t SPITTER_DELAY_MS = 10000 * 3;
 const size_t SPITTER_PROJECTILE_DELAY_MS = 5000;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.0;
@@ -46,7 +48,7 @@ float invlunerable_timer = 0.0f;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f)
+	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -180,10 +182,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			invlunerable_timer = expectedTimer;
 		}
 	}
-	ddf += elapsed_ms_since_last_update / 1000.0f;
-	if (ddf >= 260) ddl = 2;
-	else if (ddf >= 130 && ddf < 260) ddl = 1;
-	else ddl = 0;
+	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 350.0f);
+	if (ddf >= 260)
+		ddl = 2;
+	else if (ddf >= 130 && ddf < 260)
+		ddl = 1;
+	else
+		ddl = 0;
 
 	// Updating window title
 	std::stringstream title_ss;
@@ -260,14 +265,26 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		playerAnimation.curState = 0;
 	}
 
-	if (ddl == 0) current_enemy_spawning_speed = 1.f;
-	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
-	else current_enemy_spawning_speed = 10.f;
+	if (ddl == 0)
+	{
+		current_enemy_spawning_speed = 1.0f;
+		current_spitter_spawning_speed = 0.0f;
+	}
+	else if (ddl == 1)
+	{
+		current_enemy_spawning_speed = 1.2f;
+		current_spitter_spawning_speed = 0.0f;
+	}
+	else
+	{
+		current_enemy_spawning_speed = 1.0f;
+		current_spitter_spawning_speed = 1.0f;
+	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 
-	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
+	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -356,6 +373,15 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 }
 
 void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
+	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
+	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
+	{
+		next_spitter_spawn = (SPITTER_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_DELAY_MS / 2);
+		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
+		createSpitterEnemy(renderer, { x_pos, y_pos });
+	}
+
 	auto &spitterEnemy_container = registry.spitterEnemies;
 	for (uint i = 0; i < spitterEnemy_container.size(); i++)
 	{
@@ -369,7 +395,12 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 			// attack animation
 			// animation.curState = 1;
 			// create bullet at same position as enemy
-			createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+			Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+			float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
+			if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
+				registry.motions.get(entity).scale[0] = -absolute_scale_x;
+			else
+				registry.motions.get(entity).scale[0] = absolute_scale_x;
 
 			spitterEnemy.bulletsRemaining -= 1;
 			spitterEnemy.timeUntilNextShotMs = SPITTER_PROJECTILE_DELAY_MS;
@@ -377,24 +408,24 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 			// TODO: fix animation
 			// animation.curState = 0;
 		}
+	}
 
-		// decay spitter bullets
-		auto &spitterBullets_container = registry.spitterBullets;
-		for (uint i = 0; i < spitterBullets_container.size(); i++)
+	// decay spitter bullets
+	auto& spitterBullets_container = registry.spitterBullets;
+	for (uint i = 0; i < spitterBullets_container.size(); i++)
+	{
+		SpitterBullet& spitterBullet = spitterBullets_container.components[i];
+		Entity entity = spitterBullets_container.entities[i];
+		Motion& motion = registry.motions.get(entity);
+		// make bullets smaller over time
+		motion.scale = vec2(motion.scale.x / spitterBullet.mass, motion.scale.y / spitterBullet.mass);
+		spitterBullet.mass -= elapsed_ms_since_last_update / 5000;
+		motion.scale = vec2(motion.scale.x * spitterBullet.mass, motion.scale.y * spitterBullet.mass);
+		if (spitterBullet.mass <= 0.2)
 		{
-			SpitterBullet &spitterBullet = spitterBullets_container.components[i];
-			Entity entity = spitterBullets_container.entities[i];
-			Motion &motion = registry.motions.get(entity);
-			// make bullets smaller over time
-			motion.scale = vec2(motion.scale.x*spitterBullet.mass, motion.scale.y*spitterBullet.mass);
-
-			spitterBullet.mass -= elapsed_ms_since_last_update/200000;
-			if (spitterBullet.mass <= 0.98)
-			{
-				spitterBullet.mass = 0;
-				spitterBullets_container.remove(entity);
-				registry.motions.remove(entity);
-			}
+			spitterBullet.mass = 0;
+			spitterBullets_container.remove(entity);
+			registry.motions.remove(entity);
 		}
 	}
 }
@@ -408,8 +439,9 @@ void WorldSystem::restart_game()
 	printf("Restarting\n");
 
 	// Reset the game speed
-	current_enemy_spawning_speed = 1.f;
 	current_speed = 1.f;
+	current_enemy_spawning_speed = 1.f;
+	current_spitter_spawning_speed = 1.f;
 	points = 0;
 
 	// Remove all entities that we created
@@ -437,9 +469,6 @@ void WorldSystem::restart_game()
 	ddf = 0.0f;
 	invlunerable_timer = 0.0f;
 	player_color = registry.colors.get(player_hero);
-
-	// TODO: figure out when/where to spawn them based on difficulty
-	createSpitterEnemy(renderer, {840, 400});
 
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});

@@ -266,7 +266,7 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.angle = angle;
-	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.velocity = vec2(800.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
 	motion.scale = mesh.original_size * 4.f;
 	
 	vec3& colour = registry.colors.emplace(entity);
