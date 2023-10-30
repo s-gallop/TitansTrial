@@ -389,7 +389,6 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 			motion.scale = vec2(motion.scale.x*spitterBullet.mass, motion.scale.y*spitterBullet.mass);
 
 			spitterBullet.mass -= elapsed_ms_since_last_update/200000;
-			printf("mass: %f", spitterBullet.mass);
 			if (spitterBullet.mass <= 0.98)
 			{
 				spitterBullet.mass = 0;
