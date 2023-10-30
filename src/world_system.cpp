@@ -267,7 +267,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
 	else current_enemy_spawning_speed = 10.f;
 
-	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	//spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_move_following_enemies(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
   
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
@@ -408,6 +409,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			}
 		}
 	}
+}
 
 void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	auto &spitterEnemy_container = registry.spitterEnemies;
