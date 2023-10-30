@@ -374,10 +374,10 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		registry.enemies.get(newEnemy).cur_dest = find_index_from_map(registry.enemies.get(newEnemy).path.back());
 		registry.enemies.get(newEnemy).path.pop_back();
 
-		while (registry.enemies.get(newEnemy).path.size() > 0) {
-			printf("YOOOFOO %f %f\n", registry.enemies.get(newEnemy).path.back().x, registry.enemies.get(newEnemy).path.back().y);
-			registry.enemies.get(newEnemy).path.pop_back();
-		}
+		// while (registry.enemies.get(newEnemy).path.size() > 0) {
+		// 	printf("YOOOFOO %f %f\n", registry.enemies.get(newEnemy).path.back().x, registry.enemies.get(newEnemy).path.back().y);
+		// 	registry.enemies.get(newEnemy).path.pop_back();
+		// }
 	}
 	float dist;
 
@@ -385,8 +385,17 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
 		Entity enemy = registry.enemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
-		Enemies enemy_reg = registry.enemies.get(enemy);
+		Enemies& enemy_reg = registry.enemies.get(enemy);
 
+		// if (enemy_reg.follows) {
+		// 	std::vector<std::vector<char>> vec = grid_vec;
+		// 	enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
+		// 	enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+		// 	vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
+		// 	following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+		// 	enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
+		// }
+		
 		dist = ((enemy_reg.cur_dest).x - enemy_motion.position.x)* ((enemy_reg.cur_dest).x - enemy_motion.position.x) + ((enemy_reg.cur_dest).y - enemy_motion.position.y)* ((enemy_reg.cur_dest).y - enemy_motion.position.y);
 		//printf("DISTNA+INVJNVIN =========== %f\n", dist);
 		if (sqrt(dist) > 10) {
