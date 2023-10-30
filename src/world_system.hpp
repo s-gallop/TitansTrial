@@ -15,6 +15,7 @@
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
 #include <map>
+#include <stack>
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -45,8 +46,8 @@ public:
 
 	vec2 WorldSystem::find_map_index(vec2 pos);
 	std::vector<std::vector<char>> WorldSystem::create_grid();
-	std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_helper(std::vector<std::vector<char>> vec, uint length, vec2 pos_cur, std::map<short, std::pair<short, short>> p_map);
-	std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_start(std::vector<std::vector<char>> vec, vec2 pos_chase, vec2 pos_prey);
+	int WorldSystem::dfs_follow_helper(std::vector<std::vector<char>> &vec, vec2 pos, int length);
+	int WorldSystem::dfs_follow_start(std::vector<std::vector<char>> &vec, vec2 pos_chase, vec2 pos_prey);
 
 	// Check for collisions
 	void handle_collisions();

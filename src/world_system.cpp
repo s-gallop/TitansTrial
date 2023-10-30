@@ -10,6 +10,7 @@
 
 #include "physics_system.hpp"
 #include <map>
+#include <stack>
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
@@ -404,54 +405,52 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 }
 
 vec2 WorldSystem::find_map_index(vec2 pos) {
-	pos.x = (pos.x - 10) / 78;
-	pos.y = (pos.y + 25) / 90;
+	pos.x = (pos.x - 10.f) / 78.f;
+	pos.y = (pos.y + 25.f) / 90.f;
 
-	return pos;
+	return round(pos)-1.f;
 }
 
-std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_start(std::vector<std::vector<char>> vec, vec2 pos_chase, vec2 pos_prey) {
+int WorldSystem::dfs_follow_start(std::vector<std::vector<char>> &vec, vec2 pos_chase, vec2 pos_prey) {
 	vec[pos_prey.y][pos_prey.x] = 'g';
+	printf("THIS IS PREY: %f, %f +======+ THIS IS chase: %f, %f\n", pos_prey.x, pos_prey.y, pos_chase.x, pos_chase.y);
 
-	std::map<short, std::pair<short, short>> path;
-	return path;
-	//return bfs_follow_helper(vec, pos_chase, path);
+	return dfs_follow_helper(vec, pos_chase, 0);
 }
 
-std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_helper(std::vector<std::vector<char>> vec, uint length, vec2 pos_cur, std::map<short, std::pair<short, short>> p_map) {
-	if (vec[pos_cur.y][pos_cur.x] == 'g') return p_map;
-
-	vec[pos_cur.y][pos_cur.x] = 'v';
-
-	//check path up
-	if (vec[pos_cur.y - 1][pos_cur.x] != NULL && vec[pos_cur.y - 1][pos_cur.x] != 'v' && vec[pos_cur.y - 1][pos_cur.x] != 'b') {
-		p_map_up.emplace(p_map.size(), std::pair<short, short>(pos_cur.y - 1, pos_cur.x));
-		bfs_follow_helper(vec, vec2(pos_cur.y - 1, pos_cur.x), p_map_up);
-	}
-	//check path down
-	if (vec[pos_cur.y + 1][pos_cur.x] != NULL && vec[pos_cur.y + 1][pos_cur.x] != 'v' && vec[pos_cur.y + 1][pos_cur.x] != 'b') {
-		p_map_down.emplace(p_map.size(), std::pair<short, short>(pos_cur.y + 1, pos_cur.x));
-		bfs_follow_helper(vec, vec2(pos_cur.y + 1, pos_cur.x), p_map_down);
-	}
-	//check path left
-	if (vec[pos_cur.y][pos_cur.x - 1] != NULL && vec[pos_cur.y][pos_cur.x - 1] != 'v' && vec[pos_cur.y][pos_cur.x - 1] != 'b') {
-		p_map_left.emplace(p_map.size(), std::pair<short, short>(pos_cur.y, pos_cur.x - 1));
-		bfs_follow_helper(vec, vec2(pos_cur.y, pos_cur.x - 1), p_map_left);
-	}
-	//check path right
-	if (vec[pos_cur.y][pos_cur.x + 1] != NULL && vec[pos_cur.y][pos_cur.x + 1] != 'v' && vec[pos_cur.y][pos_cur.x + 1] != 'b') {
-		p_map_right.emplace(p_map.size(), std::pair<short, short>(pos_cur.y, pos_cur.x + 1));
-		bfs_follow_helper(vec, vec2(pos_cur.y, pos_cur.x + 1), p_map_right);
-	}
-
-	//find shortest path
-	std::map<short, std::pair<short, short>> cur_shortest = p_map_up;
-
-	if (cur_shortest.size() > p_map_down.size()) cur_shortest = p_map_down;
-	if (cur_shortest.size() > p_map_left.size()) cur_shortest = p_map_left;
-	if (cur_shortest.size() > p_map_right.size()) cur_shortest = p_map_right;
+int WorldSystem::dfs_follow_helper(std::vector<std::vector<char>> &vec, vec2 pos, int length) {
 	
-	return cur_shortest;
+	if (vec[pos.y][pos.x] == 'g') 
+	{
+		printf("THIS IS ME: %f, %f\n", pos.x, pos.y);
+		return length;
+	}
+	vec[pos.y][pos.x] = 'v';
+	length++;
+	int ret_length = 100;
+	int temp_length = 100;
+
+	//visit right
+	if (pos.x + 1.f < vec[0].size() && pos.x - 1 >= 0 && vec[pos.y][pos.x + 1.f] != 'v' && vec[pos.y][pos.x + 1.f] != 'b') {
+		ret_length = dfs_follow_helper(vec, vec2(pos.x + 1.f, pos.y), length);
+	}
+	//visit left
+	if (pos.x - 1.f < vec[0].size() && pos.x - 1.f >= 0 && vec[pos.y][pos.x - 1.f] != 'v' && vec[pos.y][pos.x - 1.f] != 'b') {
+		temp_length = dfs_follow_helper(vec, vec2(pos.x - 1.f, pos.y), length);
+	}
+	ret_length = min(ret_length, temp_length);
+	//visit up
+	if (pos.y - 1.f < vec.size() && pos.y - 1.f >= 0 && vec[pos.y - 1.f][pos.x] != 'v' && vec[pos.y - 1.f][pos.x] != 'b') {
+		temp_length = dfs_follow_helper(vec, vec2(pos.x, pos.y - 1.f), length);
+	}
+	ret_length = min(ret_length, temp_length);
+	//visit down
+	if (pos.y + 1.f < vec.size() && pos.y + 1.f >= 0 && vec[pos.y + 1.f][pos.x] != 'v' && vec[pos.y + 1.f][pos.x] != 'b') {
+		temp_length = dfs_follow_helper(vec, vec2(pos.x, pos.y + 1.f), length);
+	}
+	ret_length = min(ret_length, temp_length);
+
+	return ret_length;
 }
 
 std::vector<std::vector<char>> WorldSystem::create_grid() {
@@ -747,7 +746,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 	if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
 		std::vector<std::vector<char>> vec = create_grid();
-		std::map<short, std::pair<short, short>> map = bfs_follow_start(vec, find_map_index(vec2(window_width_px / 2.f, window_height_px / 2.f)), find_map_index(registry.motions.get(player_hero).position));
+		printf("BEFORE================: %f, %f\n", registry.motions.get(player_hero).position.x, registry.motions.get(player_hero).position.y);
+		int length = dfs_follow_start(vec, find_map_index(vec2((float)window_width_px / 2.f, (float)window_height_px / 2.f)), find_map_index(registry.motions.get(player_hero).position));
+
 
 		for (uint i = 0; i < vec.size(); i++) {
 			for (uint j = 0; j < vec[0].size(); j++) {
@@ -755,7 +756,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 			printf(" \n");
 		}
-		printf("MAP ========= %d\n", map.size());
+		printf("MAP ========= %d\n", length);
 	}
 
 	// Control the current speed with `<` `>`
