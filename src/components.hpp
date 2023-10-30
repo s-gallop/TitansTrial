@@ -31,6 +31,17 @@ struct Enemies
 {
 };
 
+struct SpitterEnemy
+{
+	uint bulletsRemaining;
+	float timeUntilNextShotMs;
+};
+
+struct SpitterBullet 
+{
+	float mass; // this eventually decays to 0 and the bullet disappears
+};
+
 struct Collectable
 {
 	WEAPON_TYPE type;
@@ -73,6 +84,7 @@ struct Motion
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
+	bool isProjectile = false;
 };
 
 // just for milestone 1 sudden requirement
@@ -142,6 +154,7 @@ struct AnimationInfo
 	int states;
 	std::vector<int> stateFrameLength;
 	int curState;
+	int stateCycleLength;
 };
 
 struct ShowWhenPaused {
@@ -189,7 +202,9 @@ enum class TEXTURE_ASSET_ID
 {
 	HERO = 0,
 	ENEMY = HERO + 1,
-	SWORD = ENEMY + 1,
+	SPITTER_ENEMY = ENEMY + 1,
+	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
+	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
 	BACKGROUND = GUN + 1,
 	QUIT = BACKGROUND + 1,

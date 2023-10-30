@@ -56,13 +56,13 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 				vec3)); // note the stride to skip the preceeding vertex position
 
         // does animation if texture has animation and is not DEAD
-		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && !pause)
+		if (registry.animated.has(entity) && !pause)
 		{
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
 			glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
 			GLint scale_loc = glGetUniformLocation(program, "scale");
-			glUniform2f(scale_loc, 9.0, 4.0);
+			glUniform2f(scale_loc, info.stateCycleLength, info.states);
 		}
 
 		// Enabling and binding texture to slot 0
@@ -215,7 +215,7 @@ void RenderSystem::draw(bool pause)
 	// Clearing backbuffer
 	glViewport(0, 0, w, h);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.4f, 0.0f, 0.0f, 1.0f);
 	glClearDepth(10.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
