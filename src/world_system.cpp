@@ -263,7 +263,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	else if (ddl == 1) current_enemy_spawning_speed = 5.f;
 	else current_enemy_spawning_speed = 10.f;
 
-	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	//spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_move_following_enemies(elapsed_ms_since_last_update);
 
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer);
 
@@ -351,6 +352,49 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
 	}
+}
+
+// deal with normal eneimies' spawning and moving
+void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
+{
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	if (registry.enemies.components.size() < MAX_ENEMIES && next_enemy_spawn < 0.f)
+	{
+		// Reset timer
+		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		srand(time(0));
+		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		registry.enemies.get(newEnemy).follows = true;
+	}
+
+	Motion& hero_motion = registry.motions.get(player_hero);
+
+	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
+		Entity enemy = registry.enemies.entities[i];
+		Motion& enemy_motion = registry.motions.get(enemy);
+
+		if (registry.enemies.get(enemy).follows)
+		{
+			vec2 following_direction;
+			if (i > 3)
+			{
+				following_direction = hero_motion.position - enemy_motion.position;
+				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+			}
+			else {
+				following_direction = hero_motion.position - enemy_motion.position;
+				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+
+
+			} 
+			//printf("Position: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
+			enemy_motion.velocity = following_direction * (BASIC_SPEED / 2.f);
+		}
+	}
+
 }
 
 // Reset the world state to its initial state

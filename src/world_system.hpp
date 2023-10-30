@@ -39,6 +39,9 @@ public:
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
 
+	// spawn following enemies (refactor)
+	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
+
 	// Check for collisions
 	void handle_collisions();
 

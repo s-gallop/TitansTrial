@@ -29,6 +29,7 @@ struct Block
 
 struct Enemies
 {
+	bool follows = false;
 };
 
 struct Collectable
