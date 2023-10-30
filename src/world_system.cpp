@@ -13,7 +13,7 @@
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
-const size_t MAX_FOLLOWING_ENEMIES = 3;
+const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.0;
@@ -371,41 +371,39 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		registry.enemies.get(newEnemy).follows = true;
 		std::vector<std::vector<char>> vec = grid_vec;
 		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
-		//std::map<short, std::pair<short, short>> map = bfs_follow_start(create_grid(registry.motions.get(newEnemy).position), registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position);
-		//printf("MAAAAAP === %d\n", map.size());
+		registry.enemies.get(newEnemy).cur_dest = find_index_from_map(registry.enemies.get(newEnemy).path.back());
+		registry.enemies.get(newEnemy).path.pop_back();
+
+		while (registry.enemies.get(newEnemy).path.size() > 0) {
+			printf("YOOOFOO %f %f\n", registry.enemies.get(newEnemy).path.back().x, registry.enemies.get(newEnemy).path.back().y);
+			registry.enemies.get(newEnemy).path.pop_back();
+		}
 	}
+	float dist;
 
 	Motion& hero_motion = registry.motions.get(player_hero);
-
 	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
 		Entity enemy = registry.enemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
 		Enemies enemy_reg = registry.enemies.get(enemy);
 
-		if (enemy_reg.follows && hero_motion.velocity.x != 0) {
-			enemy_motion.velocity = vec2(0.f, 0.f);
-			if (enemy_reg.path.size() == 0) {
-				std::vector<std::vector<char>> vec = grid_vec;
-				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
-			}
-		} else if (enemy_reg.follows) {
-			if (enemy_reg.cur_dest == vec2(0.f,0.f)) {
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-				enemy_reg.path.pop_back();
-			}
-			float dist_sqrd = dot(enemy_reg.cur_dest - enemy_motion.position, enemy_reg.cur_dest - enemy_motion.position);
-			if (dist_sqrd < 20.f) {
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-				enemy_reg.path.pop_back();
-			}	
-			
-			
-			printf("HELLOO: %f\n", enemy_reg.path.size());
-
+		dist = ((enemy_reg.cur_dest).x - enemy_motion.position.x)* ((enemy_reg.cur_dest).x - enemy_motion.position.x) + ((enemy_reg.cur_dest).y - enemy_motion.position.y)* ((enemy_reg.cur_dest).y - enemy_motion.position.y);
+		//printf("DISTNA+INVJNVIN =========== %f\n", dist);
+		if (sqrt(dist) > 10) {
 			vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
-			following_direction = following_direction / sqrt(dist_sqrd);
+			following_direction = following_direction / sqrt(dot(following_direction, following_direction));
 			enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
+			//createEnemy(renderer, (enemy_reg.cur_dest), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
 		}
+		else if (enemy_reg.path.size() <= 0) {
+			//printf("BJEBFFJEBFJEFBJNF");
+		}else {
+			enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+			enemy_reg.path.pop_back();
+			
+			enemy_motion.velocity = vec2(0, 0);
+		}
+
 
 		//if (registry.enemies.get(enemy).follows)
 		//{
@@ -506,11 +504,11 @@ void WorldSystem::restart_game()
 	create_pause_screen();
 
 	//testing screen dimensions
-	//for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
-	//	for (int j = -25; j < window_height_px; j += ENEMY_BB_HEIGHT) {
-	//		createEnemy(renderer, vec2(i, j), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
-	//	}
-	//}
+	/*for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
+		for (int j = -25; j < window_height_px; j += ENEMY_BB_HEIGHT) {
+			createEnemy(renderer, vec2(i, j), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		}
+	}*/
 }
 
 void WorldSystem::create_pause_screen() {
@@ -705,7 +703,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
-		std::vector<std::vector<char>> vec = create_grid();
+		std::vector<std::vector<char>> vec = grid_vec;
 		printf("BEFORE================: %f, %f\n", registry.motions.get(player_hero).position.x, registry.motions.get(player_hero).position.y);
 		std::list<vec2> path = dfs_follow_start(vec, find_map_index(vec2((float)window_width_px / 2.f, (float)window_height_px / 2.f)), find_map_index(registry.motions.get(player_hero).position));
 
@@ -713,6 +711,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		for (uint i = 0; i < vec.size(); i++) {
 			for (uint j = 0; j < vec[0].size(); j++) {
 				printf("%c", vec[i][j]);
+			}
+			printf(" \n");
+		}
+		for (uint i = 0; i < grid_vec.size(); i++) {
+			for (uint j = 0; j < grid_vec[0].size(); j++) {
+				printf("%c", grid_vec[i][j]);
 			}
 			printf(" \n");
 		}

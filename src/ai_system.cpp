@@ -21,11 +21,11 @@ vec2 find_map_index(vec2 pos) {
 
 vec2 find_index_from_map(vec2 pos) {
 	//printf("before: %f, %f==========", pos.x, pos.y);
-	pos.x = pos.x * RATIO_WIDTH + OFFSET_WIDTH;
-	pos.y = pos.y * RATIO_HEIGHT - OFFSET_HEIGHT;
+	pos.x = (int)pos.x * RATIO_WIDTH + OFFSET_WIDTH;
+	pos.y = (int)pos.y * RATIO_HEIGHT - OFFSET_HEIGHT;
 	//printf("AFTER: %f, %f\n", pos.x, pos.y);
 
-	return round(pos);
+	return pos;
 }
 
 std::list<vec2> dfs_follow_helper(std::vector<std::vector<char>>& vec, vec2 pos, std::list<vec2> path) {
@@ -67,8 +67,6 @@ std::list<vec2> dfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_c
 	path = dfs_follow_helper(vec, pos_chase, path);
 	return path;
 }
-
-
 
 std::vector<std::vector<char>> create_grid() {
 	std::vector <char> line(14, 'n');
