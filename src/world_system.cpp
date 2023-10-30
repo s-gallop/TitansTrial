@@ -363,11 +363,11 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		spitterEnemy.timeUntilNextShotMs -= elapsed_ms_since_last_update * current_speed;
 		Entity entity = spitterEnemy_container.entities[i];
 		Motion &motion = registry.motions.get(entity);
-		AnimationInfo &animation = registry.animated.get(entity);
+		// AnimationInfo &animation = registry.animated.get(entity);
 		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f)
 		{
 			// attack animation
-			animation.curState = 1;
+			// animation.curState = 1;
 			// create bullet at same position as enemy
 			createSpitterEnemyBullet(renderer, motion.position, motion.angle);
 
@@ -375,7 +375,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 			spitterEnemy.timeUntilNextShotMs = SPITTER_PROJECTILE_DELAY_MS;
 
 			// TODO: fix animation
-			animation.curState = 0;
+			// animation.curState = 0;
 		}
 
 		// decay spitter bullets
