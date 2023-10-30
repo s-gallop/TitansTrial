@@ -42,7 +42,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HERO,
-		 EFFECT_ASSET_ID::ANIMATED,
+		 EFFECT_ASSET_ID::HERO,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          true});
 
@@ -108,7 +108,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY,
-		 EFFECT_ASSET_ID::ANIMATED,
+		 EFFECT_ASSET_ID::SPITTER_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE});
 
 	registry.gravities.emplace(entity);
@@ -146,7 +146,7 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET,
-		 EFFECT_ASSET_ID::ANIMATED,
+		 EFFECT_ASSET_ID::SPITTER_ENEMY_BULLET,
 		 GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;

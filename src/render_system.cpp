@@ -37,7 +37,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 	gl_has_errors();
 
 	// Input data location as in the vertex buffer
-	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED || render_request.used_effect == EFFECT_ASSET_ID::ANIMATED)
+	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED || (uint) render_request.used_effect > (uint) EFFECT_ASSET_ID::ANIMATED)
 	{
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -56,7 +56,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 				vec3)); // note the stride to skip the preceeding vertex position
 
         // does animation if texture has animation and is not DEAD
-		if (registry.animated.has(entity) && !pause)
+		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && !pause)
 		{
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
