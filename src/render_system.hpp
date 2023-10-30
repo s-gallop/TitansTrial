@@ -52,9 +52,12 @@ class RenderSystem
 	const std::array<std::string, effect_count> effect_paths = {
 		shader_path("coloured"),
 		shader_path("textured"),
-		shader_path("animated"),
 		shader_path("bullet"),
-		shader_path("screen")};
+		shader_path("screen"),
+		shader_path("animated"),
+		shader_path("hero"),
+		shader_path("spitter"),
+		shader_path("spitter_bullet")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
