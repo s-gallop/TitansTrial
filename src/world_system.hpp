@@ -62,7 +62,6 @@ private:
     // creates pause gui
     void create_pause_screen();
 	void create_title_screen();
-	void create_help_screen();
 	// OpenGL window handle
 	GLFWwindow *window;
 

@@ -9,13 +9,9 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::MENU,{30, 32} },
         { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
         { TEXTURE_ASSET_ID::HELPER,{580, 162} },
-		{ TEXTURE_ASSET_ID::BATTLE_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::BATTLE_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::HELP_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::HELP_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::QUIT_BUTTON, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::QUIT_BUTTON_PRESSED, {window_width_px * 0.25f, window_height_px * 0.1f}},
-		{ TEXTURE_ASSET_ID::TITLE_TEXT, {window_width_px * 0.6f, window_height_px * 0.2f}},
+		{ TEXTURE_ASSET_ID::PLAY, {204, 56}},
+		{ TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
+		{ TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
 
 		
 };

@@ -41,12 +41,8 @@ class RenderSystem
 		textures_path("buttons/menu.png"),
 		textures_path("buttons/menu_pressed.png"),
 		textures_path("helper.png"),
-		textures_path("battle_text.png"),
-		textures_path("battle_text.png"),
-		textures_path("help_text.png"),
-		textures_path("help_text.png"),
-		textures_path("quit_text.png"),
-		textures_path("quit_text.png"),
+		textures_path("buttons/play.png"),
+		textures_path("buttons/play_pressed.png"),
 		textures_path("titans_trial_logo.png")};
 
 	std::array<GLuint, effect_count> effects;

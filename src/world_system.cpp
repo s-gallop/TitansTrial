@@ -142,20 +142,6 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 }
 
 
-void WorldSystem::create_help_screen() {
-	glfwSetWindowTitle(window, "Help");
-	
-	ScreenState& screen = registry.screenStates.components[0];
-	screen.screen_darken_factor = 0;
-	isTitleScreen = true;
-	
-	pause = false;
-	while (registry.motions.entities.size() > 0)
-		registry.remove_all_components_of(registry.motions.entities.back());
-	createSword(renderer, { 500,500 });
-	createHero(renderer, { 400,400 });
-	createButton(renderer, { window_width_px / 2, window_height_px * 0.825 }, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); });
-}
 void WorldSystem::create_title_screen() 
 {
 	glfwSetWindowTitle(window, "Titan's Trial");
@@ -168,10 +154,9 @@ void WorldSystem::create_title_screen()
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
 	
-	createTitleText(renderer, { window_width_px / 2, window_height_px * 0.15 });
-	createButton(renderer, { window_width_px / 2, window_height_px * 0.425 }, TEXTURE_ASSET_ID::BATTLE_BUTTON, [&]() {restart_game(); });
-	createButton(renderer, { window_width_px / 2, window_height_px * 0.575 }, TEXTURE_ASSET_ID::HELP_BUTTON, [&]() {create_help_screen(); });
-	createButton(renderer, { window_width_px / 2, window_height_px * 0.725 }, TEXTURE_ASSET_ID::QUIT_BUTTON, [&]() {exit(0); });
+	createTitleText(renderer, { window_width_px / 2, 150 });
+	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
+	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
 	
 }
 
