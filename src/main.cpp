@@ -18,7 +18,7 @@ int main()
 	WorldSystem world_system;
 	RenderSystem render_system;
 	PhysicsSystem physics_system;
-
+	
 	// Initializing window
 	GLFWwindow* window = world_system.create_window();
 	if (!window) {
@@ -31,16 +31,16 @@ int main()
 	// initialize the main systems
 	render_system.init(window);
 	world_system.init(&render_system);
-
+	
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world_system.is_over()) {
 		// Processes system messages, if this wasn't present the window would become unresponsive
 		glfwPollEvents();
-
 		// Calculating elapsed times in milliseconds from the previous iteration
         auto now = Clock::now();
-        if (!world_system.pause) {
+		
+        if (!world_system.pause && !world_system.isTitleScreen) {
             float elapsed_ms =
                     (float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
             world_system.step(elapsed_ms);
