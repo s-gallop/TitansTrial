@@ -22,6 +22,8 @@ public:
 	ComponentContainer<Mesh *> meshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
+	ComponentContainer<SpitterEnemy> spitterEnemies;
+	ComponentContainer<SpitterBullet> spitterBullets;
 	ComponentContainer<Enemies> enemies;
 	ComponentContainer<Collectable> collectables;
 	ComponentContainer<Sword> swords;
@@ -50,6 +52,8 @@ public:
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
 		registry_list.push_back(&screenStates);
+		registry_list.push_back(&spitterEnemies);
+		registry_list.push_back(&spitterBullets);
 		registry_list.push_back(&enemies);
 		registry_list.push_back(&collectables);
 		registry_list.push_back(&swords);
