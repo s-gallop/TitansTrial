@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "physics_system.hpp"
+#include <map>
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
@@ -364,10 +365,15 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		//int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		//int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px/2.f, window_height_px/2.f), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		Entity newEnemy2 = createEnemy(renderer, vec2(window_width_px / 2.f, window_height_px / 2.f + ENEMY_BB_HEIGHT), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
 		registry.enemies.get(newEnemy).follows = true;
+		//registry.motions.get(newEnemy).isSolid = true;
+
+		//std::map<short, std::pair<short, short>> map = bfs_follow_start(create_grid(registry.motions.get(newEnemy).position), registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position);
+		//printf("MAAAAAP === %d\n", map.size());
 	}
 
 	Motion& hero_motion = registry.motions.get(player_hero);
@@ -391,10 +397,67 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 
 			} 
 			//printf("Position: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
-			enemy_motion.velocity = following_direction * (BASIC_SPEED / 2.f);
+			//enemy_motion.velocity = following_direction * (BASIC_SPEED / 2.f);
+			enemy_motion.velocity = vec2(0, 0);
 		}
 	}
 
+}
+
+std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_start(std::vector<std::vector<char>> vec, vec2 pos_chase, vec2 pos_prey) {
+	vec[pos_prey.y][pos_prey.x] = 'g';
+	std::map<short, std::pair<short, short>> path;
+	return bfs_follow_helper(vec, pos_chase, path);
+}
+
+std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_helper(std::vector<std::vector<char>> vec, vec2 pos_cur, std::map<short, std::pair<short, short>> p_map) {
+	if (vec[pos_cur.y][pos_cur.x] == 'g') return p_map;
+	std::map<short, std::pair<short, short>> p_map_up = p_map;
+	std::map<short, std::pair<short, short>> p_map_down = p_map;
+	std::map<short, std::pair<short, short>> p_map_left = p_map;
+	std::map<short, std::pair<short, short>> p_map_right = p_map;
+	vec[pos_cur.y][pos_cur.x] == 'v';
+
+	//check path up
+	if (vec[pos_cur.y - 1][pos_cur.x] != NULL && vec[pos_cur.y - 1][pos_cur.x] != 'v' && vec[pos_cur.y - 1][pos_cur.x] != 'b') {
+		p_map_up.emplace(p_map.size(), std::pair<short, short>(pos_cur.y - 1, pos_cur.x));
+		bfs_follow_helper(vec, vec2(pos_cur.y - 1, pos_cur.x), p_map_up);
+	}
+	//check path down
+	if (vec[pos_cur.y + 1][pos_cur.x] != NULL && vec[pos_cur.y + 1][pos_cur.x] != 'v' && vec[pos_cur.y + 1][pos_cur.x] != 'b') {
+		p_map_down.emplace(p_map.size(), std::pair<short, short>(pos_cur.y + 1, pos_cur.x));
+		bfs_follow_helper(vec, vec2(pos_cur.y + 1, pos_cur.x), p_map_down);
+	}
+	//check path left
+	if (vec[pos_cur.y][pos_cur.x - 1] != NULL && vec[pos_cur.y][pos_cur.x - 1] != 'v' && vec[pos_cur.y][pos_cur.x - 1] != 'b') {
+		p_map_left.emplace(p_map.size(), std::pair<short, short>(pos_cur.y, pos_cur.x - 1));
+		bfs_follow_helper(vec, vec2(pos_cur.y, pos_cur.x - 1), p_map_left);
+	}
+	//check path right
+	if (vec[pos_cur.y][pos_cur.x + 1] != NULL && vec[pos_cur.y][pos_cur.x + 1] != 'v' && vec[pos_cur.y][pos_cur.x + 1] != 'b') {
+		p_map_right.emplace(p_map.size(), std::pair<short, short>(pos_cur.y, pos_cur.x + 1));
+		bfs_follow_helper(vec, vec2(pos_cur.y, pos_cur.x + 1), p_map_right);
+	}
+
+	//find shortest path
+	std::map<short, std::pair<short, short>> cur_shortest = p_map_up;
+
+	if (cur_shortest.size() > p_map_down.size()) cur_shortest = p_map_down;
+	if (cur_shortest.size() > p_map_left.size()) cur_shortest = p_map_left;
+	if (cur_shortest.size() > p_map_right.size()) cur_shortest = p_map_right;
+	
+	return cur_shortest;
+}
+
+std::vector<std::vector<char>> WorldSystem::create_grid(vec2 pos_ent) {
+	int max_vision = 5;
+	std::vector <char> line(max_vision * 2, 'n');
+	std::vector<std::vector<char> > vect(max_vision * 2, line);
+
+	vec2 player_p = registry.motions.get(player_hero).position + pos_ent;
+	if ( player_p.y > 0 && player_p.x > 0 && player_p.x < vect.size() && player_p.y < vect[0].size()) vect[player_p.y][player_p.x] = 'g';
+
+	return vect;
 }
 
 // Reset the world state to its initial state
@@ -420,8 +483,8 @@ void WorldSystem::restart_game()
 	
 	createBackground(renderer);
 	// Create a new hero
-	player_hero = createHero(renderer, {100, 200});
-	registry.colors.insert(player_hero, {1, 0.8f, 0.8f});
+	player_hero = createHero(renderer, { 100, 200 });
+	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
 	int background_pixels_width = 768;
 	int background_pixels_height = 432;
 
@@ -469,9 +532,21 @@ void WorldSystem::restart_game()
 
 	// bottom center padding platform
 	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
-	// Adds whatever's needed in the pause screen
 	
+	// Adds whatever's needed in the pause screen
 	create_pause_screen();
+
+	/*std::vector<std::vector<char>> vec = create_grid(vec2 (window_width_px/2.f, window_height_px/2.f));
+
+	for (uint i = 0; i < vec.size(); i++) {
+		for (uint j = 0; j < vec[0].size(); j++) {
+			printf("%c", vec[i][j]);
+		}
+		printf(" \n");
+	}*/
+
+	//printf("%d %d", window_height_px, window_width_px);
+
 }
 
 void WorldSystem::create_pause_screen() {
@@ -665,6 +740,17 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			debugging.in_debug_mode = true;
 	}
 
+	if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
+		std::vector<std::vector<char>> vec = create_grid(registry.motions.get(player_hero).position);
+
+		for (uint i = 0; i < vec.size(); i++) {
+			for (uint j = 0; j < vec[0].size(); j++) {
+				printf("%c", vec[i][j]);
+			}
+			printf(" \n");
+		}
+	}
+
 	// Control the current speed with `<` `>`
 	/*
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
@@ -688,6 +774,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
+
     // button click check
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);

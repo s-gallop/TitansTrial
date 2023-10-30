@@ -14,6 +14,7 @@
 #include "render_system.hpp"
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
+#include <map>
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -41,6 +42,10 @@ public:
 
 	// spawn following enemies (refactor)
 	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
+
+	std::vector<std::vector<char>> WorldSystem::create_grid(vec2 pos_ent);
+	std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_helper(std::vector<std::vector<char>> vec, vec2 pos_cur, std::map<short, std::pair<short, short>> p_map);
+	std::map<short, std::pair<short, short>> WorldSystem::bfs_follow_start(std::vector<std::vector<char>> vec, vec2 pos_chase, vec2 pos_prey);
 
 	// Check for collisions
 	void handle_collisions();
