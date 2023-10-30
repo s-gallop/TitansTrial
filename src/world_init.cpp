@@ -261,7 +261,7 @@ Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.scale = ASSET_SIZE.at(type);
-    Button &button = registry.buttons.emplace(entity);
+    GameButton &button = registry.buttons.emplace(entity);
     button.clicked = false;
     button.callback = std::move(callback);
     registry.renderRequests.insert(

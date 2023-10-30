@@ -147,7 +147,7 @@ struct AnimationInfo
 struct ShowWhenPaused {
 };
 
-struct Button {
+struct GameButton {
     int clicked;
     std::function<void ()> callback;
 };
