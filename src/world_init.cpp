@@ -94,7 +94,6 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = {-SPITTER_BB_WIDTH, SPITTER_BB_HEIGHT};
-	motion.isSolid = true;
 
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot

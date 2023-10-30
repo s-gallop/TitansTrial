@@ -501,7 +501,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other)) && invlunerable_timer <= 0.0f)
+			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && invlunerable_timer <= 0.0f)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -532,33 +532,6 @@ void WorldSystem::handle_collisions()
 					collect_weapon(entity_other, player_hero);
 				}
 			}
-			else if (registry.blocks.has(entity_other))
-			{
-				if ((registry.motions.get(entity).position.y < registry.motions.get(entity_other).position.y + registry.motions.get(entity_other).scale.y / 2) ||
-					(registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x - registry.motions.get(entity_other).scale.x / 2) ||
-					(registry.motions.get(entity).position.x > registry.motions.get(entity_other).position.x + registry.motions.get(entity_other).scale.x / 2))
-				{
-					registry.players.get(entity).jumps = MAX_JUMPS;
-				}
-			}
-		}
-		else if (registry.collectables.has(entity))
-		{
-
-			if (registry.blocks.has(entity_other))
-			{
-				registry.gravities.remove(entity);
-				registry.motions.get(entity).velocity = vec2(0, 0);
-
-				if (registry.motions.get(entity).position.y > 600 && (registry.motions.get(entity).position.x < 190 || registry.motions.get(entity).position.x > 1010))
-				{
-					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 90);
-				}
-				else
-				{
-					registry.motions.get(entity).position = vec2(registry.motions.get(entity).position.x, registry.motions.get(entity_other).position.y - 55);
-				}
-			}
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
@@ -574,6 +547,31 @@ void WorldSystem::handle_collisions()
 				}
 			} else if (registry.blocks.has(entity_other) && registry.bullets.has(entity)) {
 				registry.remove_all_components_of(entity);
+			}
+		}
+		else if (registry.blocks.has(entity))
+		{
+			if (registry.collectables.has(entity_other) || registry.spitterEnemies.has(entity_other)) {
+				registry.gravities.remove(entity_other);
+				registry.motions.get(entity_other).velocity = vec2(0, 0);
+
+				if (registry.motions.get(entity_other).position.y > 600 && (registry.motions.get(entity_other).position.x < 190 || registry.motions.get(entity_other).position.x > 1010))
+				{
+					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 90);
+				}
+				else
+				{
+					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 55);
+				}
+			}
+			else if (registry.players.has(entity_other))
+			{
+				if ((registry.motions.get(entity_other).position.y < registry.motions.get(entity).position.y + registry.motions.get(entity).scale.y / 2) ||
+					(registry.motions.get(entity_other).position.x < registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2) ||
+					(registry.motions.get(entity_other).position.x > registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2))
+				{
+					registry.players.get(entity_other).jumps = MAX_JUMPS;
+				}
 			}
 		}
 	}
