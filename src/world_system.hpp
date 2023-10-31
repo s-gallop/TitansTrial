@@ -44,7 +44,7 @@ public:
 	// spawn following enemies (refactor)
 	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
 
-	// spawn normal enemies (refactor)
+	// spawn splitter enemies
 	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
 
 	// Check for collisions
@@ -78,9 +78,11 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
-	float current_enemy_spawning_speed;
 	float current_speed;
+	float current_enemy_spawning_speed;
+	float current_spitter_spawning_speed;
 	float next_enemy_spawn;
+	float next_spitter_spawn;
 	Entity player_hero;
 
 	// C++ random number generator

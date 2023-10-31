@@ -7,7 +7,7 @@ float next_collectable_spawn = 1000.f;
 
 const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
-const size_t GUN_COOLDOWN = 1000;
+const size_t GUN_COOLDOWN = 800;
 
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
@@ -104,23 +104,31 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 	}
 }
 
-float spawn_collectable(RenderSystem* renderer) {
+float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	if (rand < 0)
-		createSword(renderer, {x_pos, y_pos});
+	if (ddl == 0)
+		createSword(renderer, { x_pos, y_pos });
+	else if (ddl == 1)
+		if (rand > 0.8)
+			createGun(renderer, { x_pos, y_pos });
+		else
+			createSword(renderer, { x_pos, y_pos });
 	else
-		createGun(renderer, {x_pos, y_pos});
+		if (rand > 0.5)
+			createGun(renderer, { x_pos, y_pos });
+		else
+			createSword(renderer, { x_pos, y_pos });
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
 
-void update_collectable_timer(float elapsed_ms, RenderSystem* renderer) {
+void update_collectable_timer(float elapsed_ms, RenderSystem* renderer, int ddl) {
 	next_collectable_spawn -= elapsed_ms;
-	if (registry.collectables.components.size() <= MAX_COLLECTABLES && next_collectable_spawn < 0.f)
-		next_collectable_spawn = spawn_collectable(renderer);
+	if (registry.collectables.components.size() < MAX_COLLECTABLES && next_collectable_spawn < 0.f)
+		next_collectable_spawn = spawn_collectable(renderer, ddl);
 }
 
 void do_weapon_action(RenderSystem* renderer, Entity weapon) {
