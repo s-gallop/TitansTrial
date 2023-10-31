@@ -17,7 +17,7 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
   * world_init.cpp:
     * func createButton
   * render_system.cpp:
-    * func drawTextureMesh
+    * func drawTextureMesh - lines 82-90
   * world_system.cpp:
     * func on_mouse_click
   * button.fs.glsl
@@ -28,7 +28,7 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
   * world_system.cpp:
     * func change_pause
   * main.cpp:
-    * func main
+    * func main - lines 43-53
 * screen.fs.glsl
 * screen.vs.glsl
 * Spitter Enemy
@@ -38,7 +38,7 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
     * func createSpitterEnemy
     * func createSpitterEnemyBullet
   * physics_system.cpp:
-    * func step *(at the bottom)
+    * func step - lines 207-246
 * Main Menu
   * world_init.cpp:
     * func createTitleText
@@ -49,11 +49,16 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
   * weapon_utils.cpp
     * everything
   * physics_system.cpp
-    * func collides
-* Dynamic Difficulty System / Health Bar + Invulnerability
-  * world_system.cpp
-    * func step
-    * func handle_collision
+    * func collides - lines 17-49
+* Dynamic Difficulty System
+  * world_system.cpp:
+    * func step - lines 172-200 268-282
+* Health Bar + Invulnerability
+  * world_system.cpp:
+    * func handle_collision - lines 586-612
+  * render_system.cpp:
+    * drawTextureMesh - lines 68-73
+  * hero.fv.glsl
 
 ---
 
