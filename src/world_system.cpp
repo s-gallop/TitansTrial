@@ -44,9 +44,6 @@ int ddl = 0;
 */
 float ddf = 0.0f;
 
-// When player hits the enemies, set it to 3000.0f
-float invlunerable_timer = 0.0f;
-
 // Create the fish world
 WorldSystem::WorldSystem()
 	: points(0), next_enemy_spawn(0.f)
@@ -171,16 +168,16 @@ void WorldSystem::create_title_screen()
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
-	if (invlunerable_timer > 0.0f)
+	if (registry.players.get(player_hero).invulnerable_timer > 0.0f)
 	{
-		float expectedTimer = invlunerable_timer - elapsed_ms_since_last_update;
+		float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
 		if (expectedTimer <= 0.0f) {
-			invlunerable_timer = 0.0f;
+			registry.players.get(player_hero).invulnerable_timer = 0.0f;
 			registry.colors.get(player_hero) = player_color;
 		}
 		else
 		{
-			invlunerable_timer = expectedTimer;
+			registry.players.get(player_hero).invulnerable_timer = expectedTimer;
 		}
 	}
 	ddf += elapsed_ms_since_last_update / 1000.0f;
@@ -194,7 +191,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
 	title_ss << "; Player HP: " << registry.players.get(player_hero).hp;
-	title_ss << "; Invlunerable Time: " << invlunerable_timer / 1000.0f;
+	title_ss << "; Invlunerable Time: " << registry.players.get(player_hero).invulnerable_timer / 1000.0f;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -491,7 +488,6 @@ void WorldSystem::restart_game()
 	motionKeyStatus.reset();
 	ddl = 0;
 	ddf = 0.0f;
-	invlunerable_timer = 0.0f;
 	player_color = registry.colors.get(player_hero);
 
 	// TODO: figure out when/where to spawn them based on difficulty
@@ -564,12 +560,11 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && invlunerable_timer <= 0.0f)
+			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f)
 			{
 				// remove 1 hp
 				player.hp -= 1;
-				invlunerable_timer = 3000.0f;
-				registry.colors.get(player_hero) = vec3(1, 0, 0);
+				registry.players.get(player_hero).invulnerable_timer = 3000.0f;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
 

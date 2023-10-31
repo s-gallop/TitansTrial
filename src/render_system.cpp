@@ -65,6 +65,13 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 			glUniform2f(scale_loc, info.stateCycleLength, info.states);
 		}
 
+		if (registry.players.has(entity) && !registry.deathTimers.has(entity)) {
+			GLint invulnerable_time_loc = glGetUniformLocation(program, "invulnerable_timer");
+			glUniform1f(invulnerable_time_loc, registry.players.get(entity).invulnerable_timer);
+			GLint pi_loc = glGetUniformLocation(program, "M_PI");
+			glUniform1f(pi_loc, M_PI);
+		}
+
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();

@@ -21,6 +21,7 @@ struct Player
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
+	float invulnerable_timer = 0;
 };
 
 struct Block
