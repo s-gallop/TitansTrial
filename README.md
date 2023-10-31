@@ -6,11 +6,12 @@ Titan's Trial - A 2D Endless survival game
 
 Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal document. The changes include:
 
-* Instead of adding a boulder as an enemy, we added 2 of them: The ghoul which follows the player and the spitter which shoots a bouncing projectile
+* Instead of adding a boulder as an enemy we decided to make the spitter which shoots a bouncing projectile
+* Instead of adding simple path finding, we started working on that with the intention of completing it in milestone 3
+  * For our creative component, we pivoted to simple rendering effects, including a screen darkening effect on pause and a pulse effect when the hero is hit
 * Early and additional implementations
   * Title screen
-  * Health system
-  * Dynamic difficulty system based on health, score and time since last damage was taken
+  * Simple path finding was started
   
 ## M2 Features
 * Button System
