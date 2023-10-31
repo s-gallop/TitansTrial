@@ -14,6 +14,8 @@
 #include "render_system.hpp"
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
+#include "ai_system.hpp"
+#include <map>
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -38,6 +40,9 @@ public:
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
+
+	// spawn following enemies (refactor)
+	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
 
 	// spawn normal enemies (refactor)
 	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
