@@ -26,14 +26,13 @@ void collect_weapon(Entity weapon, Entity hero) {
 			
 			Weapon& weapon_comp = registry.weapons.emplace(weapon);
 			Motion& motion = registry.motions.get(weapon);
+			motion.position = registry.motions.get(hero).position;
+			motion.scale *= 1.3;
+			motion.velocity = vec2(0, 0);
 			if (registry.swords.has(weapon)) {
-				motion.position = registry.motions.get(hero).position;
-				motion.scale *= 1.3;
 				motion.positionOffset.y = -50.f;
 				weapon_comp.type = WEAPON_TYPE::SWORD;
 			} else if (registry.guns.has(weapon)) {
-				motion.position = registry.motions.get(hero).position;
-				motion.scale *= 1.3;
 				motion.positionOffset.x = 30.f;
 				weapon_comp.type = WEAPON_TYPE::GUN;
 			}

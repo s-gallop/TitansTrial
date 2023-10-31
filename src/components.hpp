@@ -18,7 +18,7 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	uint jumps = 2;
+	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
 };
@@ -29,6 +29,9 @@ struct Block
 
 struct Enemies
 {
+	bool follows = false;
+	std::list<vec2> path;
+	vec2 cur_dest = vec2(0.f,0.f);
 };
 
 struct SpitterEnemy

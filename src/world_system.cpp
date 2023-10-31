@@ -1,17 +1,19 @@
 // Header
 #include "world_system.hpp"
 #include "world_init.hpp"
+#include "physics_system.hpp"
+#include "ai_system.hpp"
 
 // stlib
 #include <cassert>
 #include <sstream>
 #include <bitset>
 #include <iostream>
-
-#include "physics_system.hpp"
+#include <map>
 
 // Game configuration
 const size_t MAX_ENEMIES = 15;
+const size_t MAX_FOLLOWING_ENEMIES = MAX_ENEMIES/5;
 const size_t MAX_SPITTERS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t SPITTER_DELAY_MS = 10000 * 3;
@@ -27,6 +29,7 @@ bool WorldSystem::pause = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 vec3 player_color;
+std::vector<std::vector<char>> grid_vec = create_grid();
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -372,6 +375,58 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 	}
 }
 
+// deal with normal eneimies' spawning and moving
+void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
+{
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	if (registry.enemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
+	{
+		// Reset timer
+		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		srand(time(0));
+		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH/2, ENEMY_BB_HEIGHT/2));
+		registry.enemies.get(newEnemy).follows = true;
+		registry.colors.emplace(newEnemy);
+		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
+
+		std::vector<std::vector<char>> vec = grid_vec;
+		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
+		registry.enemies.get(newEnemy).cur_dest = find_index_from_map(registry.enemies.get(newEnemy).path.back());
+		registry.enemies.get(newEnemy).path.pop_back();
+	}
+	float dist;
+
+	Motion& hero_motion = registry.motions.get(player_hero);
+	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
+		Entity enemy = registry.enemies.entities[i];
+		Motion& enemy_motion = registry.motions.get(enemy);
+		Enemies& enemy_reg = registry.enemies.get(enemy);
+		
+		if(enemy_reg.follows)
+		{
+			dist = ((enemy_reg.cur_dest).x - enemy_motion.position.x) * ((enemy_reg.cur_dest).x - enemy_motion.position.x) + ((enemy_reg.cur_dest).y - enemy_motion.position.y) * ((enemy_reg.cur_dest).y - enemy_motion.position.y);
+			if (sqrt(dist) > 10) {
+				vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
+				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+				enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
+			}
+			else if (enemy_reg.path.size() == 0) {
+				std::vector<std::vector<char>> vec = grid_vec;
+				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
+				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				enemy_reg.path.pop_back();
+			}
+			else {
+				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				enemy_reg.path.pop_back();
+
+				enemy_motion.velocity = vec2(0, 0);
+			}
+		}
+	}
+}
+
 void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
@@ -454,8 +509,8 @@ void WorldSystem::restart_game()
 	
 	createBackground(renderer);
 	// Create a new hero
-	player_hero = createHero(renderer, {100, 200});
-	registry.colors.insert(player_hero, {1, 0.8f, 0.8f});
+	player_hero = createHero(renderer, { 100, 200 });
+	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
 	int background_pixels_width = 768;
 	int background_pixels_height = 432;
 
@@ -502,9 +557,16 @@ void WorldSystem::restart_game()
 
 	// bottom center padding platform
 	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
-	// Adds whatever's needed in the pause screen
 	
+	// Adds whatever's needed in the pause screen
 	create_pause_screen();
+
+	//testing screen dimensions
+	/*for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
+		for (int j = -25; j < window_height_px; j += ENEMY_BB_HEIGHT) {
+			createEnemy(renderer, vec2(i, j), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		}
+	}*/
 }
 
 void WorldSystem::create_pause_screen() {
@@ -719,6 +781,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
+
     // button click check
     for(Entity entity : registry.buttons.entities) {
         Motion &button = registry.motions.get(entity);
