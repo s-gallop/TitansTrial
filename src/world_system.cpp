@@ -245,6 +245,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
+	update_lodged(player_hero, motionKeyStatus);
+
 	if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
 
@@ -685,12 +687,8 @@ bool WorldSystem::is_over() const
 void WorldSystem::motion_helper(Motion &playerMotion)
 {
 	std::bitset<2>& lodged = registry.gravities.get(player_hero).lodged;
-	float rightFactor = motionKeyStatus.test(0) && !lodged.test(0) ? 1 : 0;
-	float leftFactor = motionKeyStatus.test(1) && !lodged.test(1) ? -1 : 0;
-	if (lodged.test(0) && leftFactor)
-		lodged.reset(0);
-	if (lodged.test(1) && rightFactor)
-		lodged.reset(1);
+	float rightFactor = motionKeyStatus.test(0) && !lodged.test(0) && !lodged.test(1) ? 1 : 0;
+	float leftFactor = motionKeyStatus.test(1) && !lodged.test(0) && !lodged.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
 	if (!pause) {
 		if (playerMotion.velocity.x < 0)

@@ -141,7 +141,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	createDashBoots(renderer, {x_pos, y_pos});
+	createPickaxe(renderer, {x_pos, y_pos});
 	// if (ddl == 0)
 	// 	createSword(renderer, { x_pos, y_pos });
 	// else if (ddl == 1)
@@ -189,6 +189,14 @@ void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
 	registry.players.get(hero).jumps = max_jumps;
 	registry.gravities.get(hero).lodged.set(direction);
 	play_sound(SOUND_EFFECT::PICKAXE);
+}
+
+void update_lodged(Entity hero, std::bitset<2> motionKeyStatus) {
+	std::bitset<2>& lodged = registry.gravities.get(hero).lodged;
+	if (lodged.test(0) && !motionKeyStatus.test(0))
+		lodged.reset(0);
+	else if (lodged.test(1) && !motionKeyStatus.test(1))
+		lodged.reset(1);
 }
 
 void check_dash_boots(Entity hero, uint direction) {
