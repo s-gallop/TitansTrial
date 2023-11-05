@@ -245,6 +245,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
+	if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
+
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -588,7 +591,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f)
+			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -715,6 +718,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
+			if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+				check_dash_boots(player_hero, 0);
 			motionKeyStatus.set(0);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
@@ -723,6 +728,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
+			if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+				check_dash_boots(player_hero, 1);
 			motionKeyStatus.set(1);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
@@ -730,9 +737,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			motionKeyStatus.reset(1);
 		}
 
-		motion_helper(playerMotion);
+		if (!registry.gravities.get(player_hero).dashing)
+			motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
+		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 		{
 			if (registry.players.get(player_hero).jumps > 0 && !registry.gravities.get(player_hero).lodged.test(0) && !registry.gravities.get(player_hero).lodged.test(1))
 			{
@@ -742,7 +750,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause)
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 			for (Entity weapon : registry.weapons.entities)
 				do_weapon_action(renderer, weapon);
 	}

@@ -352,6 +352,29 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
+Entity createDashBoots(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {DASH_BOOTS_BB_WIDTH, DASH_BOOTS_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::DASH_BOOTS;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::DASH_BOOTS,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();

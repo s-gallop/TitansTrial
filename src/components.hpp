@@ -11,7 +11,8 @@ enum class COLLECTABLE_TYPE
 	GUN = SWORD + 1,
 	HEART = GUN + 1,
 	PICKAXE = HEART + 1,
-	WINGED_BOOTS = PICKAXE + 1
+	WINGED_BOOTS = PICKAXE + 1,
+	DASH_BOOTS = WINGED_BOOTS + 1
 };
 
 // Player component
@@ -109,6 +110,7 @@ struct TestAI
 struct Gravity
 {
 	std::bitset<2> lodged = std::bitset<2>("00");
+	uint dashing = 0;
 };
 
 // Stucture to store collision information
@@ -219,7 +221,8 @@ enum class TEXTURE_ASSET_ID
 	HEART = GUN + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
-	BACKGROUND = WINGED_BOOTS + 1,
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	BACKGROUND = DASH_BOOTS + 1,
 	QUIT = BACKGROUND + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,

@@ -4,10 +4,15 @@
 #include "sound_utils.hpp"
 
 float next_collectable_spawn = 1000.f;
+float dash_window = 0.f;
+float dash_time = 0.f;
+uint dash_direction = 0;
 
 const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
+const size_t DASH_WINDOW = 250;
+const size_t DASH_TIME = 250;
 
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
@@ -56,13 +61,11 @@ void collect(Entity collectable, Entity hero) {
 			registry.remove_all_components_of(collectable);
 		}
 		break;
-		case COLLECTABLE_TYPE::PICKAXE: {
-			registry.players.get(hero).equipment_type = COLLECTABLE_TYPE::PICKAXE;
-			registry.remove_all_components_of(collectable);
-		}
-		break;
-		case COLLECTABLE_TYPE::WINGED_BOOTS: {
-			registry.players.get(hero).equipment_type = COLLECTABLE_TYPE::WINGED_BOOTS;
+		case COLLECTABLE_TYPE::PICKAXE:
+		case COLLECTABLE_TYPE::WINGED_BOOTS:
+		case COLLECTABLE_TYPE::DASH_BOOTS: 
+		{
+			registry.players.get(hero).equipment_type = type;
 			registry.remove_all_components_of(collectable);
 		}
 		break;
@@ -138,7 +141,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	createWingedBoots(renderer, {x_pos, y_pos});
+	createDashBoots(renderer, {x_pos, y_pos});
 	// if (ddl == 0)
 	// 	createSword(renderer, { x_pos, y_pos });
 	// else if (ddl == 1)
@@ -186,4 +189,38 @@ void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
 	registry.players.get(hero).jumps = max_jumps;
 	registry.gravities.get(hero).lodged.set(direction);
 	play_sound(SOUND_EFFECT::PICKAXE);
+}
+
+void check_dash_boots(Entity hero, uint direction) {
+	if (!registry.gravities.get(hero).dashing) {
+		if (direction == dash_direction && dash_window > 0) {
+			registry.gravities.get(hero).dashing = 1;
+			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
+			dash_time = DASH_TIME;
+			play_sound(SOUND_EFFECT::DASH);
+		} else {
+			dash_direction = direction;
+			dash_window = DASH_WINDOW;
+		}
+	}
+}
+
+void update_dash_boots(float elapsed_ms, Entity hero, std::bitset<2> motionKeyStatus, float speed) {
+	if (registry.gravities.get(hero).dashing) {
+		dash_time -= elapsed_ms;
+		if (dash_time < 0) {
+			registry.gravities.get(hero).dashing = 0;
+			float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
+			float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
+			Motion& playerMotion = registry.motions.get(hero);
+			playerMotion.velocity[0] = speed * (rightFactor + leftFactor);
+			if (playerMotion.velocity.x < 0)
+				playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+			else if (playerMotion.velocity.x > 0)
+				playerMotion.scale.x = abs(playerMotion.scale.x);
+			dash_window = 0;
+		}
+	} else if (dash_window > 0) {
+		dash_window -= elapsed_ms;
+	}
 }
