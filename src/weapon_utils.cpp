@@ -31,12 +31,30 @@ void collect_weapon(Entity weapon, Entity hero) {
 			motion.velocity = vec2(0, 0);
 			if (registry.swords.has(weapon)) {
 				motion.positionOffset.y = -50.f;
-				weapon_comp.type = WEAPON_TYPE::SWORD;
+				weapon_comp.type = COLLECTABLE_TYPE::SWORD;
 			} else if (registry.guns.has(weapon)) {
 				motion.positionOffset.x = 30.f;
-				weapon_comp.type = WEAPON_TYPE::GUN;
+				weapon_comp.type = COLLECTABLE_TYPE::GUN;
 			}
 		}
+	}
+}
+
+void collect(Entity collectable, Entity hero) {
+	COLLECTABLE_TYPE type = registry.collectables.get(collectable).type;
+	switch (type) {
+		case COLLECTABLE_TYPE::GUN:
+		case COLLECTABLE_TYPE::SWORD:
+			collect_weapon(collectable, hero);
+			break;
+		case COLLECTABLE_TYPE::HEART:
+			Player& player = registry.players.get(hero);
+			if (player.hp < player.hp_max) {
+				play_sound(SOUND_EFFECT::HEAL);
+				player.hp++;
+			}
+			registry.remove_all_components_of(collectable);
+			break;
 	}
 }
 
@@ -109,18 +127,19 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	if (ddl == 0)
-		createSword(renderer, { x_pos, y_pos });
-	else if (ddl == 1)
-		if (rand > 0.8)
-			createGun(renderer, { x_pos, y_pos });
-		else
-			createSword(renderer, { x_pos, y_pos });
-	else
-		if (rand > 0.5)
-			createGun(renderer, { x_pos, y_pos });
-		else
-			createSword(renderer, { x_pos, y_pos });
+	createHeart(renderer, {x_pos, y_pos});
+	// if (ddl == 0)
+	// 	createSword(renderer, { x_pos, y_pos });
+	// else if (ddl == 1)
+	// 	if (rand > 0.8)
+	// 		createGun(renderer, { x_pos, y_pos });
+	// 	else
+	// 		createSword(renderer, { x_pos, y_pos });
+	// else
+	// 	if (rand > 0.5)
+	// 		createGun(renderer, { x_pos, y_pos });
+	// 	else
+	// 		createSword(renderer, { x_pos, y_pos });
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }

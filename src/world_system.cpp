@@ -615,7 +615,7 @@ void WorldSystem::handle_collisions()
 			{
 				if (!registry.deathTimers.has(entity))
 				{
-					collect_weapon(entity_other, player_hero);
+					collect(entity_other, player_hero);
 				}
 			}
 		}

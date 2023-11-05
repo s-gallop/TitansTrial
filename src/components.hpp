@@ -4,10 +4,11 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
-enum class WEAPON_TYPE
+enum class COLLECTABLE_TYPE
 {
 	SWORD = 0,
-	GUN = SWORD + 1
+	GUN = SWORD + 1,
+	HEART = GUN + 1
 };
 
 // Player component
@@ -48,7 +49,7 @@ struct SpitterBullet
 
 struct Collectable
 {
-	WEAPON_TYPE type;
+	COLLECTABLE_TYPE type;
 };
 
 struct Sword
@@ -70,7 +71,7 @@ struct Bullet {
 struct Weapon
 {
 	std::vector<Entity> hitBoxes;
-	WEAPON_TYPE type;
+	COLLECTABLE_TYPE type;
 };
 
 struct WeaponHitBox
@@ -210,7 +211,8 @@ enum class TEXTURE_ASSET_ID
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
-	BACKGROUND = GUN + 1,
+	HEART = GUN + 1,
+	BACKGROUND = HEART + 1,
 	QUIT = BACKGROUND + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,

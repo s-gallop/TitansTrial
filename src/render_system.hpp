@@ -37,6 +37,7 @@ class RenderSystem
 		textures_path("spitter_bullet.png"),
 		textures_path("sword.png"),
 		textures_path("pistol.png"),
+		textures_path("heart.png"),
 		textures_path("background.png"),
 		textures_path("buttons/quit.png"),
 		textures_path("buttons/quit_pressed.png"),
