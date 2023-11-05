@@ -57,7 +57,12 @@ void collect(Entity collectable, Entity hero) {
 		}
 		break;
 		case COLLECTABLE_TYPE::PICKAXE: {
-			registry.players.get(hero).hasPickaxe = 1;
+			registry.players.get(hero).equipment_type = COLLECTABLE_TYPE::PICKAXE;
+			registry.remove_all_components_of(collectable);
+		}
+		break;
+		case COLLECTABLE_TYPE::WINGED_BOOTS: {
+			registry.players.get(hero).equipment_type = COLLECTABLE_TYPE::WINGED_BOOTS;
 			registry.remove_all_components_of(collectable);
 		}
 		break;
@@ -133,7 +138,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	createPickaxe(renderer, {x_pos, y_pos});
+	createWingedBoots(renderer, {x_pos, y_pos});
 	// if (ddl == 0)
 	// 	createSword(renderer, { x_pos, y_pos });
 	// else if (ddl == 1)

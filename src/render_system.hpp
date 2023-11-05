@@ -39,6 +39,9 @@ class RenderSystem
 		textures_path("pistol.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
+		/*
+		© <a href='https://www.123rf.com/profile_captainvector'>captainvector</a>, <a href='https://www.123rf.com/free-images/'>123RF Free Images</a>*/
+		textures_path("winged_boots.png"),
 		textures_path("background.png"),
 		textures_path("buttons/quit.png"),
 		textures_path("buttons/quit_pressed.png"),

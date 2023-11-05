@@ -10,7 +10,8 @@ enum class COLLECTABLE_TYPE
 	SWORD = 0,
 	GUN = SWORD + 1,
 	HEART = GUN + 1,
-	PICKAXE = HEART + 1
+	PICKAXE = HEART + 1,
+	WINGED_BOOTS = PICKAXE + 1
 };
 
 // Player component
@@ -21,7 +22,7 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	uint hasPickaxe = 0;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
@@ -217,7 +218,8 @@ enum class TEXTURE_ASSET_ID
 	GUN = SWORD + 1,
 	HEART = GUN + 1,
 	PICKAXE = HEART + 1,
-	BACKGROUND = PICKAXE + 1,
+	WINGED_BOOTS = PICKAXE + 1,
+	BACKGROUND = WINGED_BOOTS + 1,
 	QUIT = BACKGROUND + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,

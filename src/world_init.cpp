@@ -329,6 +329,29 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
+Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {WINGED_BOOTS_BB_WIDTH, WINGED_BOOTS_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::WINGED_BOOTS;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::WINGED_BOOTS,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();

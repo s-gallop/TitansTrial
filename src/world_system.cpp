@@ -654,14 +654,14 @@ void WorldSystem::handle_collisions()
 			{
 				if ((registry.motions.get(entity_other).position.y <= registry.motions.get(entity).position.y - registry.motions.get(entity).scale.y / 2 - registry.motions.get(entity_other).scale.y / 2))
 				{
-					registry.players.get(entity_other).jumps = MAX_JUMPS;
+					registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
 				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(0) && registry.players.get(entity_other).hasPickaxe)
+						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
 				{
 					use_pickaxe(player_hero, 0, MAX_JUMPS);
 				}
 				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(1) && registry.players.get(entity_other).hasPickaxe)
+						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
 				{
 					use_pickaxe(player_hero, 1, MAX_JUMPS);
 				}
