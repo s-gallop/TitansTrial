@@ -245,8 +245,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
-	update_lodged(player_hero, motionKeyStatus);
-
 	if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
 
@@ -723,6 +721,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
+			registry.gravities.get(player_hero).lodged.reset(0);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
@@ -733,6 +732,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
+			registry.gravities.get(player_hero).lodged.reset(1);
 		}
 
 		if (!registry.gravities.get(player_hero).dashing)
