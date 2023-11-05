@@ -15,6 +15,8 @@ const float GUN_BB_WIDTH = 1.f * 32;
 const float GUN_BB_HEIGHT = 1.f * 32;
 const float HEART_BB_WIDTH = 2.f * 16;
 const float HEART_BB_HEIGHT = 2.f * 16;
+const float PICKAXE_BB_WIDTH = .5f * 55;
+const float PICKAXE_BB_HEIGHT = .5f * 80;
 const float SPITTER_BB_WIDTH = 16.f * 3.f;
 const float SPITTER_BB_HEIGHT = 24.f * 3.f;
 const float SPITTER_BULLET_BB_WIDTH = 16.f * 3.f;
@@ -36,6 +38,8 @@ Entity createGun(RenderSystem* renderer, vec2 position);
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
+
+Entity createPickaxe(RenderSystem* renderer, vec2 position);
 // the background
 Entity createBackground(RenderSystem* renderer);
 // the helper text during pause

@@ -652,11 +652,18 @@ void WorldSystem::handle_collisions()
 			}
 			else if (registry.players.has(entity_other))
 			{
-				if ((registry.motions.get(entity_other).position.y < registry.motions.get(entity).position.y + registry.motions.get(entity).scale.y / 2) ||
-					(registry.motions.get(entity_other).position.x < registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2) ||
-					(registry.motions.get(entity_other).position.x > registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2))
+				if ((registry.motions.get(entity_other).position.y <= registry.motions.get(entity).position.y - registry.motions.get(entity).scale.y / 2 - registry.motions.get(entity_other).scale.y / 2))
 				{
 					registry.players.get(entity_other).jumps = MAX_JUMPS;
+				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
+						motionKeyStatus.test(0) && registry.players.get(entity_other).hasPickaxe)
+				{
+					use_pickaxe(player_hero, 0, MAX_JUMPS);
+				}
+				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
+						motionKeyStatus.test(1) && registry.players.get(entity_other).hasPickaxe)
+				{
+					use_pickaxe(player_hero, 1, MAX_JUMPS);
 				}
 			}
 		}
@@ -674,8 +681,13 @@ bool WorldSystem::is_over() const
 
 void WorldSystem::motion_helper(Motion &playerMotion)
 {
-	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
-	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
+	std::bitset<2>& lodged = registry.gravities.get(player_hero).lodged;
+	float rightFactor = motionKeyStatus.test(0) && !lodged.test(0) ? 1 : 0;
+	float leftFactor = motionKeyStatus.test(1) && !lodged.test(1) ? -1 : 0;
+	if (lodged.test(0) && leftFactor)
+		lodged.reset(0);
+	if (lodged.test(1) && rightFactor)
+		lodged.reset(1);
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
 	if (!pause) {
 		if (playerMotion.velocity.x < 0)
@@ -722,7 +734,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
 		{
-			if (registry.players.get(player_hero).jumps > 0)
+			if (registry.players.get(player_hero).jumps > 0 && !registry.gravities.get(player_hero).lodged.test(0) && !registry.gravities.get(player_hero).lodged.test(1))
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;

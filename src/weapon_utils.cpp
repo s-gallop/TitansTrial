@@ -47,14 +47,20 @@ void collect(Entity collectable, Entity hero) {
 		case COLLECTABLE_TYPE::SWORD:
 			collect_weapon(collectable, hero);
 			break;
-		case COLLECTABLE_TYPE::HEART:
+		case COLLECTABLE_TYPE::HEART: {
 			Player& player = registry.players.get(hero);
 			if (player.hp < player.hp_max) {
 				play_sound(SOUND_EFFECT::HEAL);
 				player.hp++;
 			}
 			registry.remove_all_components_of(collectable);
-			break;
+		}
+		break;
+		case COLLECTABLE_TYPE::PICKAXE: {
+			registry.players.get(hero).hasPickaxe = 1;
+			registry.remove_all_components_of(collectable);
+		}
+		break;
 	}
 }
 
@@ -127,7 +133,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	createHeart(renderer, {x_pos, y_pos});
+	createPickaxe(renderer, {x_pos, y_pos});
 	// if (ddl == 0)
 	// 	createSword(renderer, { x_pos, y_pos });
 	// else if (ddl == 1)
@@ -167,4 +173,12 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 			gun.loaded = false;
 		}
 	}
+}
+
+void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
+	registry.motions.get(hero).velocity = {0, 0};
+	registry.motions.get(hero).scale.x = (direction ? 1 : -1) * abs(registry.motions.get(hero).scale.x);
+	registry.players.get(hero).jumps = max_jumps;
+	registry.gravities.get(hero).lodged.set(direction);
+	play_sound(SOUND_EFFECT::PICKAXE);
 }
