@@ -96,6 +96,7 @@ struct Motion
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
 	bool isProjectile = false;
+    int dir = 1;
 };
 
 // just for milestone 1 sudden requirement
@@ -268,4 +269,6 @@ struct RenderRequest
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
     bool on_top_screen = false;
     bool visibility = true;
+    vec2 scale = {1,1};
+    vec2 offset = {0,0};
 };

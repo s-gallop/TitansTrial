@@ -3,6 +3,8 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
+const float CHARACTER_SCALING = 3.0f;
+
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::QUIT,{204, 56} },
         { TEXTURE_ASSET_ID::QUIT_PRESSED,{204, 56} },
@@ -12,8 +14,14 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
 		{ TEXTURE_ASSET_ID::PLAY, {204, 56}},
 		{ TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
 		{ TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
+        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
+};
 
-		
+const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
+        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
+};
+const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
+        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
 };
 
 
@@ -30,21 +38,24 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
-	motion.scale = {HERO_BB_WIDTH, HERO_BB_HEIGHT};
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HERO);
 	motion.isSolid = true;
 
 	registry.players.emplace(entity);
 	AnimationInfo &animationInfo = registry.animated.emplace(entity);
-	animationInfo.states = 4;
+	animationInfo.states = 13;
 	animationInfo.curState = 0;
-	animationInfo.stateFrameLength = {9, 8, 4, 4};
-	animationInfo.stateCycleLength = 9;
+	animationInfo.stateFrameLength = {9, 1, 8, 4, 4, 4, 16, 4, 8, 4, 14, 2, 8};
+	animationInfo.stateCycleLength = 16;
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HERO,
 		 EFFECT_ASSET_ID::HERO,
 		 GEOMETRY_BUFFER_ID::SPRITE,
-         true});
+         true,
+         true,
+         {52*3,21*3},
+         {(52-15*2)/2*3,-(21-16)/2*3}});
 
 	registry.gravities.emplace(entity);
 
@@ -65,14 +76,17 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = velocity;
-	motion.scale = scale;
+	motion.scale = {9,9};
 
 	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::ENEMY,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         scale});
 
 	// registry.gravities.emplace(entity);
 	registry.testAIs.emplace(entity);
@@ -109,7 +123,10 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY,
 		 EFFECT_ASSET_ID::SPITTER_ENEMY,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	registry.gravities.emplace(entity);
 
@@ -147,7 +164,10 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET,
 		 EFFECT_ASSET_ID::SPITTER_ENEMY_BULLET,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	return entity;
 }
@@ -169,7 +189,10 @@ Entity createBackground(RenderSystem* renderer)
 		entity,
 		{TEXTURE_ASSET_ID::BACKGROUND,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 	return entity;
 }
 
@@ -192,7 +215,8 @@ Entity createHelperText(RenderSystem* renderer)
              EFFECT_ASSET_ID::TEXTURED,
              GEOMETRY_BUFFER_ID::SPRITE,
              true,
-             false});
+             false,
+             motion.scale});
     registry.showWhenPaused.emplace(entity);
     return entity;
 }
@@ -221,7 +245,10 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 		entity,
 		{TEXTURE_ASSET_ID::SWORD,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	return entity;
 }
@@ -250,7 +277,10 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 		entity,
 		{TEXTURE_ASSET_ID::GUN,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	return entity;
 }
@@ -278,7 +308,10 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
 			EFFECT_ASSET_ID::BULLET,
-			GEOMETRY_BUFFER_ID::BULLET });
+			GEOMETRY_BUFFER_ID::BULLET,
+          false,
+          true,
+          motion.scale});
 
 	return entity;
 }
@@ -392,7 +425,10 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
 		 EFFECT_ASSET_ID::COLOURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	return entity;
 }
@@ -411,7 +447,10 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
 		 EFFECT_ASSET_ID::COLOURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 
 	return entity;
 }
@@ -435,7 +474,8 @@ Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std
              EFFECT_ASSET_ID::TEXTURED,
              GEOMETRY_BUFFER_ID::SPRITE,
              true,
-             visibility});
+             visibility,
+            motion.scale});
     if (!visibility) {
         registry.showWhenPaused.emplace(entity);
     }
@@ -459,7 +499,14 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 		entity,
 		{TEXTURE_ASSET_ID::TITLE_TEXT,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+         false,
+         true,
+         motion.scale});
 	registry.showWhenPaused.emplace(entity);
 	return entity;
 }
+
+//float offsetHelper(vec2 hurt_scale, vec2 sprite_scale, vec2 hurt_reduction) {
+//
+//}

@@ -256,15 +256,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
 	{
-		playerAnimation.curState = 3;
+		playerAnimation.curState = 4;
 	}
 	else if (playerVelocity.y < 0)
 	{
-		playerAnimation.curState = 2;
+		playerAnimation.curState = 3;
 	}
 	else if (playerVelocity.x != 0)
 	{
-		playerAnimation.curState = 1;
+		playerAnimation.curState = 2;
 	}
 	else
 	{
@@ -693,9 +693,9 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
 	if (!pause) {
 		if (playerMotion.velocity.x < 0)
-			playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+			playerMotion.dir = -1;
 		else if (playerMotion.velocity.x > 0)
-			playerMotion.scale.x = abs(playerMotion.scale.x);
+			playerMotion.dir = 1;
 	}
 }
 

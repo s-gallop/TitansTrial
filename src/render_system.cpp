@@ -6,6 +6,9 @@
 
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool pause)
 {
+    assert(registry.renderRequests.has(entity));
+    const RenderRequest &render_request = registry.renderRequests.get(entity);
+
 	Motion &motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
 	// specification for more info Incrementally updates transformation matrix,
@@ -13,11 +16,10 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 	Transform transform;
 	transform.translate(motion.position);
 	transform.rotate(motion.angle);
-	transform.translate(motion.positionOffset);
-	transform.scale(motion.scale);
+    vec2 flip = {motion.dir, 1};
+	transform.translate(motion.positionOffset + render_request.offset * flip);
+	transform.scale(render_request.scale * flip);
 
-	assert(registry.renderRequests.has(entity));
-	const RenderRequest &render_request = registry.renderRequests.get(entity);
 
 	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
