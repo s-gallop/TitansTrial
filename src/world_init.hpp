@@ -13,6 +13,14 @@ const float HERO_BB_WIDTH = 15.f * 3.f;
 const float HERO_BB_HEIGHT = 16.f * 3.f;
 const float GUN_BB_WIDTH = 1.f * 32;
 const float GUN_BB_HEIGHT = 1.f * 32;
+const float HEART_BB_WIDTH = 2.f * 16;
+const float HEART_BB_HEIGHT = 2.f * 16;
+const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
+const float WINGED_BOOTS_BB_HEIGHT = .02f * 1946;
+const float DASH_BOOTS_BB_WIDTH = 1.2f * 27;
+const float DASH_BOOTS_BB_HEIGHT = 1.2f * 30;
+const float PICKAXE_BB_WIDTH = .5f * 55;
+const float PICKAXE_BB_HEIGHT = .5f * 80;
 const float SPITTER_BB_WIDTH = 16.f * 3.f;
 const float SPITTER_BB_HEIGHT = 24.f * 3.f;
 const float SPITTER_BULLET_BB_WIDTH = 16.f * 3.f;
@@ -32,6 +40,14 @@ Entity createSword(RenderSystem *renderer, vec2 position);
 Entity createGun(RenderSystem* renderer, vec2 position);
 // the bullet
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createHeart(RenderSystem* renderer, vec2 position);
+
+Entity createWingedBoots(RenderSystem* renderer, vec2 position);
+
+Entity createDashBoots(RenderSystem* renderer, vec2 position);
+
+Entity createPickaxe(RenderSystem* renderer, vec2 position);
 // the background
 Entity createBackground(RenderSystem* renderer);
 // the helper text during pause

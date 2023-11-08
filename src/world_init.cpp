@@ -214,7 +214,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
-	collectable.type = WEAPON_TYPE::SWORD;
+	collectable.type = COLLECTABLE_TYPE::SWORD;
 	registry.swords.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
@@ -243,7 +243,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
-	collectable.type = WEAPON_TYPE::GUN;
+	collectable.type = COLLECTABLE_TYPE::GUN;
 	registry.guns.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
@@ -279,6 +279,98 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
 			EFFECT_ASSET_ID::BULLET,
 			GEOMETRY_BUFFER_ID::BULLET });
+
+	return entity;
+}
+
+Entity createHeart(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {HEART_BB_WIDTH, HEART_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::HEART;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::HEART,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createPickaxe(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {PICKAXE_BB_WIDTH, PICKAXE_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::PICKAXE;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::PICKAXE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {WINGED_BOOTS_BB_WIDTH, WINGED_BOOTS_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::WINGED_BOOTS;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::WINGED_BOOTS,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createDashBoots(RenderSystem* renderer, vec2 position) {
+	auto entity = Entity();
+
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = {DASH_BOOTS_BB_WIDTH, DASH_BOOTS_BB_HEIGHT};
+
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::DASH_BOOTS;
+
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::DASH_BOOTS,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;
 }

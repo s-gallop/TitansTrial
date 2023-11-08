@@ -245,6 +245,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
+	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
+	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
+	else if (equipment_type == COLLECTABLE_TYPE::PICKAXE)
+		update_pickaxe(elapsed_ms_since_last_update * current_speed);
+
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -588,7 +594,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f)
+			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -615,7 +621,7 @@ void WorldSystem::handle_collisions()
 			{
 				if (!registry.deathTimers.has(entity))
 				{
-					collect_weapon(entity_other, player_hero);
+					collect(entity_other, player_hero);
 				}
 			}
 		}
@@ -652,11 +658,18 @@ void WorldSystem::handle_collisions()
 			}
 			else if (registry.players.has(entity_other))
 			{
-				if ((registry.motions.get(entity_other).position.y < registry.motions.get(entity).position.y + registry.motions.get(entity).scale.y / 2) ||
-					(registry.motions.get(entity_other).position.x < registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2) ||
-					(registry.motions.get(entity_other).position.x > registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2))
+				if ((registry.motions.get(entity_other).position.y <= registry.motions.get(entity).position.y - registry.motions.get(entity).scale.y / 2 - registry.motions.get(entity_other).scale.y / 2))
 				{
-					registry.players.get(entity_other).jumps = MAX_JUMPS;
+					registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
+				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
+						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
+				{
+					use_pickaxe(player_hero, 0, MAX_JUMPS);
+				}
+				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
+						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
+				{
+					use_pickaxe(player_hero, 1, MAX_JUMPS);
 				}
 			}
 		}
@@ -674,8 +687,9 @@ bool WorldSystem::is_over() const
 
 void WorldSystem::motion_helper(Motion &playerMotion)
 {
-	float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
-	float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
+	std::bitset<2>& lodged = registry.gravities.get(player_hero).lodged;
+	float rightFactor = motionKeyStatus.test(0) && !lodged.test(0) && !lodged.test(1) ? 1 : 0;
+	float leftFactor = motionKeyStatus.test(1) && !lodged.test(0) && !lodged.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
 	if (!pause) {
 		if (playerMotion.velocity.x < 0)
@@ -703,34 +717,45 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
+			if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+				check_dash_boots(player_hero, 0);
 			motionKeyStatus.set(0);
 		}
 		else if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(0);
+			registry.gravities.get(player_hero).lodged.reset(0);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
+			if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+				check_dash_boots(player_hero, 1);
 			motionKeyStatus.set(1);
 		}
 		else if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
 			motionKeyStatus.reset(1);
+			registry.gravities.get(player_hero).lodged.reset(1);
 		}
 
-		motion_helper(playerMotion);
+		if (!registry.gravities.get(player_hero).dashing)
+			motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause)
+		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 		{
 			if (registry.players.get(player_hero).jumps > 0)
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;
 				play_sound(SOUND_EFFECT::HERO_JUMP);
+				if (registry.gravities.get(player_hero).lodged.test(0))
+					disable_pickaxe(player_hero, 0, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
+				else if (registry.gravities.get(player_hero).lodged.test(1))
+					disable_pickaxe(player_hero, 1, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause)
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 			for (Entity weapon : registry.weapons.entities)
 				do_weapon_action(renderer, weapon);
 	}

@@ -4,10 +4,16 @@
 #include "sound_utils.hpp"
 
 float next_collectable_spawn = 1000.f;
+float pickaxe_disable = 0.f;
+float dash_window = 0.f;
+float dash_time = 0.f;
+uint dash_direction = 0;
 
 const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
+const size_t DASH_WINDOW = 250;
+const size_t DASH_TIME = 2250;
 
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
@@ -31,12 +37,39 @@ void collect_weapon(Entity weapon, Entity hero) {
 			motion.velocity = vec2(0, 0);
 			if (registry.swords.has(weapon)) {
 				motion.positionOffset.y = -50.f;
-				weapon_comp.type = WEAPON_TYPE::SWORD;
+				weapon_comp.type = COLLECTABLE_TYPE::SWORD;
 			} else if (registry.guns.has(weapon)) {
 				motion.positionOffset.x = 30.f;
-				weapon_comp.type = WEAPON_TYPE::GUN;
+				weapon_comp.type = COLLECTABLE_TYPE::GUN;
 			}
 		}
+	}
+}
+
+void collect(Entity collectable, Entity hero) {
+	COLLECTABLE_TYPE type = registry.collectables.get(collectable).type;
+	switch (type) {
+		case COLLECTABLE_TYPE::GUN:
+		case COLLECTABLE_TYPE::SWORD:
+			collect_weapon(collectable, hero);
+			break;
+		case COLLECTABLE_TYPE::HEART: {
+			Player& player = registry.players.get(hero);
+			if (player.hp < player.hp_max) {
+				play_sound(SOUND_EFFECT::HEAL);
+				player.hp++;
+			}
+			registry.remove_all_components_of(collectable);
+		}
+		break;
+		case COLLECTABLE_TYPE::PICKAXE:
+		case COLLECTABLE_TYPE::WINGED_BOOTS:
+		case COLLECTABLE_TYPE::DASH_BOOTS: 
+		{
+			registry.players.get(hero).equipment_type = type;
+			registry.remove_all_components_of(collectable);
+		}
+		break;
 	}
 }
 
@@ -104,23 +137,59 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 	}
 }
 
+void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
+	float rand = uniform_dist(rng);
+	if (ddl == 0)
+		createSword(renderer, pos);
+	else if (ddl == 1)
+		if (rand > 0.8)
+			createGun(renderer, pos);
+		else
+			createSword(renderer, pos);
+	else
+		if (rand > 0.5)
+			createGun(renderer, pos);
+		else
+			createSword(renderer, pos);
+}
+
+void spawn_powerup(RenderSystem* renderer, vec2 pos, int ddl) {
+	float rand = uniform_dist(rng);
+	if (ddl == 0)
+		if (rand < 0.6)
+			createWingedBoots(renderer, pos);
+		else if (rand < 0.9)
+			createPickaxe(renderer, pos);
+		else
+			createDashBoots(renderer, pos);
+	else if (ddl == 1)
+		if (rand < 0.3)
+			createWingedBoots(renderer, pos);
+		else if (rand < 0.7)
+			createPickaxe(renderer, pos);
+		else
+			createDashBoots(renderer, pos);
+	else
+		if (rand < 0.2)
+			createWingedBoots(renderer, pos);
+		else if (rand < 0.5)
+			createPickaxe(renderer, pos);
+		else
+			createDashBoots(renderer, pos);
+}
+
 float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	if (ddl == 0)
-		createSword(renderer, { x_pos, y_pos });
-	else if (ddl == 1)
-		if (rand > 0.8)
-			createGun(renderer, { x_pos, y_pos });
-		else
-			createSword(renderer, { x_pos, y_pos });
+	
+	if (rand < 0.1)
+		createHeart(renderer, {x_pos, y_pos});
+	else if (rand < 0.5)
+		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
 	else
-		if (rand > 0.5)
-			createGun(renderer, { x_pos, y_pos });
-		else
-			createSword(renderer, { x_pos, y_pos });
+		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -147,5 +216,57 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 			gun.cooldown = GUN_COOLDOWN;
 			gun.loaded = false;
 		}
+	}
+}
+
+void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
+	if (pickaxe_disable <= 0) {
+		registry.motions.get(hero).velocity = {0, 0};
+		registry.motions.get(hero).scale.x = (direction ? 1 : -1) * abs(registry.motions.get(hero).scale.x);
+		registry.players.get(hero).jumps = max_jumps;
+		registry.gravities.get(hero).lodged.set(direction);
+		play_sound(SOUND_EFFECT::PICKAXE);
+	}
+}
+
+void disable_pickaxe(Entity hero, uint direction, float disable_time) {
+	registry.gravities.get(hero).lodged.reset(direction);
+	pickaxe_disable = disable_time;
+}
+
+void update_pickaxe(float elapsed_ms) {
+	pickaxe_disable -= elapsed_ms;
+}
+
+void check_dash_boots(Entity hero, uint direction) {
+	if (!registry.gravities.get(hero).dashing) {
+		if (direction == dash_direction && dash_window > 0 && dash_time <= 0) {
+			registry.gravities.get(hero).dashing = 1;
+			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
+			dash_time = DASH_TIME;
+			play_sound(SOUND_EFFECT::DASH);
+		} else {
+			dash_direction = direction;
+			dash_window = DASH_WINDOW;
+		}
+	}
+}
+
+void update_dash_boots(float elapsed_ms, Entity hero, std::bitset<2> motionKeyStatus, float speed) {
+	if (dash_time > 0) {
+		dash_time -= elapsed_ms;
+		if (dash_time < 2000) {
+			registry.gravities.get(hero).dashing = 0;
+			float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
+			float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
+			Motion& playerMotion = registry.motions.get(hero);
+			playerMotion.velocity[0] = speed * (rightFactor + leftFactor);
+			if (playerMotion.velocity.x < 0)
+				playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+			else if (playerMotion.velocity.x > 0)
+				playerMotion.scale.x = abs(playerMotion.scale.x);
+		}
+	} else if (dash_window > 0) {
+		dash_window -= elapsed_ms;
 	}
 }

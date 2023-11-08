@@ -1,13 +1,18 @@
 #pragma once
 #include "common.hpp"
 #include <vector>
+#include <bitset>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
-enum class WEAPON_TYPE
+enum class COLLECTABLE_TYPE
 {
 	SWORD = 0,
-	GUN = SWORD + 1
+	GUN = SWORD + 1,
+	HEART = GUN + 1,
+	PICKAXE = HEART + 1,
+	WINGED_BOOTS = PICKAXE + 1,
+	DASH_BOOTS = WINGED_BOOTS + 1
 };
 
 // Player component
@@ -18,6 +23,7 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
@@ -48,7 +54,7 @@ struct SpitterBullet
 
 struct Collectable
 {
-	WEAPON_TYPE type;
+	COLLECTABLE_TYPE type;
 };
 
 struct Sword
@@ -70,7 +76,7 @@ struct Bullet {
 struct Weapon
 {
 	std::vector<Entity> hitBoxes;
-	WEAPON_TYPE type;
+	COLLECTABLE_TYPE type;
 };
 
 struct WeaponHitBox
@@ -103,6 +109,8 @@ struct TestAI
 // Gravity is valid for all entities in this struct
 struct Gravity
 {
+	std::bitset<2> lodged = std::bitset<2>("00");
+	uint dashing = 0;
 };
 
 // Stucture to store collision information
@@ -210,7 +218,11 @@ enum class TEXTURE_ASSET_ID
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
-	BACKGROUND = GUN + 1,
+	HEART = GUN + 1,
+	PICKAXE = HEART + 1,
+	WINGED_BOOTS = PICKAXE + 1,
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	BACKGROUND = DASH_BOOTS + 1,
 	QUIT = BACKGROUND + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,
