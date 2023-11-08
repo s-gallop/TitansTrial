@@ -782,11 +782,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
 	{
-		ddl -= 1;
+		ddf -= 130;
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
 	{
-		ddl += 1;
+		ddf += 130;
 	}
 	current_speed = fmax(0.f, current_speed);
 	
