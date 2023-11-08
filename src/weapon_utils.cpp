@@ -12,7 +12,7 @@ const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t DASH_WINDOW = 250;
-const size_t DASH_TIME = 250;
+const size_t DASH_TIME = 2250;
 
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
@@ -182,12 +182,14 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 	float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 
 	float rand = uniform_dist(rng);
-	if (rand < 0.1)
-		createHeart(renderer, {x_pos, y_pos});
-	else if (rand < 0.5)
-		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	else
-		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	
+	createDashBoots(renderer, {x_pos, y_pos});
+	// if (rand < 0.1)
+	// 	createHeart(renderer, {x_pos, y_pos});
+	// else if (rand < 0.5)
+	// 	spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+	// else
+	// 	spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -227,7 +229,7 @@ void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
 
 void check_dash_boots(Entity hero, uint direction) {
 	if (!registry.gravities.get(hero).dashing) {
-		if (direction == dash_direction && dash_window > 0) {
+		if (direction == dash_direction && dash_window > 0 && dash_time <= 0) {
 			registry.gravities.get(hero).dashing = 1;
 			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
 			dash_time = DASH_TIME;
@@ -240,9 +242,9 @@ void check_dash_boots(Entity hero, uint direction) {
 }
 
 void update_dash_boots(float elapsed_ms, Entity hero, std::bitset<2> motionKeyStatus, float speed) {
-	if (registry.gravities.get(hero).dashing) {
+	if (dash_time > 0) {
 		dash_time -= elapsed_ms;
-		if (dash_time < 0) {
+		if (dash_time < 2000) {
 			registry.gravities.get(hero).dashing = 0;
 			float rightFactor = motionKeyStatus.test(0) ? 1 : 0;
 			float leftFactor = motionKeyStatus.test(1) ? -1 : 0;
@@ -252,7 +254,6 @@ void update_dash_boots(float elapsed_ms, Entity hero, std::bitset<2> motionKeySt
 				playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
 			else if (playerMotion.velocity.x > 0)
 				playerMotion.scale.x = abs(playerMotion.scale.x);
-			dash_window = 0;
 		}
 	} else if (dash_window > 0) {
 		dash_window -= elapsed_ms;
