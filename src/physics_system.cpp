@@ -3,7 +3,6 @@
 #include "physics_system.hpp"
 #include "world_init.hpp"
 
-const float GRAVITY_ACCELERATION_FACTOR = 10.0;
 const float COLLISION_THRESHOLD = 0.0f;
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
@@ -109,7 +108,7 @@ void PhysicsSystem::step(float elapsed_ms)
         {
             Gravity& gravity = registry.gravities.get(entity);
             if (!gravity.lodged.test(0) && !gravity.lodged.test(1) && !gravity.dashing)
-                motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR * elapsed_ms / 17.5;
+                motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR * elapsed_ms;
         }
         motion.position += motion.velocity * step_seconds;
     }

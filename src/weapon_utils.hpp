@@ -13,5 +13,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 void update_collectable_timer(float elapsed_ms, RenderSystem* render, int ddl);
 void do_weapon_action(RenderSystem* renderer, Entity weapon);
 void use_pickaxe(Entity hero, uint direction, size_t max_jumps);
+void disable_pickaxe(Entity hero, uint direction, float disable_time);
+void update_pickaxe(float elapsed_ms);
 void check_dash_boots(Entity hero, uint direction);
 void update_dash_boots(float elapsed_ms, Entity hero, std::bitset<2> motionKeyStatus, float speed);

@@ -245,8 +245,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
-	if (registry.players.get(player_hero).equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
+	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
+	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
+	else if (equipment_type == COLLECTABLE_TYPE::PICKAXE)
+		update_pickaxe(elapsed_ms_since_last_update * current_speed);
 
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
@@ -740,11 +743,15 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 		{
-			if (registry.players.get(player_hero).jumps > 0 && !registry.gravities.get(player_hero).lodged.test(0) && !registry.gravities.get(player_hero).lodged.test(1))
+			if (registry.players.get(player_hero).jumps > 0)
 			{
 				playerMotion.velocity[1] = -JUMP_INITIAL_SPEED;
 				registry.players.get(player_hero).jumps--;
 				play_sound(SOUND_EFFECT::HERO_JUMP);
+				if (registry.gravities.get(player_hero).lodged.test(0))
+					disable_pickaxe(player_hero, 0, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
+				else if (registry.gravities.get(player_hero).lodged.test(1))
+					disable_pickaxe(player_hero, 1, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
 			}
 		}
 

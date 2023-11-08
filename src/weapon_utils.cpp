@@ -4,6 +4,7 @@
 #include "sound_utils.hpp"
 
 float next_collectable_spawn = 1000.f;
+float pickaxe_disable = 0.f;
 float dash_window = 0.f;
 float dash_time = 0.f;
 uint dash_direction = 0;
@@ -183,13 +184,12 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	createDashBoots(renderer, {x_pos, y_pos});
-	// if (rand < 0.1)
-	// 	createHeart(renderer, {x_pos, y_pos});
-	// else if (rand < 0.5)
-	// 	spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	// else
-	// 	spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	if (rand < 0.1)
+		createHeart(renderer, {x_pos, y_pos});
+	else if (rand < 0.5)
+		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+	else
+		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -220,11 +220,22 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 }
 
 void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
-	registry.motions.get(hero).velocity = {0, 0};
-	registry.motions.get(hero).scale.x = (direction ? 1 : -1) * abs(registry.motions.get(hero).scale.x);
-	registry.players.get(hero).jumps = max_jumps;
-	registry.gravities.get(hero).lodged.set(direction);
-	play_sound(SOUND_EFFECT::PICKAXE);
+	if (pickaxe_disable <= 0) {
+		registry.motions.get(hero).velocity = {0, 0};
+		registry.motions.get(hero).scale.x = (direction ? 1 : -1) * abs(registry.motions.get(hero).scale.x);
+		registry.players.get(hero).jumps = max_jumps;
+		registry.gravities.get(hero).lodged.set(direction);
+		play_sound(SOUND_EFFECT::PICKAXE);
+	}
+}
+
+void disable_pickaxe(Entity hero, uint direction, float disable_time) {
+	registry.gravities.get(hero).lodged.reset(direction);
+	pickaxe_disable = disable_time;
+}
+
+void update_pickaxe(float elapsed_ms) {
+	pickaxe_disable -= elapsed_ms;
 }
 
 void check_dash_boots(Entity hero, uint direction) {
