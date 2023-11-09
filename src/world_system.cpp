@@ -28,6 +28,7 @@ vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
+bool pickupKeyStatus = false;
 vec3 player_color;
 std::vector<std::vector<char>> grid_vec = create_grid();
 
@@ -619,7 +620,7 @@ void WorldSystem::handle_collisions()
 			// Checking Player - Collectable collision
 			else if (registry.collectables.has(entity_other))
 			{
-				if (!registry.deathTimers.has(entity))
+				if (!registry.deathTimers.has(entity) && pickupKeyStatus)
 				{
 					collect(entity_other, player_hero);
 				}
@@ -741,7 +742,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (!registry.gravities.get(player_hero).dashing)
 			motion_helper(playerMotion);
 
-		if (key == GLFW_KEY_W && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
+		if ((key == GLFW_KEY_W || key == GLFW_KEY_SPACE) && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 		{
 			if (registry.players.get(player_hero).jumps > 0)
 			{
@@ -755,9 +756,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
-			for (Entity weapon : registry.weapons.entities)
-				do_weapon_action(renderer, weapon);
+		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing) {
+			pickupKeyStatus = true;
+		}
+
+		if (key == GLFW_KEY_S && action == GLFW_RELEASE && !pause && !registry.gravities.get(player_hero).dashing) {
+			pickupKeyStatus = false;
+		}
 	}
 
 	// Resetting game
@@ -801,23 +806,30 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
-
-    // button click check
-    for(Entity entity : registry.buttons.entities) {
-        Motion &button = registry.motions.get(entity);
-        GameButton &buttonInfo = registry.buttons.get(entity);
-        RenderRequest &buttonRender = registry.renderRequests.get(entity);
-        if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE && buttonInfo.clicked == true) {
-            buttonInfo.clicked = false;
-            buttonInfo.callback();
-        }
-        if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2) {
-            if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS && buttonRender.visibility) {
-                buttonInfo.clicked = true;
+    if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+		for (Entity entity: registry.buttons.entities) {
+			Motion &button = registry.motions.get(entity);
+        	GameButton &buttonInfo = registry.buttons.get(entity);
+        	RenderRequest &buttonRender = registry.renderRequests.get(entity);
+			if (abs(button.position.x - mouse_pos.x) < button.scale.x / 2 && abs(button.position.y - mouse_pos.y) < button.scale.y / 2 && buttonRender.visibility) {
+				buttonInfo.clicked = true;
                 play_sound(SOUND_EFFECT::BUTTON_CLICK);
-            }
-        }
-    }
+				return;
+			}
+		}
+		if (!pause && !registry.gravities.get(player_hero).dashing) {
+			for (Entity weapon : registry.weapons.entities)
+				do_weapon_action(renderer, weapon);
+		}
+	} else if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+		for (Entity entity: registry.buttons.entities) {
+        	GameButton &buttonInfo = registry.buttons.get(entity);
+			if (buttonInfo.clicked) {
+				buttonInfo.clicked = false;
+            	buttonInfo.callback();
+			}
+		}
+	}
 }
 
 // pause/unpauses game and show pause screen entities
