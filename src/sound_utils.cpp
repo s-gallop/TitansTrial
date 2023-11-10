@@ -1,11 +1,12 @@
 #include "sound_utils.hpp"
 
 // music references
-Mix_Music* background_music;
-std::vector<Mix_Chunk*> sound_effects;
+Mix_Music *background_music;
+std::vector<Mix_Chunk *> sound_effects;
 
-uint init_sound() {
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
+uint init_sound()
+{
+	if (SDL_Init(SDL_INIT_AUDIO) < 0)
 	{
 		fprintf(stderr, "Failed to initialize SDL Audio");
 		return 1;
@@ -27,7 +28,8 @@ uint init_sound() {
 	sound_effects.push_back(Mix_LoadWAV(audio_path("dash.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("button_click.wav").c_str()));
 
-	if (background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk* effect){return effect == nullptr;}))
+	if (background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk *effect)
+												   { return effect == nullptr; }))
 	{
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 				audio_path("music.wav").c_str(),
@@ -43,26 +45,44 @@ uint init_sound() {
 		return 1;
 	}
 
-    return 0;
+	return 0;
 }
 
-void destroy_sound() {
-    // Destroy music components
+void destroy_sound()
+{
+	// Destroy music components
 	if (background_music != nullptr)
 		Mix_FreeMusic(background_music);
-	for (Mix_Chunk* effect: sound_effects) {
-        if (effect != nullptr) {
-            Mix_FreeChunk(effect);
-        }
-    }	
+	for (Mix_Chunk *effect : sound_effects)
+	{
+		if (effect != nullptr)
+		{
+			Mix_FreeChunk(effect);
+		}
+	}
 	Mix_CloseAudio();
 }
 
-void play_music() {
-    Mix_PlayMusic(background_music, -1);
+void play_music()
+{
+	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
 }
 
-void play_sound(SOUND_EFFECT id) {
-    Mix_PlayChannel(-1, sound_effects[(uint) id], 0);
+void toggle_mute_music()
+{
+	int volume = Mix_GetMusicVolume(background_music);
+	if (volume)
+	{
+		Mix_VolumeMusic(0);
+	}
+	else
+	{
+		Mix_VolumeMusic(MIX_MAX_VOLUME);
+	}
+}
+
+void play_sound(SOUND_EFFECT id)
+{
+	Mix_PlayChannel(-1, sound_effects[(uint)id], 0);
 }
