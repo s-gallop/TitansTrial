@@ -3,27 +3,6 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
-const float CHARACTER_SCALING = 3.0f;
-
-const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
-        { TEXTURE_ASSET_ID::QUIT,{204, 56} },
-        { TEXTURE_ASSET_ID::QUIT_PRESSED,{204, 56} },
-        { TEXTURE_ASSET_ID::MENU,{30, 32} },
-        { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
-        { TEXTURE_ASSET_ID::HELPER,{580, 162} },
-		{ TEXTURE_ASSET_ID::PLAY, {204, 56}},
-		{ TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
-		{ TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
-        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-};
-
-const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
-        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-};
-const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
-        { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-};
-
 
 Entity createHero(RenderSystem *renderer, vec2 pos)
 {
@@ -42,11 +21,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	motion.isSolid = true;
 
 	registry.players.emplace(entity);
-	AnimationInfo &animationInfo = registry.animated.emplace(entity);
-	animationInfo.states = 13;
-	animationInfo.curState = 0;
-	animationInfo.stateFrameLength = {9, 1, 8, 4, 4, 4, 16, 4, 8, 4, 14, 2, 8};
-	animationInfo.stateCycleLength = 16;
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::HERO));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HERO,
@@ -54,11 +29,11 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 		 GEOMETRY_BUFFER_ID::SPRITE,
          true,
          true,
-         {52*3,21*3},
-         {(52-15*2)/2*3,-(21-16)/2*3}});
+         SPRITE_SCALE.at(TEXTURE_ASSET_ID::HERO),
+         SPRITE_OFFSET.at(TEXTURE_ASSET_ID::HERO)});
+    registry.debugRenderRequests.emplace(entity);
 
-	registry.gravities.emplace(entity);
-
+    registry.gravities.emplace(entity);
 	return entity;
 }
 
@@ -76,7 +51,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = velocity;
-	motion.scale = {9,9};
+	motion.scale = {scale.x/2, scale.y/2};
 
 	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
@@ -86,9 +61,10 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         scale});
+         scale,
+         {0, -scale.y/4}});
 
-	// registry.gravities.emplace(entity);
+    registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);
 
 	return entity;
@@ -107,18 +83,14 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
-	motion.scale = {-SPITTER_BB_WIDTH, SPITTER_BB_HEIGHT};
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY);
 
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot
 	spitterEnemy.timeUntilNextShotMs = 1000.f;
 	spitterEnemy.bulletsRemaining = 10;
 
-	AnimationInfo &animationInfo = registry.animated.emplace(entity);
-	animationInfo.states = 2;
-	animationInfo.curState = 0;
-	animationInfo.stateFrameLength = {6, 7};
-	animationInfo.stateCycleLength = 11;
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY,
@@ -126,8 +98,10 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         motion.scale});
+         SPRITE_SCALE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY),
+         SPRITE_OFFSET.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)});
 
+    registry.debugRenderRequests.emplace(entity);
 	registry.gravities.emplace(entity);
 
 	return entity;
@@ -424,12 +398,12 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-		 EFFECT_ASSET_ID::COLOURED,
+		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
-         true,
+         false,
          motion.scale});
-
+    registry.debugRenderRequests.emplace(entity);
 	return entity;
 }
 
