@@ -90,7 +90,7 @@ struct GrenadeLauncher {
 };
 
 struct Grenade {
-
+	float explode_timer = 3000;
 };
 
 // Weapon the player has picked up

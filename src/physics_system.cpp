@@ -213,35 +213,25 @@ void PhysicsSystem::step(float elapsed_ms)
                     float vCollisionDepth = (scale1.y + scale2.y) - abs(motion_i.position.y - motion_j.position.y) + COLLISION_THRESHOLD;
                     float hCollisionDepth = (scale1.x + scale2.x) - abs(motion_i.position.x - motion_j.position.x) + COLLISION_THRESHOLD;
 
-                    if (vCollisionDepth > 0 && hCollisionDepth > 0)
-                    {
-                        if (vCollisionDepth < hCollisionDepth)
-                        {
-                            // Vertical collision
-                            if (motion_i.isProjectile)
-                            {
-                                motion_i.velocity.y = -motion_i.velocity.y * motion_i.friction;
+                    if (vCollisionDepth > 0 && hCollisionDepth > 0) {
+                        if (motion_i.isProjectile) {
+                            if (vCollisionDepth < hCollisionDepth) {
+                                motion_i.velocity.y = -motion_i.velocity.y;
                                 motion_i.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
-                            }
-                            else
-                            {
-                                motion_j.velocity.y = -motion_j.velocity.y * motion_j.friction;
-                                motion_j.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
-                            }
-                        }
-                        else
-                        {
-                            // Horizontal collision
-                            if (motion_i.isProjectile)
-                            {
-                                motion_i.velocity.x = -motion_i.velocity.x * motion_i.friction;
+                            } else {
+                                motion_i.velocity.x = -motion_i.velocity.x;
                                 motion_i.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
                             }
-                            else
-                            {
-                                motion_j.velocity.x = -motion_j.velocity.x * motion_j.friction;
+                            motion_i.velocity *= motion_i.friction;
+                        } else {
+                            if (vCollisionDepth < hCollisionDepth) {
+                                motion_j.velocity.y = -motion_j.velocity.y;
+                                motion_j.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
+                            } else {
+                                motion_j.velocity.x = -motion_j.velocity.x;
                                 motion_j.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
                             }
+                            motion_j.velocity *= motion_j.friction;
                         }
                     }
                 }

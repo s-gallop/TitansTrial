@@ -245,6 +245,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
+	update_grenades(elapsed_ms_since_last_update * current_speed);
+
 	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
 	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);

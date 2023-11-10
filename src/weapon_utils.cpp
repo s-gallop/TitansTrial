@@ -129,6 +129,15 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 	}
 }
 
+void update_grenades(float elapsed_ms) {
+	for (Entity grenade: registry.grenades.entities) {
+		float& explode_timer = registry.grenades.get(grenade).explode_timer;
+		explode_timer -= elapsed_ms;
+		if (explode_timer <= 0)
+			registry.remove_all_components_of(grenade);
+	}
+}
+
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
@@ -255,7 +264,10 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 	} else if (registry.grenadeLaunchers.has(weapon)) {
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown <= 0) {
-			createGrenade(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
+			Motion launcher_motion = registry.motions.get(weapon);
+			float angle = launcher_motion.angle;
+			vec2 grenade_pos = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+			createGrenade(renderer, grenade_pos, registry.motions.get(weapon).angle);
 			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
 			launcher.cooldown = GRENADE_COOLDOWN;
 			launcher.loaded = false;

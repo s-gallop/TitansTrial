@@ -9,6 +9,7 @@
 
 void collect(Entity weapon, Entity hero);
 void rotate_weapon(Entity weapon, vec2 mouse_pos);
+void update_grenades(float elapsed_ms);
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero);
 void update_collectable_timer(float elapsed_ms, RenderSystem* render, int ddl);
 void do_weapon_action(RenderSystem* renderer, Entity weapon);
