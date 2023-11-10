@@ -13,6 +13,14 @@ const float HERO_BB_WIDTH = 15.f * 3.f;
 const float HERO_BB_HEIGHT = 16.f * 3.f;
 const float GUN_BB_WIDTH = 1.f * 32;
 const float GUN_BB_HEIGHT = 1.f * 32;
+const float ROCKET_LAUNCHER_BB_WIDTH = .8f * 82;
+const float ROCKET_LAUNCHER_BB_HEIGHT = .8f * 28;
+const float ROCKET_BB_WIDTH = 1.f * 43;
+const float ROCKET_BB_HEIGHT = 1.f * 7;
+const float GRENADE_LAUNCHER_BB_WIDTH = 1.3f * 41;
+const float GRENADE_LAUNCHER_BB_HEIGHT = 1.3f * 18;
+const float GRENADE_BB_WIDTH = 1.f * 18;
+const float GRENADE_BB_HEIGHT = 1.f * 19;
 const float HEART_BB_WIDTH = 2.f * 16;
 const float HEART_BB_HEIGHT = 2.f * 16;
 const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
@@ -40,6 +48,14 @@ Entity createSword(RenderSystem *renderer, vec2 position);
 Entity createGun(RenderSystem* renderer, vec2 position);
 // the bullet
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createRocketLauncher(RenderSystem* renderer, vec2 position);
+
+Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
+
+Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

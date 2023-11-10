@@ -632,12 +632,12 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(player_hero))
 				{
 					registry.remove_all_components_of(entity_other);
-					if (registry.bullets.has(entity))
+					if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity))
 						registry.remove_all_components_of(entity);
 					++points;
 					ddf += 10.0f;
 				}
-			} else if (registry.blocks.has(entity_other) && registry.bullets.has(entity)) {
+			} else if (registry.blocks.has(entity_other) && (registry.bullets.has(entity) || registry.rockets.has(entity))) {
 				registry.remove_all_components_of(entity);
 			}
 		}

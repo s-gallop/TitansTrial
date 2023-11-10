@@ -283,6 +283,113 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	return entity;
 }
 
+Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto &motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.position = position;
+	motion.scale = vec2({ROCKET_LAUNCHER_BB_WIDTH, ROCKET_LAUNCHER_BB_HEIGHT});
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::ROCKET_LAUNCHER;
+	registry.rocketLaunchers.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::ROCKET_LAUNCHER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = vec2({ROCKET_BB_WIDTH, ROCKET_BB_HEIGHT});;
+
+	registry.rockets.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ROCKET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto &motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.position = position;
+	motion.scale = vec2({GRENADE_LAUNCHER_BB_WIDTH, GRENADE_LAUNCHER_BB_HEIGHT});
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::GRENADE_LAUNCHER;
+	registry.grenadeLaunchers.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = vec2({GRENADE_BB_WIDTH, GRENADE_BB_HEIGHT});;
+
+	registry.grenades.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GRENADE,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 

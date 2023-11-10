@@ -10,7 +10,9 @@ enum class COLLECTABLE_TYPE
 {
 	SWORD = 0,
 	GUN = SWORD + 1,
-	HEART = GUN + 1,
+	ROCKET_LAUNCHER = GUN + 1,
+	GRENADE_LAUNCHER = ROCKET_LAUNCHER + 1,
+	HEART = GRENADE_LAUNCHER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1
@@ -70,6 +72,24 @@ struct Gun{
 };
 
 struct Bullet {
+
+};
+
+struct RocketLauncher {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Rocket {
+
+};
+
+struct GrenadeLauncher {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Grenade {
 
 };
 
@@ -219,7 +239,11 @@ enum class TEXTURE_ASSET_ID
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
-	HEART = GUN + 1,
+	ROCKET_LAUNCHER = GUN + 1,
+	ROCKET = ROCKET_LAUNCHER + 1,
+	GRENADE_LAUNCHER = ROCKET + 1,
+	GRENADE = GRENADE_LAUNCHER + 1,
+	HEART = GRENADE + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
