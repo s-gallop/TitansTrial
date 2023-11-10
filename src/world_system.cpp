@@ -790,6 +790,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 	current_speed = fmax(0.f, current_speed);
 	
+	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
+		toggle_mute_music();
+	}
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
