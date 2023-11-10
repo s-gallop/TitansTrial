@@ -515,6 +515,11 @@ void WorldSystem::restart_game()
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
+	
+	Player& player = registry.players.get(player_hero);
+	player.hasWeapon = 1;
+	update_collectable_timer(0, renderer, -1);
+
 	int background_pixels_width = 768;
 	int background_pixels_height = 432;
 

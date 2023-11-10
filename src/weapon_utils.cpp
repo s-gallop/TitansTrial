@@ -3,7 +3,7 @@
 #include "world_init.hpp"
 #include "sound_utils.hpp"
 
-float next_collectable_spawn = 1000.f;
+float next_collectable_spawn = 0.f;
 float pickaxe_disable = 0.f;
 float dash_window = 0.f;
 float dash_time = 0.f;
@@ -139,7 +139,9 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 
 void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
 	float rand = uniform_dist(rng);
-	if (ddl == 0)
+	if (ddl == -1)
+		createSword(renderer, pos);
+	else if (ddl == 0)
 		createSword(renderer, pos);
 	else if (ddl == 1)
 		if (rand > 0.8)
@@ -184,19 +186,22 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	if (rand < 0.1)
-		createHeart(renderer, {x_pos, y_pos});
-	else if (rand < 0.5)
-		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	else
+	if (ddl == -1)
 		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	else
+		if (rand < 0.1)
+			createHeart(renderer, {x_pos, y_pos});
+		else if (rand < 0.5)
+			spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+		else
+			spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
 
 void update_collectable_timer(float elapsed_ms, RenderSystem* renderer, int ddl) {
 	next_collectable_spawn -= elapsed_ms;
-	if (registry.collectables.components.size() < MAX_COLLECTABLES && next_collectable_spawn < 0.f)
+	if (registry.collectables.components.size() < MAX_COLLECTABLES && next_collectable_spawn <= 0.f)
 		next_collectable_spawn = spawn_collectable(renderer, ddl);
 }
 
