@@ -377,10 +377,13 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = vec2({GRENADE_BB_WIDTH, GRENADE_BB_HEIGHT});;
+	motion.scale = vec2({GRENADE_BB_WIDTH, GRENADE_BB_HEIGHT});
+	motion.isProjectile = true;
+	motion.friction = .8f;
 
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
+	registry.gravities.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,

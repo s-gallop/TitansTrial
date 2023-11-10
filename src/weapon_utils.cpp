@@ -211,10 +211,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	if (rand < 0.5)
-		createRocketLauncher(renderer, {x_pos, y_pos});
-	else
-		createGrenadeLauncher(renderer, {x_pos, y_pos});
+	createGrenadeLauncher(renderer, {x_pos, y_pos});
 	// if (rand < 0.1)
 	// 	createHeart(renderer, {x_pos, y_pos});
 	// else if (rand < 0.5)

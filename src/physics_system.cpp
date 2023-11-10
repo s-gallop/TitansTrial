@@ -220,12 +220,12 @@ void PhysicsSystem::step(float elapsed_ms)
                             // Vertical collision
                             if (motion_i.isProjectile)
                             {
-                                motion_i.velocity.y = -motion_i.velocity.y;
+                                motion_i.velocity.y = -motion_i.velocity.y * motion_i.friction;
                                 motion_i.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
                             }
                             else
                             {
-                                motion_j.velocity.y = -motion_j.velocity.y;
+                                motion_j.velocity.y = -motion_j.velocity.y * motion_j.friction;
                                 motion_j.position.y += vCollisionDepth * (motion_i.position.y < motion_j.position.y ? 1 : -1);
                             }
                         }
@@ -234,12 +234,12 @@ void PhysicsSystem::step(float elapsed_ms)
                             // Horizontal collision
                             if (motion_i.isProjectile)
                             {
-                                motion_i.velocity.x = -motion_i.velocity.x;
+                                motion_i.velocity.x = -motion_i.velocity.x * motion_i.friction;
                                 motion_i.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
                             }
                             else
                             {
-                                motion_j.velocity.x = -motion_j.velocity.x;
+                                motion_j.velocity.x = -motion_j.velocity.x * motion_j.friction;
                                 motion_j.position.x += hCollisionDepth * (motion_i.position.x < motion_j.position.x ? 1 : -1);
                             }
                         }

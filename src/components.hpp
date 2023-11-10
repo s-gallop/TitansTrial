@@ -116,6 +116,7 @@ struct Motion
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
 	bool isProjectile = false;
+	float friction = 0.f;
 };
 
 // just for milestone 1 sudden requirement
