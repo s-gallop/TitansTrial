@@ -21,6 +21,7 @@ public:
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
+    ComponentContainer<Blank> debugRenderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<SpitterEnemy> spitterEnemies;
 	ComponentContainer<SpitterBullet> spitterBullets;
@@ -51,6 +52,7 @@ public:
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
+        registry_list.push_back(&debugRenderRequests);
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&spitterEnemies);
 		registry_list.push_back(&spitterBullets);

@@ -26,6 +26,7 @@ const float DDF_PUNISHMENT = 30.0;
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
+bool WorldSystem::debug = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 vec3 player_color;
@@ -256,15 +257,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
 	{
-		playerAnimation.curState = 3;
+		playerAnimation.curState = 4;
 	}
 	else if (playerVelocity.y < 0)
 	{
-		playerAnimation.curState = 2;
+		playerAnimation.curState = 3;
 	}
 	else if (playerVelocity.x != 0)
 	{
-		playerAnimation.curState = 1;
+		playerAnimation.curState = 2;
 	}
 	else
 	{
@@ -447,24 +448,26 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		spitterEnemy.timeUntilNextShotMs -= elapsed_ms_since_last_update * current_speed;
 		Entity entity = spitterEnemy_container.entities[i];
 		Motion &motion = registry.motions.get(entity);
-		// AnimationInfo &animation = registry.animated.get(entity);
+		 AnimationInfo &animation = registry.animated.get(entity);
+         if ((int)floor((glfwGetTime() - animation.oneTimer) * 10.0) == 4 && spitterEnemy.canShoot) {
+             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+             float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
+             if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
+                 registry.motions.get(entity).scale[0] = -absolute_scale_x;
+             else
+                 registry.motions.get(entity).scale[0] = absolute_scale_x;
+             spitterEnemy.canShoot = false;
+         }
 		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f)
 		{
 			// attack animation
-			// animation.curState = 1;
+            animation.oneTimeState = 2;
+            animation.oneTimer = glfwGetTime();
+            spitterEnemy.canShoot = true;
 			// create bullet at same position as enemy
-			Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
-			float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
-			if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
-				registry.motions.get(entity).scale[0] = -absolute_scale_x;
-			else
-				registry.motions.get(entity).scale[0] = absolute_scale_x;
 
 			spitterEnemy.bulletsRemaining -= 1;
 			spitterEnemy.timeUntilNextShotMs = SPITTER_PROJECTILE_DELAY_MS;
-
-			// TODO: fix animation
-			// animation.curState = 0;
 		}
 	}
 
@@ -693,9 +696,9 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
 	if (!pause) {
 		if (playerMotion.velocity.x < 0)
-			playerMotion.scale.x = -1 * abs(playerMotion.scale.x);
+			playerMotion.dir = -1;
 		else if (playerMotion.velocity.x > 0)
-			playerMotion.scale.x = abs(playerMotion.scale.x);
+			playerMotion.dir = 1;
 	}
 }
 
@@ -754,6 +757,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 					disable_pickaxe(player_hero, 1, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
 			}
 		}
+        else if (key == GLFW_KEY_9 && action == GLFW_RELEASE && !pause)
+        {
+            next_spitter_spawn = -1.0;
+            spawn_spitter_enemy(0);
+        }
+
 
 		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 			for (Entity weapon : registry.weapons.entities)
@@ -773,9 +782,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	if (key == GLFW_KEY_B)
 	{
 		if (action == GLFW_RELEASE)
-			debugging.in_debug_mode = false;
+			debug = false;
 		else
-			debugging.in_debug_mode = true;
+            debug = true;
 	}
 
 	// Control the current speed with `<` `>`
