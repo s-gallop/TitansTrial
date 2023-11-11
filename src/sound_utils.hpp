@@ -21,7 +21,8 @@ enum class SOUND_EFFECT {
     HEAL = GUN_LEVER + 1,
     PICKAXE = HEAL + 1,
     DASH = PICKAXE + 1,
-    BUTTON_CLICK = DASH + 1
+    EQUIPMENT_DROP = DASH + 1,
+    BUTTON_CLICK = EQUIPMENT_DROP + 1
 };
 
 void play_music();

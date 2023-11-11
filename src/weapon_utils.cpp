@@ -12,6 +12,7 @@ uint dash_direction = 0;
 const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
+const size_t EQUIPMENT_DURATION = 10000;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -67,6 +68,7 @@ void collect(Entity collectable, Entity hero) {
 		case COLLECTABLE_TYPE::DASH_BOOTS: 
 		{
 			registry.players.get(hero).equipment_type = type;
+			registry.players.get(hero).equipment_timer = EQUIPMENT_DURATION;
 			registry.remove_all_components_of(collectable);
 		}
 		break;
@@ -120,19 +122,35 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 	}
 }
 
-void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
-	Motion &weaponMot = registry.motions.get(weapon);
-	weaponMot.position = registry.motions.get(hero).position;
-	if (registry.swords.has(weapon))
-		swing_sword(renderer, weapon);
-	else if (registry.guns.has(weapon)) {
-		Gun& gun = registry.guns.get(weapon);
-		if (!gun.loaded) {
-			gun.cooldown -= elapsed_ms;
-			if (gun.cooldown <= 0) {
-				play_sound(SOUND_EFFECT::GUN_LEVER);
-				gun.loaded = true;
+void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero) {
+	if (registry.players.get(hero).hasWeapon) {
+		Entity weapon = registry.players.get(hero).weapon;
+		Motion &weaponMot = registry.motions.get(weapon);
+		weaponMot.position = registry.motions.get(hero).position;
+		if (registry.swords.has(weapon))
+			swing_sword(renderer, weapon);
+		else if (registry.guns.has(weapon)) {
+			Gun& gun = registry.guns.get(weapon);
+			if (!gun.loaded) {
+				gun.cooldown -= elapsed_ms;
+				if (gun.cooldown <= 0) {
+					play_sound(SOUND_EFFECT::GUN_LEVER);
+					gun.loaded = true;
+				}
 			}
+		}
+	}
+}
+
+void update_equipment(float elapsed_ms, Entity hero) {
+	if (registry.players.get(hero).equipment_timer > 0) {
+		Player& player = registry.players.get(hero);
+		player.equipment_timer -= elapsed_ms;
+		if (player.equipment_timer <= 0) {
+			if (player.equipment_type == COLLECTABLE_TYPE::PICKAXE)
+				registry.gravities.get(hero).lodged = false;
+			player.equipment_type = COLLECTABLE_TYPE::COLLECTABLE_COUNT;
+			play_sound(SOUND_EFFECT::EQUIPMENT_DROP);
 		}
 	}
 }
@@ -203,6 +221,15 @@ void update_collectable_timer(float elapsed_ms, RenderSystem* renderer, int ddl)
 	next_collectable_spawn -= elapsed_ms;
 	if (registry.collectables.components.size() < MAX_COLLECTABLES && next_collectable_spawn <= 0.f)
 		next_collectable_spawn = spawn_collectable(renderer, ddl);
+	for (Entity entity: registry.collectables.entities) {
+		Collectable& collectable = registry.collectables.get(entity);
+		if (collectable.despawn_timer > 0) {
+			collectable.despawn_timer -= elapsed_ms;
+			if (collectable.despawn_timer <= 0) {
+				registry.remove_all_components_of(entity);
+			}
+		}
+	}
 }
 
 void do_weapon_action(RenderSystem* renderer, Entity weapon) {

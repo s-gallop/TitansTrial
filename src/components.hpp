@@ -13,7 +13,8 @@ enum class COLLECTABLE_TYPE
 	HEART = GUN + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
-	DASH_BOOTS = WINGED_BOOTS + 1
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	COLLECTABLE_COUNT = DASH_BOOTS + 1
 };
 
 // Player component
@@ -24,7 +25,8 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::COLLECTABLE_COUNT;
+	float equipment_timer = 0;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
@@ -56,6 +58,7 @@ struct SpitterBullet
 struct Collectable
 {
 	COLLECTABLE_TYPE type;
+	float despawn_timer = 10000;
 };
 
 struct Sword

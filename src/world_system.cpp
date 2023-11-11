@@ -242,9 +242,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		
 	}
 
-	// Keep weapons centred on player
-	for (Entity weapon: registry.weapons.entities)
-		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
+	update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero);
+	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 
 	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
 	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
