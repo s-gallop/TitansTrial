@@ -122,7 +122,7 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 			float angleBackup = weaponMot.angleBackup;
 			vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 			float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}));
+			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}, false));
 			if (!registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed) {
 				registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed = true;
 				play_sound(SOUND_EFFECT::SWORD_SWING);
@@ -136,13 +136,14 @@ void update_grenades(RenderSystem* renderer, float elapsed_ms) {
 		float& explode_timer = registry.grenades.get(grenade).explode_timer;
 		explode_timer -= elapsed_ms;
 		if (explode_timer <= 0) {
-			createExplosion(renderer, registry.motions.get(grenade).position, GRENADE_EXPLOSION_FACTOR);
+			explode(renderer, registry.motions.get(grenade).position, grenade);
 			registry.remove_all_components_of(grenade);
 		}
 	}
 }
 
 void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
+	play_sound(SOUND_EFFECT::EXPLOSION);
 	if (registry.rockets.has(explodable))
 		createExplosion(renderer, position, ROCKET_EXPLOSION_FACTOR);
 	else if (registry.grenades.has(explodable))

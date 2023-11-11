@@ -407,7 +407,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	motion.scale = size * vec2({EXPLOSION_BB_WIDTH, EXPLOSION_BB_HEIGHT});
 
 	Explosion& explosion = registry.explosions.emplace(entity);
-	explosion.hit_box = createWeaponHitBox(renderer, motion.position, motion.scale / 2.f);
+	explosion.hit_box = createWeaponHitBox(renderer, motion.position, motion.scale / 2.f, true);
 
 	AnimationInfo &animationInfo = registry.animated.emplace(entity);
 	animationInfo.states = 1;
@@ -537,7 +537,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, bool hits_player)
 {
 	auto entity = Entity();
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -546,7 +546,8 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.scale = size;
-	registry.weaponHitBoxes.emplace(entity);
+	WeaponHitBox& hit_box = registry.weaponHitBoxes.emplace(entity);
+	hit_box.hits_player = hits_player;
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
