@@ -21,6 +21,8 @@ const float GRENADE_LAUNCHER_BB_WIDTH = 1.3f * 41;
 const float GRENADE_LAUNCHER_BB_HEIGHT = 1.3f * 18;
 const float GRENADE_BB_WIDTH = 1.f * 18;
 const float GRENADE_BB_HEIGHT = 1.f * 19;
+const float EXPLOSION_BB_WIDTH = 1.f * 92;
+const float EXPLOSION_BB_HEIGHT = 1.f * 100;
 const float HEART_BB_WIDTH = 2.f * 16;
 const float HEART_BB_HEIGHT = 2.f * 16;
 const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
@@ -56,6 +58,8 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
 Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 
 Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

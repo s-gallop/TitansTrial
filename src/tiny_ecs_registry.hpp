@@ -33,6 +33,7 @@ public:
 	ComponentContainer<Rocket> rockets;
 	ComponentContainer<GrenadeLauncher> grenadeLaunchers;
 	ComponentContainer<Grenade> grenades;
+	ComponentContainer<Explosion> explosions;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
@@ -67,6 +68,7 @@ public:
 		registry_list.push_back(&rockets);
 		registry_list.push_back(&grenadeLaunchers);
 		registry_list.push_back(&grenades);
+		registry_list.push_back(&explosions);
 		registry_list.push_back(&weapons);
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);

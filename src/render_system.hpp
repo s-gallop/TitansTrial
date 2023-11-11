@@ -41,6 +41,7 @@ class RenderSystem
 		textures_path("rocket.png"),
 		textures_path("grenade_launcher.png"),
 		textures_path("grenade.png"),
+		textures_path("explosion.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
 		/*
@@ -66,6 +67,7 @@ class RenderSystem
 		shader_path("screen"),
 		shader_path("animated"),
 		shader_path("hero"),
+		shader_path("explosion"),
 		shader_path("spitter"),
 		shader_path("spitter_bullet")};
 

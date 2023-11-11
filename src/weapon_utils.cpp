@@ -13,7 +13,9 @@ const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t ROCKET_COOLDOWN = 3000;
+const float ROCKET_EXPLOSION_FACTOR = 2.f;
 const size_t GRENADE_COOLDOWN = 2000;
+const float GRENADE_EXPLOSION_FACTOR = 1.f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -129,13 +131,22 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 	}
 }
 
-void update_grenades(float elapsed_ms) {
+void update_grenades(RenderSystem* renderer, float elapsed_ms) {
 	for (Entity grenade: registry.grenades.entities) {
 		float& explode_timer = registry.grenades.get(grenade).explode_timer;
 		explode_timer -= elapsed_ms;
-		if (explode_timer <= 0)
+		if (explode_timer <= 0) {
+			createExplosion(renderer, registry.motions.get(grenade).position, GRENADE_EXPLOSION_FACTOR);
 			registry.remove_all_components_of(grenade);
+		}
 	}
+}
+
+void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
+	if (registry.rockets.has(explodable))
+		createExplosion(renderer, position, ROCKET_EXPLOSION_FACTOR);
+	else if (registry.grenades.has(explodable))
+		createExplosion(renderer, position, GRENADE_EXPLOSION_FACTOR);
 }
 
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
@@ -220,7 +231,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	createGrenadeLauncher(renderer, {x_pos, y_pos});
+	createRocketLauncher(renderer, {x_pos, y_pos});
 	// if (rand < 0.1)
 	// 	createHeart(renderer, {x_pos, y_pos});
 	// else if (rand < 0.5)

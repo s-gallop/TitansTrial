@@ -393,6 +393,36 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 	return entity;
 }
 
+Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion &motion = registry.motions.emplace(entity);
+	motion.position = position - vec2({8, 0});
+	motion.scale = size * vec2({EXPLOSION_BB_WIDTH, EXPLOSION_BB_HEIGHT});
+
+	Explosion& explosion = registry.explosions.emplace(entity);
+	explosion.hit_box = createWeaponHitBox(renderer, motion.position, motion.scale / 2.f);
+
+	AnimationInfo &animationInfo = registry.animated.emplace(entity);
+	animationInfo.states = 1;
+	animationInfo.curState = 0;
+	animationInfo.stateFrameLength = {6};
+	animationInfo.stateCycleLength = 6;
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::EXPLOSION,
+		 EFFECT_ASSET_ID::EXPLOSION,
+		 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 

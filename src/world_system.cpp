@@ -245,7 +245,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	for (Entity weapon: registry.weapons.entities)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
-	update_grenades(elapsed_ms_since_last_update * current_speed);
+	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 
 	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
 	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
@@ -634,12 +634,17 @@ void WorldSystem::handle_collisions()
 				if (!registry.deathTimers.has(player_hero))
 				{
 					registry.remove_all_components_of(entity_other);
-					if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity))
+					if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
+						if (registry.rockets.has(entity) || registry.grenades.has(entity))
+							explode(renderer, registry.motions.get(entity).position, entity);
 						registry.remove_all_components_of(entity);
+					}
 					++points;
 					ddf += 10.0f;
 				}
 			} else if (registry.blocks.has(entity_other) && (registry.bullets.has(entity) || registry.rockets.has(entity))) {
+				if (registry.rockets.has(entity))
+					explode(renderer, registry.motions.get(entity).position, entity);
 				registry.remove_all_components_of(entity);
 			}
 		}

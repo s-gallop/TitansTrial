@@ -93,6 +93,11 @@ struct Grenade {
 	float explode_timer = 3000;
 };
 
+struct Explosion {
+	float timer = 1000;
+	Entity hit_box;
+};
+
 // Weapon the player has picked up
 struct Weapon
 {
@@ -244,7 +249,8 @@ enum class TEXTURE_ASSET_ID
 	ROCKET = ROCKET_LAUNCHER + 1,
 	GRENADE_LAUNCHER = ROCKET + 1,
 	GRENADE = GRENADE_LAUNCHER + 1,
-	HEART = GRENADE + 1,
+	EXPLOSION = GRENADE + 1,
+	HEART = EXPLOSION + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -270,7 +276,8 @@ enum class EFFECT_ASSET_ID
 	SCREEN = BULLET + 1,
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
-	SPITTER_ENEMY = HERO + 1,
+	EXPLOSION = HERO + 1,
+	SPITTER_ENEMY = EXPLOSION + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	EFFECT_COUNT = SPITTER_ENEMY_BULLET + 1
 };
