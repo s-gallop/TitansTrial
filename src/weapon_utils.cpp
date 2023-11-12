@@ -14,7 +14,7 @@ const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t ROCKET_COOLDOWN = 3000;
 const float ROCKET_EXPLOSION_FACTOR = 3.5f;
-const size_t GRENADE_COOLDOWN = 2000;
+const size_t GRENADE_COOLDOWN = 1750;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
@@ -188,7 +188,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown > 0) {
 			launcher.cooldown -= elapsed_ms;
-			if (launcher.cooldown <= 1750 && !launcher.loaded) {
+			if (!launcher.loaded) {
 				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
 				launcher.loaded = true;
 			}
@@ -243,10 +243,7 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	if (rand < 0.5)
-		createRocketLauncher(renderer, {x_pos, y_pos});
-	else
-		createGrenadeLauncher(renderer, {x_pos, y_pos});
+	createGrenadeLauncher(renderer, {x_pos, y_pos});
 	// if (rand < 0.1)
 	// 	createHeart(renderer, {x_pos, y_pos});
 	// else if (rand < 0.5)
