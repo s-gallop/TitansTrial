@@ -4,8 +4,11 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool pause)
+void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool pause, bool is_debug)
 {
+    assert(registry.renderRequests.has(entity));
+    const RenderRequest &render_request = registry.renderRequests.get(entity);
+
 	Motion &motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
 	// specification for more info Incrementally updates transformation matrix,
@@ -13,11 +16,12 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 	Transform transform;
 	transform.translate(motion.position);
 	transform.rotate(motion.angle);
-	transform.translate(motion.positionOffset);
-	transform.scale(motion.scale);
+    vec2 flip = {motion.dir, 1};
+	if (!is_debug) {
+        transform.translate(motion.positionOffset + render_request.offset * flip);
+    }
+	transform.scale((is_debug ? motion.scale : render_request.scale) * flip);
 
-	assert(registry.renderRequests.has(entity));
-	const RenderRequest &render_request = registry.renderRequests.get(entity);
 
 	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -56,11 +60,20 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 				vec3)); // note the stride to skip the preceeding vertex position
 
         // does animation if texture has animation and is not DEAD
-		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && !pause)
+		if (registry.animated.has(entity) && !registry.deathTimers.has(entity) && !pause && !is_debug)
 		{
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
-			glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
+            if (info.oneTimeState != -1) {
+                int count = (int)floor((glfwGetTime() - info.oneTimer) * 10.0);
+                if (count < info.stateFrameLength[info.oneTimeState]) {
+                    glUniform2f(frame_loc, count % info.stateFrameLength[info.oneTimeState], info.oneTimeState);
+                } else {
+                    info.oneTimeState = -1;
+                }
+            } else {
+                glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
+            }
 			GLint scale_loc = glGetUniformLocation(program, "scale");
 			glUniform2f(scale_loc, info.stateCycleLength, info.states);
 		}
@@ -76,7 +89,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		GLuint texture_id = texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+		GLuint texture_id = is_debug? texture_gl_handles[(GLuint) TEXTURE_ASSET_ID::HITBOX] :texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
 
         assert(registry.renderRequests.has(entity));
         if (registry.buttons.has(entity))
@@ -210,7 +223,7 @@ void RenderSystem::drawToScreen(bool pause)
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
-void RenderSystem::draw(bool pause)
+void RenderSystem::draw(bool pause, bool debug)
 {
 	// Getting size of window
 	int w, h;
@@ -250,6 +263,12 @@ void RenderSystem::draw(bool pause)
     //draws whatever is filtered out as on top of the screen effects.
     for (Entity e : beyonders) {
         drawTexturedMesh(e, projection_2D, pause);
+    }
+    if (debug) {
+        for (Entity entity : registry.debugRenderRequests.entities)
+        {
+            drawTexturedMesh(entity, projection_2D, pause, true);
+        }
     }
 
 	// flicker-free display with a double buffer

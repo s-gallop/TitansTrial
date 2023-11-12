@@ -17,7 +17,10 @@ enum class COLLECTABLE_TYPE
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1
 };
+struct Blank
+{
 
+};
 // Player component
 struct Player
 {
@@ -48,6 +51,7 @@ struct SpitterEnemy
 {
 	uint bulletsRemaining;
 	float timeUntilNextShotMs;
+    bool canShoot;
 };
 
 struct SpitterBullet 
@@ -122,6 +126,7 @@ struct Motion
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
 	bool isProjectile = false;
+	int dir = 1;
 	float friction = 0.f;
 };
 
@@ -195,6 +200,8 @@ struct AnimationInfo
 	std::vector<int> stateFrameLength;
 	int curState;
 	int stateCycleLength;
+    int oneTimeState = -1;
+    double oneTimer;
 };
 
 struct ShowWhenPaused {
@@ -264,7 +271,8 @@ enum class TEXTURE_ASSET_ID
 	PLAY = HELPER + 1,
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
-	TEXTURE_COUNT = TITLE_TEXT + 1,
+    HITBOX = TITLE_TEXT + 1,
+	TEXTURE_COUNT = HITBOX + 1,
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -301,4 +309,6 @@ struct RenderRequest
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
     bool on_top_screen = false;
     bool visibility = true;
+    vec2 scale = {1,1};
+    vec2 offset = {0,0};
 };

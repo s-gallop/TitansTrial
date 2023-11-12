@@ -56,7 +56,8 @@ class RenderSystem
 		textures_path("helper.png"),
 		textures_path("buttons/play.png"),
 		textures_path("buttons/play_pressed.png"),
-		textures_path("titans_trial_logo.png")};
+		textures_path("titans_trial_logo.png"),
+        textures_path("hitbox.png"),};
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -99,13 +100,13 @@ public:
 	~RenderSystem();
 
 	// Draw all entities
-	void draw(bool pause);
+	void draw(bool pause, bool debug);
 
 	mat3 createProjectionMatrix();
 
 private:
 	// Internal drawing functions for each entity type
-	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause);
+	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause, bool is_debug = false);
 	void drawToScreen(bool pause);
 
 	// Window handle

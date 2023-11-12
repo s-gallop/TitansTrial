@@ -31,3 +31,4 @@ enum class SOUND_EFFECT {
 
 void play_music();
 void play_sound(SOUND_EFFECT id);
+void toggle_mute_music();
