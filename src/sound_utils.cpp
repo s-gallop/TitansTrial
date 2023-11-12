@@ -4,6 +4,8 @@
 Mix_Music *background_music;
 std::vector<Mix_Chunk *> sound_effects;
 
+bool is_music_muted;
+
 uint init_sound()
 {
 	if (SDL_Init(SDL_INIT_AUDIO) < 0)
@@ -77,21 +79,23 @@ void destroy_sound()
 void play_music()
 {
 	Mix_PlayMusic(background_music, -1);
+	is_music_muted = false;
 	fprintf(stderr, "Loaded music\n");
 }
 
-// void toggle_mute_music()
-// {
-// 	int volume = Mix_GetMusicVolume(background_music);
-// 	if (volume)
-// 	{
-// 		Mix_VolumeMusic(0);
-// 	}
-// 	else
-// 	{
-// 		Mix_VolumeMusic(MIX_MAX_VOLUME);
-// 	}
-// }
+void toggle_mute_music()
+{
+	if (!is_music_muted)
+	{
+		Mix_VolumeMusic(0);
+		is_music_muted = true;
+	}
+	else
+	{
+		Mix_VolumeMusic(MIX_MAX_VOLUME);
+		is_music_muted = false;
+	}
+}
 
 void play_sound(SOUND_EFFECT id)
 {
