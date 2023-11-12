@@ -761,8 +761,24 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				else if (registry.gravities.get(player_hero).lodged.test(1))
 					disable_pickaxe(player_hero, 1, JUMP_INITIAL_SPEED / GRAVITY_ACCELERATION_FACTOR);
 			}
+		} else if (key == GLFW_KEY_1 && action == GLFW_PRESS && !pause && debug) {
+			createSword(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_2 && action == GLFW_PRESS && !pause && debug) {
+			createGun(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_3 && action == GLFW_PRESS && !pause && debug) {
+			createGrenadeLauncher(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_4 && action == GLFW_PRESS && !pause && debug) {
+			createRocketLauncher(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_5 && action == GLFW_PRESS && !pause && debug) {
+			createHeart(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_6 && action == GLFW_PRESS && !pause && debug) {
+			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_7 && action == GLFW_PRESS && !pause && debug) {
+			createPickaxe(renderer, registry.motions.get(player_hero).position);
+		}else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
+			createDashBoots(renderer, registry.motions.get(player_hero).position);
 		}
-        else if (key == GLFW_KEY_9 && action == GLFW_RELEASE && !pause)
+        else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug)
         {
             next_spitter_spawn = -1.0;
             spawn_spitter_enemy(0);
@@ -784,21 +800,18 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_B)
+	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 	{
-		if (action == GLFW_RELEASE)
-			debug = false;
-		else
-            debug = true;
+		debug = !debug;
 	}
 
 	// Control the current speed with `<` `>`
 	
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
+	if (key == GLFW_KEY_COMMA && action == GLFW_RELEASE && debug)
 	{
 		ddf -= 130;
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
+	if (key == GLFW_KEY_PERIOD && action == GLFW_RELEASE && debug)
 	{
 		ddf += 130;
 	}
