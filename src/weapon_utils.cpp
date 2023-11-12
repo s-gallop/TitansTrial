@@ -199,17 +199,26 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Enti
 void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
 	float rand = uniform_dist(rng);
 	if (ddl == 0)
-		createSword(renderer, pos);
+		if (rand < 0.9)
+			createSword(renderer, pos);
+		else
+			createGun(renderer, pos);
 	else if (ddl == 1)
-		if (rand > 0.8)
-			createGun(renderer, pos);
-		else
+		if (rand < 0.6)
 			createSword(renderer, pos);
+		else if (rand < 0.9)
+			createGun(renderer, pos);
+		else if (rand < 0.1)
+			createGrenadeLauncher(renderer, pos);
 	else
-		if (rand > 0.5)
-			createGun(renderer, pos);
-		else
+		if (rand < 0.3)
 			createSword(renderer, pos);
+		else if (rand < 0.6)
+			createGun(renderer, pos);
+		else if (rand < 0.8)
+			createGrenadeLauncher(renderer, pos);
+		else
+			createRocketLauncher(renderer, pos);
 }
 
 void spawn_powerup(RenderSystem* renderer, vec2 pos, int ddl) {
@@ -243,13 +252,12 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	createGrenadeLauncher(renderer, {x_pos, y_pos});
-	// if (rand < 0.1)
-	// 	createHeart(renderer, {x_pos, y_pos});
-	// else if (rand < 0.5)
-	// 	spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	// else
-	// 	spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	if (rand < 0.1)
+		createHeart(renderer, {x_pos, y_pos});
+	else if (rand < 0.5)
+		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+	else
+		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
