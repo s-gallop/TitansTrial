@@ -247,6 +247,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, weapon, player_hero);
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
+	update_explosions(elapsed_ms_since_last_update * current_speed);
 
 	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
 	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
@@ -450,16 +451,16 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		spitterEnemy.timeUntilNextShotMs -= elapsed_ms_since_last_update * current_speed;
 		Entity entity = spitterEnemy_container.entities[i];
 		Motion &motion = registry.motions.get(entity);
-		 AnimationInfo &animation = registry.animated.get(entity);
-         if ((int)floor((glfwGetTime() - animation.oneTimer) * 10.0) == 4 && spitterEnemy.canShoot) {
-             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
-             float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
-             if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
-                 registry.motions.get(entity).scale[0] = -absolute_scale_x;
-             else
-                 registry.motions.get(entity).scale[0] = absolute_scale_x;
-             spitterEnemy.canShoot = false;
-         }
+		AnimationInfo &animation = registry.animated.get(entity);
+        if ((int)floor((glfwGetTime() - animation.oneTimer) * 10.0) == 4 && spitterEnemy.canShoot) {
+            Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+            float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
+            if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
+                registry.motions.get(entity).scale[0] = -absolute_scale_x;
+            else
+                registry.motions.get(entity).scale[0] = absolute_scale_x;
+            spitterEnemy.canShoot = false;
+        }
 		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f)
 		{
 			// attack animation
@@ -599,7 +600,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.weaponHitBoxes.has(entity_other) && registry.weaponHitBoxes.get(entity_other).hits_player)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -632,19 +633,16 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if (registry.enemies.has(entity_other) || registry.spitterEnemies.has(entity_other))
+			if ((registry.enemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
 			{
-				if (!registry.deathTimers.has(player_hero))
-				{
-					registry.remove_all_components_of(entity_other);
-					if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
-						if (registry.rockets.has(entity) || registry.grenades.has(entity))
-							explode(renderer, registry.motions.get(entity).position, entity);
-						registry.remove_all_components_of(entity);
-					}
-					++points;
-					ddf += 10.0f;
+				registry.remove_all_components_of(entity_other);
+				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
+					if (registry.rockets.has(entity) || registry.grenades.has(entity))
+						explode(renderer, registry.motions.get(entity).position, entity);
+					registry.remove_all_components_of(entity);
 				}
+				++points;
+				ddf += 10.0f;
 			} else if (registry.blocks.has(entity_other) && (registry.bullets.has(entity) || registry.rockets.has(entity))) {
 				if (registry.rockets.has(entity))
 					explode(renderer, registry.motions.get(entity).position, entity);
@@ -806,9 +804,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 	current_speed = fmax(0.f, current_speed);
 	
-	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
-		toggle_mute_music();
-	}
+	// if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
+	// 	toggle_mute_music();
+	// }
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)

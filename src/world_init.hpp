@@ -20,8 +20,6 @@ const float GRENADE_LAUNCHER_BB_WIDTH = 1.3f * 41;
 const float GRENADE_LAUNCHER_BB_HEIGHT = 1.3f * 18;
 const float GRENADE_BB_WIDTH = 1.f * 18;
 const float GRENADE_BB_HEIGHT = 1.f * 19;
-const float EXPLOSION_BB_WIDTH = 1.f * 92;
-const float EXPLOSION_BB_HEIGHT = 1.f * 100;
 const float HEART_BB_WIDTH = 2.f * 16;
 const float HEART_BB_HEIGHT = 2.f * 16;
 const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
@@ -33,8 +31,8 @@ const float PICKAXE_BB_HEIGHT = .5f * 80;
 const float SPITTER_BULLET_BB_WIDTH = 16.f * 3.f;
 const float SPITTER_BULLET_BB_HEIGHT = 16.f * 3.f;
 
-
 const float CHARACTER_SCALING = 3.0f;
+const float EXPLOSION_SCALING = 2.0f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::QUIT,{204, 56} },
@@ -46,16 +44,19 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}}
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}}
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}}
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
 };
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {-8, 0}}
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -70,6 +71,12 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {6, 7, 8, 3, 8},
             0,
             9
+        }},
+        {TEXTURE_ASSET_ID::EXPLOSION, {
+            1,
+            {6},
+            0,
+            6
         }}
 };
 // the player
@@ -111,5 +118,5 @@ Entity createHelperText(RenderSystem* renderer);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 // the ui button
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
-Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, bool hits_player);
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);

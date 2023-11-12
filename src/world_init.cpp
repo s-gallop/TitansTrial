@@ -314,7 +314,10 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 		entity,
 		{TEXTURE_ASSET_ID::ROCKET_LAUNCHER,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -339,7 +342,10 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 		entity,
 		{ TEXTURE_ASSET_ID::ROCKET,
 			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale});
 
 	return entity;
 }
@@ -368,7 +374,10 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -395,7 +404,10 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
 			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale});
 
 	return entity;
 }
@@ -410,22 +422,25 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
-	motion.position = position - vec2({8, 0});
-	motion.scale = size * vec2({EXPLOSION_BB_WIDTH, EXPLOSION_BB_HEIGHT});
+	motion.position = position - size * vec2({8, 0});
+	motion.scale = size * ASSET_SIZE.at(TEXTURE_ASSET_ID::EXPLOSION);
 
-	Explosion& explosion = registry.explosions.emplace(entity);
-	explosion.hit_box = createWeaponHitBox(renderer, motion.position, motion.scale / 2.f, true);
+	registry.explosions.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	
+	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
+	info.oneTimeState = 0;
+	info.oneTimer = glfwGetTime();
 
-	AnimationInfo &animationInfo = registry.animated.emplace(entity);
-	animationInfo.states = 1;
-	animationInfo.curState = 0;
-	animationInfo.stateFrameLength = {6};
-	animationInfo.stateCycleLength = 6;
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::EXPLOSION,
 		 EFFECT_ASSET_ID::EXPLOSION,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 size * SPRITE_SCALE.at(TEXTURE_ASSET_ID::EXPLOSION),
+		 size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION)});
 
 	return entity;
 }
@@ -448,7 +463,10 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::HEART,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -471,7 +489,10 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::PICKAXE,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -494,7 +515,10 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::WINGED_BOOTS,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -517,7 +541,10 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::DASH_BOOTS,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -547,7 +574,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, bool hits_player)
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -557,7 +584,6 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, bool hits
 	motion.position = pos;
 	motion.scale = size;
 	WeaponHitBox& hit_box = registry.weaponHitBoxes.emplace(entity);
-	hit_box.hits_player = hits_player;
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed

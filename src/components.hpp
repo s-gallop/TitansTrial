@@ -99,7 +99,6 @@ struct Grenade {
 
 struct Explosion {
 	float timer = 1000;
-	Entity hit_box;
 };
 
 // Weapon the player has picked up
@@ -112,7 +111,7 @@ struct Weapon
 struct WeaponHitBox
 {
 	bool soundPlayed = false;
-	bool hits_player = false;
+	bool isActive = true;
 };
 
 // All data relevant to the shape and motion of entities
@@ -127,7 +126,7 @@ struct Motion
 	bool isSolid = false;
 	bool isProjectile = false;
 	int dir = 1;
-	float friction = 0.f;
+	float friction = 1.f;
 };
 
 // just for milestone 1 sudden requirement

@@ -80,18 +80,18 @@ void play_music()
 	fprintf(stderr, "Loaded music\n");
 }
 
-void toggle_mute_music()
-{
-	int volume = Mix_GetMusicVolume(background_music);
-	if (volume)
-	{
-		Mix_VolumeMusic(0);
-	}
-	else
-	{
-		Mix_VolumeMusic(MIX_MAX_VOLUME);
-	}
-}
+// void toggle_mute_music()
+// {
+// 	int volume = Mix_GetMusicVolume(background_music);
+// 	if (volume)
+// 	{
+// 		Mix_VolumeMusic(0);
+// 	}
+// 	else
+// 	{
+// 		Mix_VolumeMusic(MIX_MAX_VOLUME);
+// 	}
+// }
 
 void play_sound(SOUND_EFFECT id)
 {

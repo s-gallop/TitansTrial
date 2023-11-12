@@ -13,9 +13,9 @@ const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t ROCKET_COOLDOWN = 3000;
-const float ROCKET_EXPLOSION_FACTOR = 2.f;
+const float ROCKET_EXPLOSION_FACTOR = 3.5f;
 const size_t GRENADE_COOLDOWN = 2000;
-const float GRENADE_EXPLOSION_FACTOR = 1.f;
+const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -40,6 +40,7 @@ void collect_weapon(Entity weapon, Entity hero) {
 			Motion& motion = registry.motions.get(weapon);
 			motion.position = registry.motions.get(hero).position;
 			motion.scale *= 1.3;
+			registry.renderRequests.get(weapon).scale *= 1.3;
 			motion.velocity = vec2(0, 0);
 			
 			if (registry.swords.has(weapon)) {
@@ -122,7 +123,7 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 			float angleBackup = weaponMot.angleBackup;
 			vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 			float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}, false));
+			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}));
 			if (!registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed) {
 				registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed = true;
 				play_sound(SOUND_EFFECT::SWORD_SWING);
@@ -148,6 +149,16 @@ void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
 		createExplosion(renderer, position, ROCKET_EXPLOSION_FACTOR);
 	else if (registry.grenades.has(explodable))
 		createExplosion(renderer, position, GRENADE_EXPLOSION_FACTOR);
+}
+
+void update_explosions(float elapsed_ms) {
+	for (Entity explosion: registry.explosions.entities) {
+		int frame = (int)floor((glfwGetTime() - registry.animated.get(explosion).oneTimer) * 10.0);
+		if (frame == 6)
+			registry.remove_all_components_of(explosion);
+		else if (frame == 2)
+			registry.weaponHitBoxes.get(explosion).isActive = false;
+	}
 }
 
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
@@ -232,7 +243,10 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	createRocketLauncher(renderer, {x_pos, y_pos});
+	if (rand < 0.5)
+		createRocketLauncher(renderer, {x_pos, y_pos});
+	else
+		createGrenadeLauncher(renderer, {x_pos, y_pos});
 	// if (rand < 0.1)
 	// 	createHeart(renderer, {x_pos, y_pos});
 	// else if (rand < 0.5)
