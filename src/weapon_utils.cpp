@@ -332,6 +332,9 @@ void check_dash_boots(Entity hero, uint direction) {
 			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
 			dash_time = DASH_TIME;
 			play_sound(SOUND_EFFECT::DASH);
+            AnimationInfo& info = registry.animated.get(hero);
+            info.oneTimeState = 5;
+            info.oneTimer = glfwGetTime();
 		} else {
 			dash_direction = direction;
 			dash_window = DASH_WINDOW;
