@@ -12,6 +12,14 @@ const float SWORD_BB_WIDTH = 1.f * 21.f;
 const float SWORD_BB_HEIGHT = 1.f * 50.f;
 const float GUN_BB_WIDTH = 1.f * 32;
 const float GUN_BB_HEIGHT = 1.f * 32;
+const float ROCKET_LAUNCHER_BB_WIDTH = .8f * 82;
+const float ROCKET_LAUNCHER_BB_HEIGHT = .8f * 28;
+const float ROCKET_BB_WIDTH = 1.f * 43;
+const float ROCKET_BB_HEIGHT = 1.f * 7;
+const float GRENADE_LAUNCHER_BB_WIDTH = 1.3f * 41;
+const float GRENADE_LAUNCHER_BB_HEIGHT = 1.3f * 18;
+const float GRENADE_BB_WIDTH = 1.f * 18;
+const float GRENADE_BB_HEIGHT = 1.f * 19;
 const float HEART_BB_WIDTH = 2.f * 16;
 const float HEART_BB_HEIGHT = 2.f * 16;
 const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
@@ -23,8 +31,8 @@ const float PICKAXE_BB_HEIGHT = .5f * 80;
 const float SPITTER_BULLET_BB_WIDTH = 16.f * 3.f;
 const float SPITTER_BULLET_BB_HEIGHT = 16.f * 3.f;
 
-
 const float CHARACTER_SCALING = 3.0f;
+const float EXPLOSION_SCALING = 2.0f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16 * CHARACTER_SCALING, 24 * CHARACTER_SCALING}},
@@ -37,17 +45,19 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::DIFFICULTY_BAR, {600, 40}},
-        { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}}
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}}
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
 };
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {-8, 0}}
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -62,6 +72,12 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {6, 7, 8, 3, 8},
             0,
             9
+        }},
+        {TEXTURE_ASSET_ID::EXPLOSION, {
+            1,
+            {6},
+            0,
+            6
         }}
 };
 // the player
@@ -78,6 +94,16 @@ Entity createSword(RenderSystem *renderer, vec2 position);
 Entity createGun(RenderSystem* renderer, vec2 position);
 // the bullet
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createRocketLauncher(RenderSystem* renderer, vec2 position);
+
+Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
+
+Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

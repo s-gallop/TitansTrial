@@ -290,6 +290,161 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	return entity;
 }
 
+Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto &motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.position = position;
+	motion.scale = vec2({ROCKET_LAUNCHER_BB_WIDTH, ROCKET_LAUNCHER_BB_HEIGHT});
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::ROCKET_LAUNCHER;
+	registry.rocketLaunchers.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::ROCKET_LAUNCHER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
+
+	return entity;
+}
+
+Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = vec2({ROCKET_BB_WIDTH, ROCKET_BB_HEIGHT});;
+
+	registry.rockets.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ROCKET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale});
+
+	return entity;
+}
+
+Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto &motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = {0.f, 0.f};
+	motion.position = position;
+	motion.scale = vec2({GRENADE_LAUNCHER_BB_WIDTH, GRENADE_LAUNCHER_BB_HEIGHT});
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::GRENADE_LAUNCHER;
+	registry.grenadeLaunchers.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
+
+	return entity;
+}
+
+Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = vec2({GRENADE_BB_WIDTH, GRENADE_BB_HEIGHT});
+	motion.isProjectile = true;
+	motion.friction = .8f;
+
+	registry.grenades.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GRENADE,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale});
+
+	return entity;
+}
+
+Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion &motion = registry.motions.emplace(entity);
+	motion.position = position - size * vec2({8, 0});
+	motion.scale = size * ASSET_SIZE.at(TEXTURE_ASSET_ID::EXPLOSION);
+
+	registry.explosions.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	
+	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
+	info.oneTimeState = 0;
+	info.oneTimer = glfwGetTime();
+
+	registry.renderRequests.insert(
+		entity,
+		{TEXTURE_ASSET_ID::EXPLOSION,
+		 EFFECT_ASSET_ID::EXPLOSION,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 size * SPRITE_SCALE.at(TEXTURE_ASSET_ID::EXPLOSION),
+		 size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION)});
+
+	return entity;
+}
+
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 
@@ -308,7 +463,10 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::HEART,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -331,7 +489,10 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::PICKAXE,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -354,7 +515,10 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::WINGED_BOOTS,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -377,7 +541,10 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 		entity,
 		{TEXTURE_ASSET_ID::DASH_BOOTS,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE});
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale});
 
 	return entity;
 }
@@ -416,7 +583,7 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.scale = size;
-	registry.weaponHitBoxes.emplace(entity);
+	WeaponHitBox& hit_box = registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
