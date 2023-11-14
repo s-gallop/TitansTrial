@@ -689,3 +689,57 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 	registry.showWhenPaused.emplace(entity);
 	return entity;
 }
+
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::DIFFICULTY_BAR);
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DIFFICULTY_BAR,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PLAYER_HEART);
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PLAYER_HEART,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 false,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+//float offsetHelper(vec2 hurt_scale, vec2 sprite_scale, vec2 hurt_reduction) {
+//
+//}
