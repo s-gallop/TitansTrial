@@ -185,6 +185,10 @@ struct GameButton {
     std::function<void ()> callback;
 };
 
+struct InGameGUI {
+
+};
+
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
@@ -240,7 +244,9 @@ enum class TEXTURE_ASSET_ID
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
     HITBOX = TITLE_TEXT + 1,
-	TEXTURE_COUNT = HITBOX + 1,
+	DIFFICULTY_BAR = HITBOX + 1,
+	PLAYER_HEART = DIFFICULTY_BAR + 1,
+	TEXTURE_COUNT = PLAYER_HEART + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;

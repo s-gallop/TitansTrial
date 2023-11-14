@@ -31,6 +31,7 @@ bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 vec3 player_color;
 std::vector<std::vector<char>> grid_vec = create_grid();
+std::vector<Entity> player_hearts_GUI = { };
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -196,8 +197,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
-	title_ss << "; Player HP: " << registry.players.get(player_hero).hp;
-	title_ss << "; Invlunerable Time: " << registry.players.get(player_hero).invulnerable_timer / 1000.0f;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
@@ -286,6 +285,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		current_enemy_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 1.0f;
+	}
+	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
+		Entity curHeart = player_hearts_GUI[i];
+		registry.renderRequests.get(curHeart).visibility = true;
+	}
+	for (int i = registry.players.get(player_hero).hp; i < player_hearts_GUI.size(); i++) {
+		Entity curHeart = player_hearts_GUI[i];
+		registry.renderRequests.get(curHeart).visibility = false;
 	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
@@ -494,7 +501,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
-  isTitleScreen = false;
+	isTitleScreen = false;
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -529,6 +536,9 @@ void WorldSystem::restart_game()
 	ddl = 0;
 	ddf = 0.0f;
 	player_color = registry.colors.get(player_hero);
+	player_hearts_GUI.clear();
+
+	create_inGame_GUIs();
 
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
@@ -578,6 +588,15 @@ void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
     createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); }, false);
     createHelperText(renderer);
+}
+
+void WorldSystem::create_inGame_GUIs() {
+	createDifficultyBar(renderer, { window_width_px / 2, 20.0 });
+	float heartStartPosition = 70;
+	for (int i = 0; i < registry.players.get(player_hero).hp_max; i++) {
+		player_hearts_GUI.push_back(createPlayerHeart(renderer, { heartStartPosition, 20.0 }));
+		heartStartPosition += 35;
+	}
 }
 
 // Compute collisions between entities
