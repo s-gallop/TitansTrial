@@ -123,3 +123,4 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
+Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);

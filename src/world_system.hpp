@@ -34,13 +34,18 @@ const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
-const float SPITTER_PROJECTILE_MIN_SIZE = .2f;
+const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
 const uint SPITTER_PROJECTILE_AMT = 10;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.f;
 const float JUMP_INITIAL_SPEED = 350.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 30.f;
+const float HEART_START_POS = 70.f;
+const float HEART_GAP = 35.f;
+const float HEART_Y_CORD = 20.f;
+const float POWER_X_CORD = 25.f;
+const float POWER_Y_CORD = 60.f;
 
 class WorldSystem
 {

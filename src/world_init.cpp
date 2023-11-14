@@ -739,3 +739,28 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 
 	return entity;
 }
+
+Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 40.f, 40.f};
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 false,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
