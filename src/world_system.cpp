@@ -654,7 +654,7 @@ void WorldSystem::handle_collisions()
 			{
 				// remove 1 hp
 				player.hp -= 1;
-				registry.players.get(player_hero).invulnerable_timer = 3000.f;
+				registry.players.get(player_hero).invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
 				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
@@ -835,6 +835,18 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             spawn_spitter_enemy(0);
         }
 
+		if (key == GLFW_KEY_I && debug)
+		{
+			registry.players.get(player_hero).invulnerable_timer = 12550821.f;
+			registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
+		}
+		if (key == GLFW_KEY_K && debug)
+		{
+			std::vector<Entity> justKillThem = { };
+			for (uint i = 0; i < registry.enemies.size(); i++) justKillThem.push_back(registry.enemies.entities[i]);
+			for (uint i = 0; i < registry.spitterEnemies.size(); i++) justKillThem.push_back(registry.spitterEnemies.entities[i]);
+			for (Entity e : justKillThem) registry.remove_all_components_of(e);
+		}
 
 		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 			for (Entity weapon : registry.weapons.entities)
