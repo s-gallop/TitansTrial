@@ -515,8 +515,8 @@ void WorldSystem::restart_game()
 	int background_pixels_width = 768;
 	int background_pixels_height = 432;
 
-	int base_height = ceil(16 * window_height_px / background_pixels_height);
-	int base_width = ceil(16 * window_width_px / background_pixels_width);
+	float base_height = 16 * window_height_px / background_pixels_height;
+	float base_width = 16 * window_width_px / background_pixels_width;
 
 
 	// global variables at this .cpp to reset, don't forget it!
@@ -538,16 +538,16 @@ void WorldSystem::restart_game()
 	createBlock(renderer, {base_width * 8 - 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// top middle platform
-	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, base_height * 6 + 4}, {base_width * 26, base_height * 2});
 
 	// right middle platform
 	createBlock(renderer, {window_width_px - base_width * 8 + 16, base_height * 12 + 8}, {base_width * 11, base_height * 2});
 
 	// bottom middle left platform
-	createBlock(renderer, {base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {base_width * 13, base_height * 18 + 12}, {base_width * 10, base_height * 2});
 
 	// bottom middle right platform
-	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18 + 8}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18 + 12}, {base_width * 10, base_height * 2});
 
 	// bottom left padding platform
 	createBlock(renderer, {base_width * 6 + 8, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
