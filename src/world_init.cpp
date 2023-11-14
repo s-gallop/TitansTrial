@@ -696,7 +696,3 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 
 	return entity;
 }
-
-//float offsetHelper(vec2 hurt_scale, vec2 sprite_scale, vec2 hurt_reduction) {
-//
-//}
