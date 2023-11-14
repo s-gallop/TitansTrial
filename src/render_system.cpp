@@ -1,5 +1,6 @@
 // internal
 #include "render_system.hpp"
+#include "world_system.hpp"
 #include <SDL.h>
 
 #include "tiny_ecs_registry.hpp"
@@ -65,14 +66,14 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 			AnimationInfo &info = registry.animated.get(entity);
 			GLint frame_loc = glGetUniformLocation(program, "frame");
             if (info.oneTimeState != -1) {
-                int count = (int)floor((glfwGetTime() - info.oneTimer) * 10.0);
+                int count = (int)floor((glfwGetTime() - info.oneTimer) * ANIMATION_SPEED_FACTOR);
                 if (count < info.stateFrameLength[info.oneTimeState]) {
                     glUniform2f(frame_loc, count % info.stateFrameLength[info.oneTimeState], info.oneTimeState);
                 } else {
                     info.oneTimeState = -1;
                 }
             } else {
-                glUniform2f(frame_loc, (int)floor(glfwGetTime() * 10.0) % info.stateFrameLength[info.curState], info.curState);
+                glUniform2f(frame_loc, ((int)floor(glfwGetTime() * ANIMATION_SPEED_FACTOR) % info.stateFrameLength[info.curState]), info.curState);
             }
 			GLint scale_loc = glGetUniformLocation(program, "scale");
 			glUniform2f(scale_loc, info.stateCycleLength, info.states);

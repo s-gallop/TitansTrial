@@ -5,34 +5,23 @@
 #include "render_system.hpp"
 #include <map>
 
-// These are ahrd coded to the dimensions of the entity texture
-const float ENEMY_BB_WIDTH = 3.f * 26.f;
-const float ENEMY_BB_HEIGHT = 3.f * 30.f;
-const float SWORD_BB_WIDTH = 1.f * 21.f;
-const float SWORD_BB_HEIGHT = 1.f * 50.f;
-const float GUN_BB_WIDTH = 1.f * 32;
-const float GUN_BB_HEIGHT = 1.f * 32;
-const float ROCKET_LAUNCHER_BB_WIDTH = .8f * 82;
-const float ROCKET_LAUNCHER_BB_HEIGHT = .8f * 28;
-const float ROCKET_BB_WIDTH = 1.f * 43;
-const float ROCKET_BB_HEIGHT = 1.f * 7;
-const float GRENADE_LAUNCHER_BB_WIDTH = 1.3f * 41;
-const float GRENADE_LAUNCHER_BB_HEIGHT = 1.3f * 18;
-const float GRENADE_BB_WIDTH = 1.f * 18;
-const float GRENADE_BB_HEIGHT = 1.f * 19;
-const float HEART_BB_WIDTH = 2.f * 16;
-const float HEART_BB_HEIGHT = 2.f * 16;
-const float WINGED_BOOTS_BB_WIDTH = .02f * 1489;
-const float WINGED_BOOTS_BB_HEIGHT = .02f * 1946;
-const float DASH_BOOTS_BB_WIDTH = 1.2f * 27;
-const float DASH_BOOTS_BB_HEIGHT = 1.2f * 30;
-const float PICKAXE_BB_WIDTH = .5f * 55;
-const float PICKAXE_BB_HEIGHT = .5f * 80;
-const float SPITTER_BULLET_BB_WIDTH = 16.f * 3.f;
-const float SPITTER_BULLET_BB_HEIGHT = 16.f * 3.f;
+// These are hard coded to the dimensions of the entity texture
 
 const float CHARACTER_SCALING = 3.0f;
 const float EXPLOSION_SCALING = 2.0f;
+
+const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
+const vec2 SWORD_BB = vec2(21.f, 50.f);
+const vec2 GUN_BB = vec2(32.f, 32.f);
+const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
+const vec2 ROCKET_BB = vec2(43.f, 7.f);
+const vec2 GRENADE_LAUNCHER_BB = vec2(41.f, 18.f) * 1.3f;
+const vec2 GRENADE_BB = vec2(18.f, 19.f);
+const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
+const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
+const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
+const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
+const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16 * CHARACTER_SCALING, 24 * CHARACTER_SCALING}},
@@ -56,6 +45,9 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
 };
+
+const float BULLET_MESH_SCALE = 4.0f;
+
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
@@ -80,6 +72,12 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {6},
             0,
             6
+        }},
+        {TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET, {
+            1,
+            {4},
+            0,
+            4
         }}
 };
 // the player
