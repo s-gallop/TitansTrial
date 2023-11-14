@@ -11,18 +11,6 @@
 #include <iostream>
 #include <map>
 
-// Game configuration
-const size_t MAX_ENEMIES = 15;
-const size_t MAX_FOLLOWING_ENEMIES = MAX_ENEMIES/5;
-const size_t MAX_SPITTERS = 3;
-const size_t ENEMY_DELAY_MS = 2000 * 3;
-const size_t SPITTER_DELAY_MS = 10000 * 3;
-const size_t SPITTER_PROJECTILE_DELAY_MS = 5000;
-const uint MAX_JUMPS = 2;
-const float BASIC_SPEED = 200.0;
-const float JUMP_INITIAL_SPEED = 350.0;
-const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
-const float DDF_PUNISHMENT = 30.0;
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
@@ -158,7 +146,8 @@ void WorldSystem::create_title_screen()
 	
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
-	
+
+    //these magic number are just the vertical position of where the buttons are
 	createTitleText(renderer, { window_width_px / 2, 150 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
 	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
@@ -339,7 +328,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT));
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), ENEMY_BB);
 		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
@@ -392,7 +381,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), vec2(ENEMY_BB_WIDTH/2, ENEMY_BB_HEIGHT/2));
+		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), ENEMY_BB / 2.f);
 		registry.enemies.get(newEnemy).follows = true;
 		registry.colors.emplace(newEnemy);
 		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
@@ -435,10 +424,12 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 }
 
 void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
+    const uint SHOOT_STATE = 2;
+    const uint SPITTER_FIRE_FRAME = 4;
 	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
 	{
-		next_spitter_spawn = (SPITTER_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_DELAY_MS / 2);
+		next_spitter_spawn = (SPITTER_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_SPAWN_DELAY_MS / 2);
 		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 		createSpitterEnemy(renderer, { x_pos, y_pos });
@@ -452,7 +443,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		Entity entity = spitterEnemy_container.entities[i];
 		Motion &motion = registry.motions.get(entity);
 		AnimationInfo &animation = registry.animated.get(entity);
-        if ((int)floor((glfwGetTime() - animation.oneTimer) * 10.0) == 4 && spitterEnemy.canShoot) {
+        if ((int)floor((glfwGetTime() - animation.oneTimer) * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
             float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
             if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
@@ -464,12 +455,12 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f)
 		{
 			// attack animation
-            animation.oneTimeState = 2;
+            animation.oneTimeState = SHOOT_STATE;
             animation.oneTimer = glfwGetTime();
             spitterEnemy.canShoot = true;
 			// create bullet at same position as enemy
 
-			spitterEnemy.bulletsRemaining -= 1;
+			spitterEnemy.bulletsRemaining--;
 			spitterEnemy.timeUntilNextShotMs = SPITTER_PROJECTILE_DELAY_MS;
 		}
 	}
@@ -480,12 +471,13 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	{
 		SpitterBullet& spitterBullet = spitterBullets_container.components[i];
 		Entity entity = spitterBullets_container.entities[i];
+        RenderRequest& render = registry.renderRequests.get(entity);
 		Motion& motion = registry.motions.get(entity);
 		// make bullets smaller over time
-		motion.scale = vec2(motion.scale.x / spitterBullet.mass, motion.scale.y / spitterBullet.mass);
-		spitterBullet.mass -= elapsed_ms_since_last_update / 5000;
+		spitterBullet.mass -= elapsed_ms_since_last_update / SPITTER_PROJECTILE_REDUCTION_FACTOR;
 		motion.scale = vec2(motion.scale.x * spitterBullet.mass, motion.scale.y * spitterBullet.mass);
-		if (spitterBullet.mass <= 0.2)
+        render.scale = motion.scale;
+		if (spitterBullet.mass <= SPITTER_PROJECTILE_MIN_SIZE)
 		{
 			spitterBullet.mass = 0;
 			spitterBullets_container.remove(entity);

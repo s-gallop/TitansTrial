@@ -1,6 +1,6 @@
-#include <map>
 #include <utility>
 #include "world_init.hpp"
+#include "world_system.hpp"
 #include "tiny_ecs_registry.hpp"
 
 
@@ -40,6 +40,8 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
 {
 	auto entity = Entity();
+    const float ACTUAL_SCALE_FACTOR = 0.5f;
+    const float OFFSET_FACTOR = 4.0f;
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -51,7 +53,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = velocity;
-	motion.scale = {scale.x/2, scale.y/2};
+	motion.scale = {scale.x*ACTUAL_SCALE_FACTOR, scale.y*ACTUAL_SCALE_FACTOR};
 
 	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
@@ -62,7 +64,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
          false,
          true,
          scale,
-         {0, -scale.y/4}});
+         {0, -scale.y/OFFSET_FACTOR}});
 
     registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);
@@ -87,8 +89,8 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot
-	spitterEnemy.timeUntilNextShotMs = 1000.f;
-	spitterEnemy.bulletsRemaining = 10;
+	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
+	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(
@@ -122,18 +124,14 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	auto dir = []() -> int
 	{ return rand() % 2 == 0 ? 1 : -1; };
 	motion.velocity = {dir() * 300, dir() * (rand() % 300)};
-	motion.scale = {-SPITTER_BULLET_BB_WIDTH, SPITTER_BULLET_BB_HEIGHT};
+	motion.scale = SPITTER_BULLET_BB;
 	motion.isProjectile = true;
 
 	SpitterBullet &bullet = registry.spitterBullets.emplace(entity);
 
 	bullet.mass = 1;
 
-	AnimationInfo &animationInfo = registry.animated.emplace(entity);
-	animationInfo.states = 1;
-	animationInfo.curState = 0;
-	animationInfo.stateFrameLength = {4};
-	animationInfo.stateCycleLength = 4;
+	AnimationInfo &animationInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET,
@@ -208,7 +206,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = vec2({SWORD_BB_WIDTH, SWORD_BB_HEIGHT});
+	motion.scale = SWORD_BB;
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -240,7 +238,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = vec2({GUN_BB_WIDTH, GUN_BB_HEIGHT});
+	motion.scale = GUN_BB;
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -261,6 +259,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	auto entity = Entity();
+    const float GREY_SCALE = .47f;
 
 	// Store a reference to the potentially re-used mesh object
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::BULLET);
@@ -271,10 +270,10 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	motion.position = position;
 	motion.angle = angle;
 	motion.velocity = vec2(800.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = mesh.original_size * 4.f;
+	motion.scale = mesh.original_size * BULLET_MESH_SCALE;
 	
 	vec3& colour = registry.colors.emplace(entity);
-	colour = {.47, .47, .47};
+	colour = {GREY_SCALE, GREY_SCALE, GREY_SCALE};
 
 	registry.bullets.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
@@ -303,7 +302,7 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = vec2({ROCKET_LAUNCHER_BB_WIDTH, ROCKET_LAUNCHER_BB_HEIGHT});
+	motion.scale = ROCKET_LAUNCHER_BB;
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -334,7 +333,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 	motion.position = position;
 	motion.angle = angle;
 	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = vec2({ROCKET_BB_WIDTH, ROCKET_BB_HEIGHT});;
+	motion.scale = ROCKET_BB;
 
 	registry.rockets.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
@@ -363,7 +362,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = vec2({GRENADE_LAUNCHER_BB_WIDTH, GRENADE_LAUNCHER_BB_HEIGHT});
+	motion.scale = GRENADE_LAUNCHER_BB;
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -393,7 +392,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = vec2({GRENADE_BB_WIDTH, GRENADE_BB_HEIGHT});
+	motion.scale = GRENADE_BB;
 	motion.isProjectile = true;
 	motion.friction = .8f;
 
@@ -453,7 +452,7 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.scale = {HEART_BB_WIDTH, HEART_BB_HEIGHT};
+	motion.scale = HEART_BB;
 
 	Collectable& collectable = registry.collectables.emplace(entity);
 	collectable.type = COLLECTABLE_TYPE::HEART;
@@ -479,7 +478,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.scale = {PICKAXE_BB_WIDTH, PICKAXE_BB_HEIGHT};
+	motion.scale = PICKAXE_BB;
 
 	Collectable& collectable = registry.collectables.emplace(entity);
 	collectable.type = COLLECTABLE_TYPE::PICKAXE;
@@ -505,7 +504,7 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.scale = {WINGED_BOOTS_BB_WIDTH, WINGED_BOOTS_BB_HEIGHT};
+	motion.scale = WINGED_BOOTS_BB;
 
 	Collectable& collectable = registry.collectables.emplace(entity);
 	collectable.type = COLLECTABLE_TYPE::WINGED_BOOTS;
@@ -531,7 +530,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.scale = {DASH_BOOTS_BB_WIDTH, DASH_BOOTS_BB_HEIGHT};
+	motion.scale = DASH_BOOTS_BB;
 
 	Collectable& collectable = registry.collectables.emplace(entity);
 	collectable.type = COLLECTABLE_TYPE::DASH_BOOTS;
@@ -583,7 +582,7 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.scale = size;
-	WeaponHitBox& hit_box = registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
@@ -647,7 +646,3 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 	registry.showWhenPaused.emplace(entity);
 	return entity;
 }
-
-//float offsetHelper(vec2 hurt_scale, vec2 sprite_scale, vec2 hurt_reduction) {
-//
-//}
