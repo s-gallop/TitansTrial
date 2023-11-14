@@ -161,18 +161,36 @@ void WorldSystem::create_title_screen()
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
-	if (registry.players.get(player_hero).invulnerable_timer > 0.0f)
+	if (registry.players.get(player_hero).invuln_type != INVULN_TYPE::NONE)
 	{
 		float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
-		if (expectedTimer <= 0.0f) {
+		if (expectedTimer <= 0.0f)
+		{
 			registry.players.get(player_hero).invulnerable_timer = 0.0f;
 			registry.colors.get(player_hero) = player_color;
+			registry.players.get(player_hero).invuln_type = INVULN_TYPE::NONE;
+			for (Entity e : player_hearts_GUI) {
+				registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART;
+			}
 		}
 		else
 		{
+			if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HIT) 
+			{
+				for (Entity e : player_hearts_GUI) {
+					registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_STEEL;
+				}
+			}
+			else
+			{
+				for (Entity e : player_hearts_GUI) {
+					registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_HEAL;
+				}
+			}
 			registry.players.get(player_hero).invulnerable_timer = expectedTimer;
 		}
 	}
+
 	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 350.0f);
 	if (ddf >= 260)
 		ddl = 2;
@@ -636,7 +654,8 @@ void WorldSystem::handle_collisions()
 			{
 				// remove 1 hp
 				player.hp -= 1;
-				registry.players.get(player_hero).invulnerable_timer = 3000.0f;
+				registry.players.get(player_hero).invulnerable_timer = 3000.f;
+				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
 

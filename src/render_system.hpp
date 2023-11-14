@@ -64,7 +64,10 @@ class RenderSystem
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
 		textures_path("TestBar.png"),
-		textures_path("pixel_heart.png")};
+		textures_path("pixel_heart.png"),
+		textures_path("pixel_heart_steel.png"),
+		textures_path("pixel_heart_heal.png")};
+
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
