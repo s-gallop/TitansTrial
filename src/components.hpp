@@ -17,10 +17,19 @@ enum class COLLECTABLE_TYPE
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1
 };
+
+enum class INVULN_TYPE
+{
+	NONE = 0,
+	HIT = NONE + 1,
+	HEAL = HIT + 1
+};
+
 struct Blank
 {
 
 };
+
 // Player component
 struct Player
 {
@@ -34,6 +43,7 @@ struct Player
 	int hp_max = 5;
 	int hp = 5;
 	float invulnerable_timer = 0;
+	INVULN_TYPE invuln_type = INVULN_TYPE::NONE;
 };
 
 struct Block
@@ -274,10 +284,12 @@ enum class TEXTURE_ASSET_ID
 	PLAY = HELPER + 1,
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
-    HITBOX = TITLE_TEXT + 1,
+	HITBOX = TITLE_TEXT + 1,
 	DIFFICULTY_BAR = HITBOX + 1,
 	PLAYER_HEART = DIFFICULTY_BAR + 1,
-	TEXTURE_COUNT = PLAYER_HEART + 1
+	PLAYER_HEART_STEEL = PLAYER_HEART + 1,
+	PLAYER_HEART_HEAL = PLAYER_HEART_STEEL + 1,
+	TEXTURE_COUNT = PLAYER_HEART_HEAL + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
