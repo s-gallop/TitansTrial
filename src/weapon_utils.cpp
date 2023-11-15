@@ -3,7 +3,7 @@
 #include "world_init.hpp"
 #include "sound_utils.hpp"
 
-float next_collectable_spawn = 0.f;
+float next_collectable_spawn = 1200.f;
 float pickaxe_disable = 0.f;
 float dash_window = 0.f;
 float dash_time = 0.f;
@@ -12,7 +12,7 @@ uint dash_direction = 0;
 const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
-const size_t EQUIPMENT_DURATION = 10000;
+const size_t EQUIPMENT_DURATION = 20000;
 const size_t ROCKET_COOLDOWN = 3000;
 const float ROCKET_EXPLOSION_FACTOR = 3.5f;
 const size_t GRENADE_COOLDOWN = 1750;
@@ -89,6 +89,7 @@ void collect(Entity collectable, Entity hero) {
 
 void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 	Motion &motion = registry.motions.get(weapon);
+	RenderRequest& render = registry.renderRequests.get(weapon);
 	if (!registry.swords.has(weapon) || registry.swords.get(weapon).swing == 0) {
 		motion.angle = atan2(mouse_pos.y - motion.position.y, mouse_pos.x - motion.position.x);
 		
@@ -98,9 +99,9 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 		
 		if (registry.guns.has(weapon) || registry.rocketLaunchers.has(weapon) || registry.grenadeLaunchers.has(weapon)) {
 			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
-				motion.scale.y = -1*abs(motion.scale.y);
+				render.scale.y = -1*abs(motion.scale.y);
 			} else {
-				motion.scale.y = abs(motion.scale.y);
+				render.scale.y = abs(motion.scale.y);
 			}
 		}
 	}
@@ -268,15 +269,12 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	if (ddl == -1)
-		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	if (rand < 0.1)
+		createHeart(renderer, {x_pos, y_pos});
+	else if (rand < 0.5)
+		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
 	else
-		if (rand < 0.1)
-			createHeart(renderer, {x_pos, y_pos});
-		else if (rand < 0.5)
-			spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-		else
-			spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -337,7 +335,7 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 void use_pickaxe(Entity hero, uint direction, size_t max_jumps) {
 	if (pickaxe_disable <= 0) {
 		registry.motions.get(hero).velocity = {0, 0};
-		registry.motions.get(hero).scale.x = (direction ? 1 : -1) * abs(registry.motions.get(hero).scale.x);
+		registry.motions.get(hero).dir = direction ? 1 : -1;
 		registry.players.get(hero).jumps = max_jumps;
 		registry.gravities.get(hero).lodged.set(direction);
 		play_sound(SOUND_EFFECT::PICKAXE);
@@ -350,7 +348,8 @@ void disable_pickaxe(Entity hero, uint direction, float disable_time) {
 }
 
 void update_pickaxe(float elapsed_ms) {
-	pickaxe_disable -= elapsed_ms;
+	if (pickaxe_disable > 0)
+		pickaxe_disable -= elapsed_ms;
 }
 
 void check_dash_boots(Entity hero, uint direction) {

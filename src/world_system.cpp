@@ -236,15 +236,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero);
 	
 	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
+	update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
+	update_pickaxe(elapsed_ms_since_last_update * current_speed);
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
-
-	COLLECTABLE_TYPE equipment_type = registry.players.get(player_hero).equipment_type;
-	if (equipment_type == COLLECTABLE_TYPE::DASH_BOOTS)
-		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
-	else if (equipment_type == COLLECTABLE_TYPE::PICKAXE)
-		update_pickaxe(elapsed_ms_since_last_update * current_speed);
 
 	// Animation Stuff	
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
@@ -516,7 +512,7 @@ void WorldSystem::restart_game()
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
 	
 	Player& player = registry.players.get(player_hero);
-	update_collectable_timer(0, renderer, -1);
+	createSword(renderer, registry.motions.get(player_hero).position);
 
 	int background_pixels_width = 768;
 	int background_pixels_height = 432;
