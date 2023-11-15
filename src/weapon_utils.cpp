@@ -163,7 +163,8 @@ void update_explosions(float elapsed_ms) {
 	}
 }
 
-void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
+void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero) {
+	Entity weapon = registry.players.get(hero).weapon;
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
 	if (registry.swords.has(weapon))

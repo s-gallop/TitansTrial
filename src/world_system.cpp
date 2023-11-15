@@ -232,7 +232,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		
 	}
 
-	update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero);
+	if (registry.players.get(player_hero).hasWeapon)
+		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero);
+	
 	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
