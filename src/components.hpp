@@ -10,13 +10,18 @@ enum class COLLECTABLE_TYPE
 {
 	SWORD = 0,
 	GUN = SWORD + 1,
-	HEART = GUN + 1,
+	ROCKET_LAUNCHER = GUN + 1,
+	GRENADE_LAUNCHER = ROCKET_LAUNCHER + 1,
+	HEART = GRENADE_LAUNCHER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
 	COLLECTABLE_COUNT = DASH_BOOTS + 1
 };
+struct Blank
+{
 
+};
 // Player component
 struct Player
 {
@@ -48,6 +53,7 @@ struct SpitterEnemy
 {
 	uint bulletsRemaining;
 	float timeUntilNextShotMs;
+    bool canShoot;
 };
 
 struct SpitterBullet 
@@ -76,6 +82,28 @@ struct Bullet {
 
 };
 
+struct RocketLauncher {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Rocket {
+
+};
+
+struct GrenadeLauncher {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Grenade {
+	float explode_timer = 3000;
+};
+
+struct Explosion {
+	float timer = 1000;
+};
+
 // Weapon the player has picked up
 struct Weapon
 {
@@ -86,6 +114,7 @@ struct Weapon
 struct WeaponHitBox
 {
 	bool soundPlayed = false;
+	bool isActive = true;
 };
 
 // All data relevant to the shape and motion of entities
@@ -99,6 +128,8 @@ struct Motion
 	vec2 positionOffset = {0.f, 0.f};
 	bool isSolid = false;
 	bool isProjectile = false;
+	int dir = 1;
+	float friction = 1.f;
 };
 
 // just for milestone 1 sudden requirement
@@ -171,6 +202,8 @@ struct AnimationInfo
 	std::vector<int> stateFrameLength;
 	int curState;
 	int stateCycleLength;
+    int oneTimeState = -1;
+    double oneTimer;
 };
 
 struct ShowWhenPaused {
@@ -222,7 +255,12 @@ enum class TEXTURE_ASSET_ID
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
-	HEART = GUN + 1,
+	ROCKET_LAUNCHER = GUN + 1,
+	ROCKET = ROCKET_LAUNCHER + 1,
+	GRENADE_LAUNCHER = ROCKET + 1,
+	GRENADE = GRENADE_LAUNCHER + 1,
+	EXPLOSION = GRENADE + 1,
+	HEART = EXPLOSION + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -235,7 +273,8 @@ enum class TEXTURE_ASSET_ID
 	PLAY = HELPER + 1,
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
-	TEXTURE_COUNT = TITLE_TEXT + 1,
+    HITBOX = TITLE_TEXT + 1,
+	TEXTURE_COUNT = HITBOX + 1,
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -248,7 +287,8 @@ enum class EFFECT_ASSET_ID
 	SCREEN = BULLET + 1,
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
-	SPITTER_ENEMY = HERO + 1,
+	EXPLOSION = HERO + 1,
+	SPITTER_ENEMY = EXPLOSION + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	EFFECT_COUNT = SPITTER_ENEMY_BULLET + 1
 };
@@ -271,4 +311,6 @@ struct RenderRequest
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
     bool on_top_screen = false;
     bool visibility = true;
+    vec2 scale = {1,1};
+    vec2 offset = {0,0};
 };

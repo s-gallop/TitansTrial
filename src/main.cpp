@@ -49,7 +49,7 @@ int main()
         }
         t = now;
 
-		render_system.draw(world_system.pause);
+		render_system.draw(world_system.pause, world_system.debug);
 	}
 
 	return EXIT_SUCCESS;

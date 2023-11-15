@@ -19,12 +19,36 @@
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
+
+
+
+// Render configs
+const float ANIMATION_SPEED_FACTOR = 10.0f;
+
+// Game configuration
+const size_t MAX_ENEMIES = 15;
+const size_t MAX_FOLLOWING_ENEMIES = MAX_ENEMIES/5;
+const size_t MAX_SPITTERS = 3;
+const size_t ENEMY_DELAY_MS = 2000 * 3;
+const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
+const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
+const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
+const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
+const float SPITTER_PROJECTILE_MIN_SIZE = .2f;
+const uint SPITTER_PROJECTILE_AMT = 10;
+const uint MAX_JUMPS = 2;
+const float BASIC_SPEED = 200.f;
+const float JUMP_INITIAL_SPEED = 350.f;
+const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
+const float DDF_PUNISHMENT = 30.f;
+
 class WorldSystem
 {
 public:
 	WorldSystem();
     // somehow pause it activated once
     static bool pause;
+    static bool debug;
 	static bool isTitleScreen;
 	// Creates a window
 	GLFWwindow *create_window();

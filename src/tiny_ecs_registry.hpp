@@ -21,6 +21,7 @@ public:
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
+    ComponentContainer<Blank> debugRenderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<SpitterEnemy> spitterEnemies;
 	ComponentContainer<SpitterBullet> spitterBullets;
@@ -29,6 +30,11 @@ public:
 	ComponentContainer<Sword> swords;
 	ComponentContainer<Gun> guns;
 	ComponentContainer<Bullet> bullets;
+	ComponentContainer<RocketLauncher> rocketLaunchers;
+	ComponentContainer<Rocket> rockets;
+	ComponentContainer<GrenadeLauncher> grenadeLaunchers;
+	ComponentContainer<Grenade> grenades;
+	ComponentContainer<Explosion> explosions;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
@@ -51,6 +57,7 @@ public:
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
 		registry_list.push_back(&renderRequests);
+        registry_list.push_back(&debugRenderRequests);
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&spitterEnemies);
 		registry_list.push_back(&spitterBullets);
@@ -59,6 +66,11 @@ public:
 		registry_list.push_back(&swords);
 		registry_list.push_back(&guns);
 		registry_list.push_back(&bullets);
+		registry_list.push_back(&rocketLaunchers);
+		registry_list.push_back(&rockets);
+		registry_list.push_back(&grenadeLaunchers);
+		registry_list.push_back(&grenades);
+		registry_list.push_back(&explosions);
 		registry_list.push_back(&weapons);
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);

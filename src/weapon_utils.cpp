@@ -13,6 +13,10 @@ const size_t COLLECTABLE_DELAY_MS = 12000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t EQUIPMENT_DURATION = 10000;
+const size_t ROCKET_COOLDOWN = 3000;
+const float ROCKET_EXPLOSION_FACTOR = 3.5f;
+const size_t GRENADE_COOLDOWN = 1750;
+const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -26,22 +30,28 @@ void collect_weapon(Entity weapon, Entity hero) {
 		} else {
 			if (registry.players.get(hero).hasWeapon)
 				registry.remove_all_components_of(registry.players.get(hero).weapon);
-			registry.collectables.remove(weapon);
 			registry.gravities.remove(weapon);
 			registry.players.get(hero).hasWeapon = 1;
 			registry.players.get(hero).weapon = weapon;
 			
 			Weapon& weapon_comp = registry.weapons.emplace(weapon);
+			weapon_comp.type = registry.collectables.get(weapon).type;
+			registry.collectables.remove(weapon);
+			
 			Motion& motion = registry.motions.get(weapon);
 			motion.position = registry.motions.get(hero).position;
 			motion.scale *= 1.3;
+			registry.renderRequests.get(weapon).scale *= 1.3;
 			motion.velocity = vec2(0, 0);
+			
 			if (registry.swords.has(weapon)) {
 				motion.positionOffset.y = -50.f;
-				weapon_comp.type = COLLECTABLE_TYPE::SWORD;
 			} else if (registry.guns.has(weapon)) {
 				motion.positionOffset.x = 30.f;
-				weapon_comp.type = COLLECTABLE_TYPE::GUN;
+			} else if (registry.rocketLaunchers.has(weapon)) {
+				motion.positionOffset.x = 20.f;
+			} else if (registry.grenadeLaunchers.has(weapon)) {
+				motion.positionOffset.x = 25.f;
 			}
 		}
 	}
@@ -52,6 +62,8 @@ void collect(Entity collectable, Entity hero) {
 	switch (type) {
 		case COLLECTABLE_TYPE::GUN:
 		case COLLECTABLE_TYPE::SWORD:
+		case COLLECTABLE_TYPE::ROCKET_LAUNCHER:
+		case COLLECTABLE_TYPE::GRENADE_LAUNCHER:
 			collect_weapon(collectable, hero);
 			break;
 		case COLLECTABLE_TYPE::HEART: {
@@ -84,11 +96,11 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 			motion.angle += M_PI/2;
 		motion.angleBackup = motion.angle;
 		
-		if (registry.guns.has(weapon)) {
+		if (registry.guns.has(weapon) || registry.rocketLaunchers.has(weapon) || registry.grenadeLaunchers.has(weapon)) {
 			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
-				motion.scale.y = -1*abs(motion.scale.x);
+				motion.scale.y = -1*abs(motion.scale.y);
 			} else {
-				motion.scale.y = abs(motion.scale.x);
+				motion.scale.y = abs(motion.scale.y);
 			}
 		}
 	}
@@ -122,21 +134,65 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 	}
 }
 
-void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero) {
-	if (registry.players.get(hero).hasWeapon) {
-		Entity weapon = registry.players.get(hero).weapon;
-		Motion &weaponMot = registry.motions.get(weapon);
-		weaponMot.position = registry.motions.get(hero).position;
-		if (registry.swords.has(weapon))
-			swing_sword(renderer, weapon);
-		else if (registry.guns.has(weapon)) {
-			Gun& gun = registry.guns.get(weapon);
-			if (!gun.loaded) {
-				gun.cooldown -= elapsed_ms;
-				if (gun.cooldown <= 0) {
-					play_sound(SOUND_EFFECT::GUN_LEVER);
-					gun.loaded = true;
-				}
+void update_grenades(RenderSystem* renderer, float elapsed_ms) {
+	for (Entity grenade: registry.grenades.entities) {
+		float& explode_timer = registry.grenades.get(grenade).explode_timer;
+		explode_timer -= elapsed_ms;
+		if (explode_timer <= 0) {
+			explode(renderer, registry.motions.get(grenade).position, grenade);
+			registry.remove_all_components_of(grenade);
+		}
+	}
+}
+
+void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
+	play_sound(SOUND_EFFECT::EXPLOSION);
+	if (registry.rockets.has(explodable))
+		createExplosion(renderer, position, ROCKET_EXPLOSION_FACTOR);
+	else if (registry.grenades.has(explodable))
+		createExplosion(renderer, position, GRENADE_EXPLOSION_FACTOR);
+}
+
+void update_explosions(float elapsed_ms) {
+	for (Entity explosion: registry.explosions.entities) {
+		int frame = (int)floor((glfwGetTime() - registry.animated.get(explosion).oneTimer) * 10.0);
+		if (frame == 6)
+			registry.remove_all_components_of(explosion);
+		else if (frame == 2)
+			registry.weaponHitBoxes.get(explosion).isActive = false;
+	}
+}
+
+void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity weapon, Entity hero) {
+	Motion &weaponMot = registry.motions.get(weapon);
+	weaponMot.position = registry.motions.get(hero).position;
+	if (registry.swords.has(weapon))
+		swing_sword(renderer, weapon);
+	else if (registry.guns.has(weapon)) {
+		Gun& gun = registry.guns.get(weapon);
+		if (gun.cooldown > 0) {
+			gun.cooldown -= elapsed_ms;
+			if (gun.cooldown <= 640 && !gun.loaded) {
+				play_sound(SOUND_EFFECT::GUN_LEVER);
+				gun.loaded = true;
+			}
+		}
+	} else if (registry.rocketLaunchers.has(weapon)) {
+		RocketLauncher& launcher = registry.rocketLaunchers.get(weapon);
+		if (launcher.cooldown > 0) {
+			launcher.cooldown -= elapsed_ms;
+			if (launcher.cooldown <= 2000 && !launcher.loaded) {
+				play_sound(SOUND_EFFECT::ROCKET_LAUNCHER_RELOAD);
+				launcher.loaded = true;
+			}
+		}
+	} else if (registry.grenadeLaunchers.has(weapon)) {
+		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
+		if (launcher.cooldown > 0) {
+			launcher.cooldown -= elapsed_ms;
+			if (!launcher.loaded) {
+				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
+				launcher.loaded = true;
 			}
 		}
 	}
@@ -157,20 +213,27 @@ void update_equipment(float elapsed_ms, Entity hero) {
 
 void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
 	float rand = uniform_dist(rng);
-	if (ddl == -1)
-		createSword(renderer, pos);
-	else if (ddl == 0)
-		createSword(renderer, pos);
+	if (ddl == 0)
+		if (rand < 0.9)
+			createSword(renderer, pos);
+		else
+			createGun(renderer, pos);
 	else if (ddl == 1)
-		if (rand > 0.8)
-			createGun(renderer, pos);
-		else
+		if (rand < 0.6)
 			createSword(renderer, pos);
+		else if (rand < 0.9)
+			createGun(renderer, pos);
+		else if (rand < 0.1)
+			createGrenadeLauncher(renderer, pos);
 	else
-		if (rand > 0.5)
-			createGun(renderer, pos);
-		else
+		if (rand < 0.3)
 			createSword(renderer, pos);
+		else if (rand < 0.6)
+			createGun(renderer, pos);
+		else if (rand < 0.8)
+			createGrenadeLauncher(renderer, pos);
+		else
+			createRocketLauncher(renderer, pos);
 }
 
 void spawn_powerup(RenderSystem* renderer, vec2 pos, int ddl) {
@@ -242,11 +305,30 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 		}
 	} else if (registry.guns.has(weapon)) {
 		Gun& gun = registry.guns.get(weapon);
-		if (gun.loaded) {
+		if (gun.cooldown <= 0) {
 			createBullet(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
 			play_sound(SOUND_EFFECT::BULLET_SHOOT);
 			gun.cooldown = GUN_COOLDOWN;
 			gun.loaded = false;
+		}
+	} else if (registry.rocketLaunchers.has(weapon)) {
+		RocketLauncher& launcher = registry.rocketLaunchers.get(weapon);
+		if (launcher.cooldown <= 0) {
+			createRocket(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
+			play_sound(SOUND_EFFECT::ROCKET_LAUNCHER_FIRE);
+			launcher.cooldown = ROCKET_COOLDOWN;
+			launcher.loaded = false;
+		}
+	} else if (registry.grenadeLaunchers.has(weapon)) {
+		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
+		if (launcher.cooldown <= 0) {
+			Motion launcher_motion = registry.motions.get(weapon);
+			float angle = launcher_motion.angle;
+			vec2 grenade_pos = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+			createGrenade(renderer, grenade_pos, registry.motions.get(weapon).angle);
+			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			launcher.cooldown = GRENADE_COOLDOWN;
+			launcher.loaded = false;
 		}
 	}
 }
@@ -277,6 +359,9 @@ void check_dash_boots(Entity hero, uint direction) {
 			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
 			dash_time = DASH_TIME;
 			play_sound(SOUND_EFFECT::DASH);
+            AnimationInfo& info = registry.animated.get(hero);
+            info.oneTimeState = 5;
+            info.oneTimer = glfwGetTime();
 		} else {
 			dash_direction = direction;
 			dash_window = DASH_WINDOW;
