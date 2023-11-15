@@ -44,7 +44,7 @@ struct Enemies
 {
 	bool follows = false;
 	std::list<vec2> path;
-	vec2 cur_dest = vec2(0.f,0.f);
+	float next_blink = 0.f;
 };
 
 struct SpitterEnemy

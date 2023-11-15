@@ -548,7 +548,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid)
 {
 	auto entity = Entity();
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -560,6 +560,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	motion.velocity = {0.f, 0.f};
 	motion.scale = size;
 	motion.isSolid = true;
+	fill_grid(grid, pos, size);
 	registry.blocks.emplace(entity);
 	registry.renderRequests.insert(
 		entity,

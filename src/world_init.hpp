@@ -81,6 +81,8 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
 Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
+// the following & teleporting enemy
+Entity createFollowingEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
 // spitter enemy
 Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos);
 // spitter enemy bullet
@@ -113,7 +115,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position);
 Entity createBackground(RenderSystem* renderer);
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer);
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
 // the ui button
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
