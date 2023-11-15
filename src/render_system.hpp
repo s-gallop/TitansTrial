@@ -63,10 +63,11 @@ class RenderSystem
 		textures_path("buttons/play_pressed.png"),
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
-		textures_path("TestBar.png"),
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
-		textures_path("pixel_heart_heal.png")};
+		textures_path("pixel_heart_heal.png"),
+		textures_path("difficulty_bar.png"),
+		textures_path("indicator.png")};
 
 
 	std::array<GLuint, effect_count> effects;

@@ -44,8 +44,13 @@ const float DDF_PUNISHMENT = 30.f;
 const float HEART_START_POS = 70.f;
 const float HEART_GAP = 35.f;
 const float HEART_Y_CORD = 20.f;
-const float POWER_X_CORD = 25.f;
-const float POWER_Y_CORD = 60.f;
+const vec2 POWER_CORD = { 20.f, 60.f };
+const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
+const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
+const vec2 INDICATOR_LEVEL_ONE_CORD = { 105.f, 710.f };
+const vec2 INDICATOR_LEVEL_TWO_CORD = { 175.f, 710.f };
+const vec2 INDICATOR_END_CORD = { 245.f, 710.f };
+const float INDICATOR_VECLOCITY = 70.f / 130.f;
 
 class WorldSystem
 {
