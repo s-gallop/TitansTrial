@@ -21,13 +21,14 @@ vec3 player_color;
 std::vector<std::vector<char>> grid_vec = create_grid();
 std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
+Entity indicator;
 
 /* 
 * ddl = Dynamic Difficulty Level
 * (0 <= ddf < 139) -> (ddl = 0)
 * (130 <= ddf < 260) -> (ddl = 1)
 * (260 <= ddf <= MAX) -> (ddl = 2)
-* Now MAX is 300
+* Now MAX is 390
 */
 int ddl = 0; 
 
@@ -210,13 +211,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(powerup_GUI).visibility = false;
 	}
 
-	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 350.0f);
+	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 390.0f);
+	ddf = max(0.f, ddf);
 	if (ddf >= 260)
 		ddl = 2;
 	else if (ddf >= 130 && ddf < 260)
 		ddl = 1;
 	else
 		ddl = 0;
+	registry.motions.get(indicator).position[0] = 35.f + ddf * INDICATOR_VECLOCITY;
 
 	// Updating window title
 	std::stringstream title_ss;
@@ -623,13 +626,14 @@ void WorldSystem::create_pause_screen() {
 }
 
 void WorldSystem::create_inGame_GUIs() {
-	createDifficultyBar(renderer, { window_width_px / 2, 20.0 });
 	float heartStartPosition = HEART_START_POS;
 	for (int i = 0; i < registry.players.get(player_hero).hp_max; i++) {
 		player_hearts_GUI.push_back(createPlayerHeart(renderer, { heartStartPosition, HEART_Y_CORD }));
 		heartStartPosition += HEART_GAP;
 	}
-	powerup_GUI = createPowerUpIcon(renderer, { POWER_X_CORD, POWER_Y_CORD });
+	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
+	createDifficultyBar(renderer, DIFF_BAR_CORD);
+	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
 }
 
 // Compute collisions between entities
@@ -656,7 +660,7 @@ void WorldSystem::handle_collisions()
 				registry.players.get(player_hero).invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
 				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
-				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
+				ddf -= player.hp_max - player.hp * DDF_PUNISHMENT;
 
 				// initiate death unless already dying
 				if (player.hp == 0 && !registry.deathTimers.has(entity))

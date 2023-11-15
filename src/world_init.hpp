@@ -36,7 +36,6 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
-        { TEXTURE_ASSET_ID::DIFFICULTY_BAR, {600, 40}},
         { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
 };
 
@@ -121,6 +120,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
-Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos);

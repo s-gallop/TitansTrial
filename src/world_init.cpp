@@ -647,31 +647,6 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 	return entity;
 }
 
-Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
-	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
-	auto& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::DIFFICULTY_BAR);
-	motion.position = pos;
-
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::DIFFICULTY_BAR,
-		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE,
-		 true,
-		 true,
-		 motion.scale });
-
-	registry.inGameGUIs.emplace(entity);
-
-	return entity;
-}
-
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -715,6 +690,56 @@ Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
 		 false,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 220.f, 40.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DIFFICULTY_BAR,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = M_PI;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 34.56f, 30.72f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INDICATOR,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
