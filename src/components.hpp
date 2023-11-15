@@ -42,7 +42,10 @@ struct Block
 
 struct Enemies
 {
-	bool follows = false;
+};
+
+struct FollowingEnemies
+{
 	std::list<vec2> path;
 	float next_blink = 0.f;
 };

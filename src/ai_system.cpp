@@ -130,7 +130,7 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 	//	printf("\n");
 	//} 
 
-	registry.enemies.get(chaser).path = bfs_follow_iter(vec, pos_chase, path);
+	registry.followingEnemies.get(chaser).path = bfs_follow_iter(vec, pos_chase, path);
 
 	//printf("HELLOOO: %d-------------------------------------------\n", registry.enemies.get(chaser).path.size());
 

@@ -376,12 +376,11 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
 {
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(15, 10)), 0.0, vec2(0.0, 0.0), ENEMY_BB / 2.f);
-		registry.enemies.get(newEnemy).follows = true;
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(15, 10)));
 
 		registry.colors.emplace(newEnemy);
 		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
@@ -391,40 +390,38 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	}
 
 	Motion& hero_motion = registry.motions.get(player_hero);
-	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
-		Entity enemy = registry.enemies.entities[i];
+	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
+		Entity enemy = registry.followingEnemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
-		Enemies& enemy_reg = registry.enemies.get(enemy);
+		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
 
-		if (enemy_reg.follows)
+		enemy_reg.next_blink -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+		if (enemy_reg.next_blink < 0.f)
 		{
-			enemy_reg.next_blink -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-			if (enemy_reg.next_blink < 0.f)
+			enemy_reg.next_blink = 1000.f;
+
+			//printf("POSITION: %f, %f\n", find_map_index(enemy_motion.position).x, find_map_index(enemy_motion.position).y);
+			//printf("GOAL: %f, %f\n", find_map_index(hero_motion.position).x, find_map_index(hero_motion.position).y);
+			if (enemy_reg.path.size() != 0)
 			{
-				enemy_reg.next_blink = 1000.f;
-
+				//enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				enemy_motion.position = find_index_from_map(enemy_reg.path.back());
+				//printf("POSITION GO: %f, %f\n", enemy_reg.path.back().x, enemy_reg.path.back().y);
 				//printf("POSITION: %f, %f\n", find_map_index(enemy_motion.position).x, find_map_index(enemy_motion.position).y);
-				//printf("GOAL: %f, %f\n", find_map_index(hero_motion.position).x, find_map_index(hero_motion.position).y);
-				if (enemy_reg.path.size() != 0)
-				{
-					//enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-					enemy_motion.position = find_index_from_map(enemy_reg.path.back());
-					//printf("POSITION GO: %f, %f\n", enemy_reg.path.back().x, enemy_reg.path.back().y);
-					//printf("POSITION: %f, %f\n", find_map_index(enemy_motion.position).x, find_map_index(enemy_motion.position).y);
 
-					enemy_reg.path.pop_back();
-				}
-				else if (find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
-					std::vector<std::vector<char>> vec = grid_vec;
-					bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
-				}
-				else {
-					enemy_motion.velocity = vec2(0, 0);
-					//printf("WE DID IT!!!!!!!!!!!!!!!!!!!\n");
-				}
-
+				enemy_reg.path.pop_back();
 			}
+			else if (find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
+				std::vector<std::vector<char>> vec = grid_vec;
+				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
+			}
+			else {
+				enemy_motion.velocity = vec2(0, 0);
+				//printf("WE DID IT!!!!!!!!!!!!!!!!!!!\n");
+			}
+
 		}
+		
 	}
 }
 
@@ -596,7 +593,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -629,7 +626,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				registry.remove_all_components_of(entity_other);
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {

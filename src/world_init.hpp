@@ -82,7 +82,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
 Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
 // the following & teleporting enemy
-Entity createFollowingEnemy(RenderSystem* renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
+Entity createFollowingEnemy(RenderSystem* renderer, vec2 position);
 // spitter enemy
 Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos);
 // spitter enemy bullet
