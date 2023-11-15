@@ -99,6 +99,22 @@ private:
 
 	// Number of enemies killed, displayed in the window title
 	unsigned int points;
+	
+	// backgrounds
+    void create_parallax_background();
+	Entity parallax_background;
+	Entity parallax_clouds_far_1;
+	Entity parallax_clouds_far_2;
+	Entity parallax_clouds_close_1;
+	Entity parallax_clouds_close_2;
+	Entity parallax_rain_1;
+	Entity parallax_rain_2;
+	Entity parallax_rain_3;
+	Entity parallax_rain_4;
+	Entity parallax_moon;
+	Entity parallax_lava_1;
+	Entity parallax_lava_2;
+	Entity parallax_lava_3;
 
 	// Game state
 	RenderSystem *renderer;

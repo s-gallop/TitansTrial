@@ -109,8 +109,9 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position);
 Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
-// the background
-Entity createBackground(RenderSystem* renderer);
+
+// the parallax backgrounds
+Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
