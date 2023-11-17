@@ -76,9 +76,9 @@ public:
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms_since_last_update);
 
-	void WorldSystem::changeScore(int score);
+	void changeScore(int score);
 
-	TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit);
+	TEXTURE_ASSET_ID connectNumber(int digit);
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);

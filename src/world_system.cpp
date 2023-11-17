@@ -719,22 +719,6 @@ void WorldSystem::create_inGame_GUIs() {
 	}
 }
 
-void WorldSystem::create_parallax_background() {
-	parallax_moon = createParallaxItem(renderer, {580, 400}, TEXTURE_ASSET_ID::PARALLAX_MOON);
-	parallax_clouds_far_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
-	parallax_clouds_far_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
-	parallax_clouds_close_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE);
-	parallax_clouds_close_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE);
-	parallax_rain_1 = createParallaxItem(renderer, {0, 1200}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
-	parallax_rain_2 = createParallaxItem(renderer, {600, 800}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
-	parallax_rain_3 = createParallaxItem(renderer, {400, 400}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
-	parallax_rain_4 = createParallaxItem(renderer, {800, 100}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
-	parallax_background = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND);
-	parallax_lava_1 = createParallaxItem(renderer, {600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
-	parallax_lava_2 = createParallaxItem(renderer, {-600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
-	parallax_lava_3 = createParallaxItem(renderer, {-1200, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
-}
-
 // Compute collisions between entities
 void WorldSystem::handle_collisions()
 {
