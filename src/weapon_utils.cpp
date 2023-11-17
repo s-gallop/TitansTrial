@@ -70,6 +70,8 @@ void collect(Entity collectable, Entity hero) {
 			if (player.hp < player.hp_max) {
 				play_sound(SOUND_EFFECT::HEAL);
 				player.hp++;
+				player.invulnerable_timer = max(3000.f, player.invulnerable_timer);
+				player.invuln_type = INVULN_TYPE::HEAL;
 			}
 			registry.remove_all_components_of(collectable);
 		}

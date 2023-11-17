@@ -57,7 +57,24 @@ class RenderSystem
 		textures_path("buttons/play.png"),
 		textures_path("buttons/play_pressed.png"),
 		textures_path("titans_trial_logo.png"),
-        textures_path("hitbox.png"),};
+        textures_path("hitbox.png"),
+		textures_path("pixel_heart.png"),
+		textures_path("pixel_heart_steel.png"),
+		textures_path("pixel_heart_heal.png"),
+		textures_path("difficulty_bar.png"),
+		textures_path("indicator.png"),
+		textures_path("scores/score.png"),
+		textures_path("scores/0.png"),
+		textures_path("scores/1.png"), 
+		textures_path("scores/2.png"), 
+		textures_path("scores/3.png"), 
+		textures_path("scores/4.png"), 
+		textures_path("scores/5.png"), 
+		textures_path("scores/6.png"), 
+		textures_path("scores/7.png"), 
+		textures_path("scores/8.png"), 
+		textures_path("scores/9.png")};
+
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.

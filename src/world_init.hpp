@@ -24,6 +24,7 @@ const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16 * CHARACTER_SCALING, 24 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::QUIT,{204, 56} },
         { TEXTURE_ASSET_ID::QUIT_PRESSED,{204, 56} },
         { TEXTURE_ASSET_ID::MENU,{30, 32} },
@@ -34,7 +35,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
+        { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -118,3 +120,9 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
+Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
+Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos);
+Entity createScore(RenderSystem* renderer, vec2 pos);
+Entity createNumber(RenderSystem* renderer, vec2 pos);

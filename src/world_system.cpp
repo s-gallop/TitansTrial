@@ -19,13 +19,17 @@ bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 vec3 player_color;
 std::vector<std::vector<char>> grid_vec = create_grid();
+std::vector<Entity> player_hearts_GUI = { };
+Entity powerup_GUI;
+Entity indicator;
+std::vector<Entity> score_GUI = { };
 
 /* 
 * ddl = Dynamic Difficulty Level
 * (0 <= ddf < 139) -> (ddl = 0)
 * (130 <= ddf < 260) -> (ddl = 1)
 * (260 <= ddf <= MAX) -> (ddl = 2)
-* Now MAX is 300
+* Now MAX is 390
 */
 int ddl = 0; 
 
@@ -160,34 +164,74 @@ void WorldSystem::create_title_screen()
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// internal data update section
-	if (registry.players.get(player_hero).invulnerable_timer > 0.0f)
+	float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
+	if (expectedTimer <= 0.0f)
 	{
-		float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
-		if (expectedTimer <= 0.0f) {
-			registry.players.get(player_hero).invulnerable_timer = 0.0f;
-			registry.colors.get(player_hero) = player_color;
-		}
-		else
-		{
-			registry.players.get(player_hero).invulnerable_timer = expectedTimer;
+		expectedTimer = 0.0f;
+		registry.colors.get(player_hero) = player_color;
+		registry.players.get(player_hero).invuln_type = INVULN_TYPE::NONE;
+	}
+	registry.players.get(player_hero).invulnerable_timer = expectedTimer;
+
+	if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HIT) 
+	{
+		for (Entity e : player_hearts_GUI) {
+			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_STEEL;
 		}
 	}
-	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 350.0f);
+	else if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HEAL)
+	{
+		for (Entity e : player_hearts_GUI) {
+			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_HEAL;
+		}
+	}
+	else
+	{
+		for (Entity e : player_hearts_GUI) {
+			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART;
+		}
+	}
+		
+
+	switch (registry.players.get(player_hero).equipment_type)
+	{
+		case COLLECTABLE_TYPE::PICKAXE:
+			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::PICKAXE;
+			registry.renderRequests.get(powerup_GUI).visibility = true;
+			break;
+		case COLLECTABLE_TYPE::WINGED_BOOTS:
+			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::WINGED_BOOTS;
+			registry.renderRequests.get(powerup_GUI).visibility = true;
+			break;
+		case COLLECTABLE_TYPE::DASH_BOOTS:
+			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::DASH_BOOTS;
+			registry.renderRequests.get(powerup_GUI).visibility = true;
+			break;
+		default:
+			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+			registry.renderRequests.get(powerup_GUI).visibility = false;
+	}
+
+	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 390.0f);
+	ddf = max(0.f, ddf);
 	if (ddf >= 260)
 		ddl = 2;
 	else if (ddf >= 130 && ddf < 260)
 		ddl = 1;
 	else
 		ddl = 0;
+	registry.motions.get(indicator).position[0] = 35.f + ddf * INDICATOR_VECLOCITY;
+
+	changeScore(points);
 
 	// Updating window title
+	/*
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
-	title_ss << "; Player HP: " << registry.players.get(player_hero).hp;
-	title_ss << "; Invlunerable Time: " << registry.players.get(player_hero).invulnerable_timer / 1000.0f;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
+	*/
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -279,6 +323,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		current_enemy_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 1.0f;
 	}
+	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
+		Entity curHeart = player_hearts_GUI[i];
+		registry.renderRequests.get(curHeart).visibility = true;
+	}
+	for (int i = registry.players.get(player_hero).hp; i < player_hearts_GUI.size(); i++) {
+		Entity curHeart = player_hearts_GUI[i];
+		registry.renderRequests.get(curHeart).visibility = false;
+	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
@@ -313,6 +365,55 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
 
 	return true;
+}
+
+void WorldSystem::changeScore(int score)
+{
+	if (score >= 99999) 
+	{
+		for (Entity n : score_GUI)
+			registry.renderRequests.get(n).used_texture = TEXTURE_ASSET_ID::NINE;
+	}
+	else
+	{
+		int mask = 10000;
+		for (Entity n : score_GUI)
+		{
+			int digit = score / mask;
+			registry.renderRequests.get(n).used_texture = connectNumber(digit);
+			if (digit != 0) {
+				score -= digit * mask;
+			}
+			mask /= 10;
+		}
+	}
+}
+
+TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
+{
+	switch (digit)
+	{
+	case 0:
+		return TEXTURE_ASSET_ID::ZERO;
+	case 1:
+		return TEXTURE_ASSET_ID::ONE;
+	case 2:
+		return TEXTURE_ASSET_ID::TWO;
+	case 3:
+		return TEXTURE_ASSET_ID::THREE;
+	case 4:
+		return TEXTURE_ASSET_ID::FOUR;
+	case 5:
+		return TEXTURE_ASSET_ID::FIVE;
+	case 6:
+		return TEXTURE_ASSET_ID::SIX;
+	case 7:
+		return TEXTURE_ASSET_ID::SEVEN;
+	case 8:
+		return TEXTURE_ASSET_ID::EIGHT;
+	default:
+		return TEXTURE_ASSET_ID::NINE;
+	}
 }
 
 // deal with normal eneimies' spawning and moving
@@ -474,6 +575,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
         RenderRequest& render = registry.renderRequests.get(entity);
 		Motion& motion = registry.motions.get(entity);
 		// make bullets smaller over time
+		motion.scale = vec2(motion.scale.x / spitterBullet.mass, motion.scale.y / spitterBullet.mass);
 		spitterBullet.mass -= elapsed_ms_since_last_update / SPITTER_PROJECTILE_REDUCTION_FACTOR;
 		motion.scale = vec2(motion.scale.x * spitterBullet.mass, motion.scale.y * spitterBullet.mass);
         render.scale = motion.scale;
@@ -489,7 +591,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
-  isTitleScreen = false;
+	isTitleScreen = false;
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -523,6 +625,10 @@ void WorldSystem::restart_game()
 	ddl = 0;
 	ddf = 0.0f;
 	player_color = registry.colors.get(player_hero);
+	player_hearts_GUI.clear();
+	score_GUI.clear();
+
+	create_inGame_GUIs();
 
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
@@ -574,6 +680,23 @@ void WorldSystem::create_pause_screen() {
     createHelperText(renderer);
 }
 
+void WorldSystem::create_inGame_GUIs() {
+	float heartPosition = HEART_START_POS;
+	for (int i = 0; i < registry.players.get(player_hero).hp_max; i++) {
+		player_hearts_GUI.push_back(createPlayerHeart(renderer, { heartPosition, HEART_Y_CORD }));
+		heartPosition += HEART_GAP;
+	}
+	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
+	createDifficultyBar(renderer, DIFF_BAR_CORD);
+	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
+	createScore(renderer, SCORE_CORD);
+	float numberPosition = NUMBER_START_POS;
+	for (int i = 0; i < 5; i++) {
+		score_GUI.push_back(createNumber(renderer, { numberPosition, NUMBER_Y_CORD }));
+		numberPosition += NUMBER_GAP;
+	}
+}
+
 // Compute collisions between entities
 void WorldSystem::handle_collisions()
 {
@@ -595,9 +718,10 @@ void WorldSystem::handle_collisions()
 			{
 				// remove 1 hp
 				player.hp -= 1;
-				registry.players.get(player_hero).invulnerable_timer = 3000.0f;
+				registry.players.get(player_hero).invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
+				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
-				ddf = max(ddf - (player.hp_max - player.hp) * DDF_PUNISHMENT, 0.0f);
+				ddf -= (player.hp_max - player.hp) * DDF_PUNISHMENT;
 
 				// initiate death unless already dying
 				if (player.hp == 0 && !registry.deathTimers.has(entity))
@@ -775,6 +899,27 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             spawn_spitter_enemy(0);
         }
 
+		if (key == GLFW_KEY_I && action == GLFW_PRESS && debug)
+		{
+			if (registry.players.get(player_hero).invuln_type != INVULN_TYPE::HEAL)
+			{
+				registry.players.get(player_hero).invulnerable_timer = 12550821.f;
+				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
+			}
+			else
+			{
+				registry.players.get(player_hero).invulnerable_timer = 0.f;
+				registry.players.get(player_hero).invuln_type = INVULN_TYPE::NONE;
+			}
+		}
+		if (key == GLFW_KEY_K && action == GLFW_PRESS && debug)
+		{
+			std::vector<Entity> justKillThem = { };
+			for (uint i = 0; i < registry.enemies.size(); i++) justKillThem.push_back(registry.enemies.entities[i]);
+			for (uint i = 0; i < registry.spitterEnemies.size(); i++) justKillThem.push_back(registry.spitterEnemies.entities[i]);
+			for (uint i = 0; i < registry.spitterBullets.size(); i++) justKillThem.push_back(registry.spitterBullets.entities[i]);
+			for (Entity e : justKillThem) registry.remove_all_components_of(e);
+		}
 
 		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing)
 			for (Entity weapon : registry.weapons.entities)

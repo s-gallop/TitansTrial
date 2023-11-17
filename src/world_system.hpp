@@ -34,13 +34,27 @@ const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
-const float SPITTER_PROJECTILE_MIN_SIZE = .2f;
+const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
 const uint SPITTER_PROJECTILE_AMT = 10;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.f;
 const float JUMP_INITIAL_SPEED = 350.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 30.f;
+const float HEART_START_POS = 70.f;
+const float HEART_GAP = 35.f;
+const float HEART_Y_CORD = 20.f;
+const vec2 POWER_CORD = { 20.f, 60.f };
+const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
+const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
+const vec2 INDICATOR_LEVEL_ONE_CORD = { 105.f, 710.f };
+const vec2 INDICATOR_LEVEL_TWO_CORD = { 175.f, 710.f };
+const vec2 INDICATOR_END_CORD = { 245.f, 710.f };
+const float INDICATOR_VECLOCITY = 70.f / 130.f;
+const vec2 SCORE_CORD = { 1050.f, 700.f };
+const float NUMBER_START_POS = 992.f;
+const float NUMBER_GAP = 29.f;
+const float NUMBER_Y_CORD = 740.f;
 
 class WorldSystem
 {
@@ -61,6 +75,10 @@ public:
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms_since_last_update);
+
+	void WorldSystem::changeScore(int score);
+
+	TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit);
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
@@ -94,6 +112,7 @@ private:
     // creates pause gui
     void create_pause_screen();
 	void create_title_screen();
+	void create_inGame_GUIs();
 	// OpenGL window handle
 	GLFWwindow *window;
 
