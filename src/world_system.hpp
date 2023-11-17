@@ -75,7 +75,7 @@ public:
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms_since_last_update);
-
+  
 	void changeScore(int score);
 
 	TEXTURE_ASSET_ID connectNumber(int digit);
