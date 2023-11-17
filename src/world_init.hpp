@@ -34,7 +34,6 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
 };
@@ -111,8 +110,9 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position);
 Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
-// the background
-Entity createBackground(RenderSystem* renderer);
+
+// the parallax backgrounds
+Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);

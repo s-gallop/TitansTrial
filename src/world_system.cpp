@@ -269,8 +269,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
 		{
-			if (!registry.players.has(motion_container.entities[i]) && !registry.weapons.has(motion_container.entities[i]) && !registry.blocks.has(motion_container.entities[i])) // only remove enemies
-				registry.remove_all_components_of(motion_container.entities[i]);
+			Entity e = motion_container.entities[i];
+			if (registry.parallaxBackgrounds.has(e)) {
+				ParallaxBackground &bg = registry.parallaxBackgrounds.get(e);
+				motion.position = bg.resetPosition;
+			}
+			if (!registry.players.has(e) && !registry.weapons.has(e) && !registry.blocks.has(e) && !registry.parallaxBackgrounds.has(e)) // only remove enemies
+				registry.remove_all_components_of(e);
 		}
 		
 	}
@@ -610,7 +615,8 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 	// add bg
 	
-	createBackground(renderer);
+	create_parallax_background();
+
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
@@ -678,6 +684,22 @@ void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
     createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); }, false);
     createHelperText(renderer);
+}
+
+void WorldSystem::create_parallax_background() {
+	parallax_moon = createParallaxItem(renderer, {580, 400}, TEXTURE_ASSET_ID::PARALLAX_MOON);
+	parallax_clouds_far_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
+	parallax_clouds_far_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
+	parallax_clouds_close_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE);
+	parallax_clouds_close_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE);
+	parallax_rain_1 = createParallaxItem(renderer, {0, 1200}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
+	parallax_rain_2 = createParallaxItem(renderer, {600, 800}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
+	parallax_rain_3 = createParallaxItem(renderer, {400, 400}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
+	parallax_rain_4 = createParallaxItem(renderer, {800, 100}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
+	parallax_background = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND);
+	parallax_lava_1 = createParallaxItem(renderer, {600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	parallax_lava_2 = createParallaxItem(renderer, {-600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	parallax_lava_3 = createParallaxItem(renderer, {-1200, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
 }
 
 void WorldSystem::create_inGame_GUIs() {

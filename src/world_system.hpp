@@ -75,10 +75,10 @@ public:
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms_since_last_update);
+  
+	void changeScore(int score);
 
-	void WorldSystem::changeScore(int score);
-
-	TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit);
+	TEXTURE_ASSET_ID connectNumber(int digit);
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
@@ -118,6 +118,22 @@ private:
 
 	// Number of enemies killed, displayed in the window title
 	unsigned int points;
+	
+	// backgrounds
+    void create_parallax_background();
+	Entity parallax_background;
+	Entity parallax_clouds_far_1;
+	Entity parallax_clouds_far_2;
+	Entity parallax_clouds_close_1;
+	Entity parallax_clouds_close_2;
+	Entity parallax_rain_1;
+	Entity parallax_rain_2;
+	Entity parallax_rain_3;
+	Entity parallax_rain_4;
+	Entity parallax_moon;
+	Entity parallax_lava_1;
+	Entity parallax_lava_2;
+	Entity parallax_lava_3;
 
 	// Game state
 	RenderSystem *renderer;

@@ -50,6 +50,12 @@ struct Block
 {
 };
 
+struct ParallaxBackground
+{
+	// where to reset entity to once it reaches end of screen
+	vec2 resetPosition;
+};
+
 struct Enemies
 {
 	bool follows = false;
@@ -276,7 +282,12 @@ enum class TEXTURE_ASSET_ID
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
 	BACKGROUND = DASH_BOOTS + 1,
-	QUIT = BACKGROUND + 1,
+	PARALLAX_RAIN = BACKGROUND + 1,
+	PARALLAX_MOON = PARALLAX_RAIN + 1,
+	PARALLAX_CLOUDS_CLOSE = PARALLAX_MOON + 1,
+	PARALLAX_CLOUDS_FAR = PARALLAX_CLOUDS_CLOSE + 1,
+	PARALLAX_LAVA = PARALLAX_CLOUDS_FAR + 1,
+	QUIT = PARALLAX_LAVA + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,
 	MENU_PRESSED = MENU + 1,
