@@ -22,6 +22,7 @@ std::vector<std::vector<char>> grid_vec = create_grid();
 std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity indicator;
+std::vector<Entity> score_GUI = { };
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -221,12 +222,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		ddl = 0;
 	registry.motions.get(indicator).position[0] = 35.f + ddf * INDICATOR_VECLOCITY;
 
+	changeScore(points);
+
 	// Updating window title
+	/*
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
+	*/
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -365,6 +370,55 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
 
 	return true;
+}
+
+void WorldSystem::changeScore(int score)
+{
+	if (score >= 99999) 
+	{
+		for (Entity n : score_GUI)
+			registry.renderRequests.get(n).used_texture = TEXTURE_ASSET_ID::NINE;
+	}
+	else
+	{
+		int mask = 10000;
+		for (Entity n : score_GUI)
+		{
+			int digit = score / mask;
+			registry.renderRequests.get(n).used_texture = connectNumber(digit);
+			if (digit != 0) {
+				score -= digit * mask;
+			}
+			mask /= 10;
+		}
+	}
+}
+
+TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
+{
+	switch (digit)
+	{
+	case 0:
+		return TEXTURE_ASSET_ID::ZERO;
+	case 1:
+		return TEXTURE_ASSET_ID::ONE;
+	case 2:
+		return TEXTURE_ASSET_ID::TWO;
+	case 3:
+		return TEXTURE_ASSET_ID::THREE;
+	case 4:
+		return TEXTURE_ASSET_ID::FOUR;
+	case 5:
+		return TEXTURE_ASSET_ID::FIVE;
+	case 6:
+		return TEXTURE_ASSET_ID::SIX;
+	case 7:
+		return TEXTURE_ASSET_ID::SEVEN;
+	case 8:
+		return TEXTURE_ASSET_ID::EIGHT;
+	default:
+		return TEXTURE_ASSET_ID::NINE;
+	}
 }
 
 // deal with normal eneimies' spawning and moving
@@ -578,6 +632,7 @@ void WorldSystem::restart_game()
 	ddf = 0.0f;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
+	score_GUI.clear();
 
 	create_inGame_GUIs();
 
@@ -648,14 +703,20 @@ void WorldSystem::create_parallax_background() {
 }
 
 void WorldSystem::create_inGame_GUIs() {
-	float heartStartPosition = HEART_START_POS;
+	float heartPosition = HEART_START_POS;
 	for (int i = 0; i < registry.players.get(player_hero).hp_max; i++) {
-		player_hearts_GUI.push_back(createPlayerHeart(renderer, { heartStartPosition, HEART_Y_CORD }));
-		heartStartPosition += HEART_GAP;
+		player_hearts_GUI.push_back(createPlayerHeart(renderer, { heartPosition, HEART_Y_CORD }));
+		heartPosition += HEART_GAP;
 	}
 	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
 	createDifficultyBar(renderer, DIFF_BAR_CORD);
 	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
+	createScore(renderer, SCORE_CORD);
+	float numberPosition = NUMBER_START_POS;
+	for (int i = 0; i < 5; i++) {
+		score_GUI.push_back(createNumber(renderer, { numberPosition, NUMBER_Y_CORD }));
+		numberPosition += NUMBER_GAP;
+	}
 }
 
 // Compute collisions between entities
@@ -682,7 +743,7 @@ void WorldSystem::handle_collisions()
 				registry.players.get(player_hero).invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
 				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
-				ddf -= player.hp_max - player.hp * DDF_PUNISHMENT;
+				ddf -= (player.hp_max - player.hp) * DDF_PUNISHMENT;
 
 				// initiate death unless already dying
 				if (player.hp == 0 && !registry.deathTimers.has(entity))

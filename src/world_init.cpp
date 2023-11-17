@@ -789,3 +789,53 @@ Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
 
 	return entity;
 }
+
+Entity createScore(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 140.f, 29.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::SCORE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createNumber(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 20.f, 29.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ZERO,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}

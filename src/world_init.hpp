@@ -124,3 +124,5 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos);
+Entity createScore(RenderSystem* renderer, vec2 pos);
+Entity createNumber(RenderSystem* renderer, vec2 pos);

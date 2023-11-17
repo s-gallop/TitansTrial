@@ -51,6 +51,10 @@ const vec2 INDICATOR_LEVEL_ONE_CORD = { 105.f, 710.f };
 const vec2 INDICATOR_LEVEL_TWO_CORD = { 175.f, 710.f };
 const vec2 INDICATOR_END_CORD = { 245.f, 710.f };
 const float INDICATOR_VECLOCITY = 70.f / 130.f;
+const vec2 SCORE_CORD = { 1050.f, 700.f };
+const float NUMBER_START_POS = 992.f;
+const float NUMBER_GAP = 29.f;
+const float NUMBER_Y_CORD = 740.f;
 
 class WorldSystem
 {
@@ -71,6 +75,10 @@ public:
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms_since_last_update);
+
+	void WorldSystem::changeScore(int score);
+
+	TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit);
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
