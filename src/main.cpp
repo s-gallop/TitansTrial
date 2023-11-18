@@ -42,7 +42,7 @@ int main()
 		
         if (!world_system.pause && !world_system.isTitleScreen) {
             float elapsed_ms =
-                    (float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
+                    min((float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000, 50.0f);
             world_system.step(elapsed_ms);
             physics_system.step(elapsed_ms);
             world_system.handle_collisions();

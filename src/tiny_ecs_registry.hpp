@@ -17,6 +17,7 @@ public:
 	ComponentContainer<Gravity> gravities;
 	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
+	ComponentContainer<ParallaxBackground> parallaxBackgrounds;
 	ComponentContainer<Player> players;
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
@@ -42,6 +43,7 @@ public:
 	ComponentContainer<AnimationInfo> animated;
     ComponentContainer<GameButton> buttons;
     ComponentContainer<ShowWhenPaused> showWhenPaused;
+	ComponentContainer<InGameGUI> inGameGUIs;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -52,6 +54,7 @@ public:
 		registry_list.push_back(&motions);
 		registry_list.push_back(&gravities);
 		registry_list.push_back(&testAIs);
+		registry_list.push_back(&parallaxBackgrounds);
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);
 		registry_list.push_back(&blocks);
