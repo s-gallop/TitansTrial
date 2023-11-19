@@ -92,10 +92,13 @@ GLFWwindow *WorldSystem::create_window()
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
-	window = glfwCreateWindow(window_width_px, window_height_px, "Titan's Trial", nullptr, nullptr);
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    float new_width = mode->width;
+    float new_height = mode->height;
+    window = glfwCreateWindow(new_width, new_height, "Titan's Trial", nullptr, nullptr);
 	if (window == nullptr)
 	{
 		fprintf(stderr, "Failed to glfwCreateWindow");
@@ -982,10 +985,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    //todo: set mouse pos
+    mouse_pos = mouse_position;
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
-			rotate_weapon(weapon, mouse_position);
-	mouse_pos = mouse_position;
+			rotate_weapon(weapon, mouse_pos);
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){

@@ -172,11 +172,23 @@ void RenderSystem::drawToScreen(bool pause)
 	gl_has_errors();
 	// Clearing backbuffer
 	int w, h;
+    float ox = 0, oy = 0;
 	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
+    float aspect_ratio = window_width_px / (float) window_height_px; // 16:9
+    float new_aspect_ratio = w / (float) h;
+    if (aspect_ratio < new_aspect_ratio) {
+        int new_w = h * aspect_ratio;
+        ox = (w-new_w)/2.0;
+        w = new_w;
+    } else {
+        int new_h = w / aspect_ratio;
+        oy = (h-new_h) / 2.0;
+        h = new_h;
+    }
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, w, h);
+	glViewport(ox, oy, w, h);
 	glDepthRange(0, 10);
-	glClearColor(1.f, 0, 0, 1.0);
+	glClearColor(0, 0, 0, 1.0);
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
@@ -248,6 +260,8 @@ void RenderSystem::draw(bool pause, bool debug)
 	mat3 projection_2D = createProjectionMatrix();
     std::vector<Entity> beyonders;
     // separates what needs the screen effects and what doesn't need screen effect, Not the most efficient, could look into it later
+    // Truely render to the screen
+    drawToScreen(pause);
 	for (Entity entity : registry.renderRequests.entities)
 	{
         RenderRequest &render_request = registry.renderRequests.get(entity);
@@ -259,8 +273,7 @@ void RenderSystem::draw(bool pause, bool debug)
             drawTexturedMesh(entity, projection_2D, pause);
         }
 	}
-	// Truely render to the screen
-	drawToScreen(pause);
+    //todo: add a new darken screen effect;
     //draws whatever is filtered out as on top of the screen effects.
     for (Entity e : beyonders) {
         drawTexturedMesh(e, projection_2D, pause);
