@@ -4,6 +4,7 @@
 #include "tiny_ecs.hpp"
 #include "render_system.hpp"
 #include <map>
+#include <vector>
 
 // These are hard coded to the dimensions of the entity texture
 
@@ -36,12 +37,14 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 42}},
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
 };
 
 const float BULLET_MESH_SCALE = 4.0f;
@@ -49,7 +52,8 @@ const float BULLET_MESH_SCALE = 4.0f;
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {-8, 0}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -99,7 +103,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 
-Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
+Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity);
 
 Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 
@@ -120,6 +124,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
+Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle);
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);

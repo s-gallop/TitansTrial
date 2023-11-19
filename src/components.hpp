@@ -15,7 +15,8 @@ enum class COLLECTABLE_TYPE
 	HEART = GRENADE_LAUNCHER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
-	DASH_BOOTS = WINGED_BOOTS + 1
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	COLLECTABLE_COUNT = DASH_BOOTS + 1
 };
 
 enum class INVULN_TYPE
@@ -38,7 +39,8 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::COLLECTABLE_COUNT;
+	float equipment_timer = 0;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
@@ -78,6 +80,7 @@ struct SpitterBullet
 struct Collectable
 {
 	COLLECTABLE_TYPE type;
+	float despawn_timer = 15000;
 };
 
 struct Sword
@@ -107,6 +110,7 @@ struct Rocket {
 struct GrenadeLauncher {
 	float cooldown = 0;
 	bool loaded = true;
+	std::vector<Entity> trajectory;
 };
 
 struct Grenade {
@@ -136,6 +140,7 @@ struct Motion
 	vec2 position = {0.f, 0.f};
 	float angle = 0.f;
 	float angleBackup = 0.f;
+	float globalAngle = 0.f;
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
@@ -296,7 +301,8 @@ enum class TEXTURE_ASSET_ID
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
 	HITBOX = TITLE_TEXT + 1,
-	PLAYER_HEART = HITBOX + 1,
+	LINE = HITBOX + 1,
+	PLAYER_HEART = LINE + 1,
 	PLAYER_HEART_STEEL = PLAYER_HEART + 1,
 	PLAYER_HEART_HEAL = PLAYER_HEART_STEEL + 1,
 	DIFFICULTY_BAR = PLAYER_HEART_HEAL + 1,

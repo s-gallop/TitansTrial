@@ -13,7 +13,7 @@ vec2 get_bounding_box(const Motion &motion)
 
 // assumes at least one collider is box shaped
 
-bool collides(const Entity &entity1, const Entity &entity2)
+bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
 {
     Motion& motion1 = registry.motions.get(entity1);
     Motion& motion2 = registry.motions.get(entity2);
@@ -125,7 +125,7 @@ void PhysicsSystem::step(float elapsed_ms)
             Motion &motion_j = motion_container.components[j];
             Entity entity_j = motion_container.entities[j];
 
-            if (collides(entity_i, entity_j))
+            if (PhysicsSystem::collides(entity_i, entity_j))
             {
                 if (motion_i.isSolid && motion_j.isSolid)
                 {

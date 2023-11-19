@@ -63,6 +63,7 @@ class RenderSystem
 		textures_path("buttons/play_pressed.png"),
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
+		textures_path("line.png"),
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
 		textures_path("pixel_heart_heal.png"),
