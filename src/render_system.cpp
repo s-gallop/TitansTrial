@@ -20,7 +20,10 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
     vec2 flip = {motion.dir, 1};
 	if (!is_debug) {
         transform.translate(motion.positionOffset + render_request.offset * flip);
-    }
+    } else {
+		transform.translate(motion.positionOffset);
+	}
+	transform.rotate(motion.globalAngle);
 	transform.scale((is_debug ? motion.scale : render_request.scale) * flip);
 
 

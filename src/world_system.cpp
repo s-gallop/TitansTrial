@@ -249,24 +249,22 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		Motion &motion = motion_container.components[i];
 
-		if (motion.position.y > window_height_px - 5)
-		{
-			if (registry.players.has(motion_container.entities[i]))
-				if (!registry.deathTimers.has(motion_container.entities[i]))
+		if (registry.players.has(motion_container.entities[i]) && motion.position.y > window_height_px - 5) {
+			if (!registry.deathTimers.has(motion_container.entities[i]))
+			{
+				// Scream, reset timer, and make the hero fall
+				registry.deathTimers.emplace(motion_container.entities[i]);
+				for (Entity weapon : registry.weapons.entities)
 				{
-					// Scream, reset timer, and make the hero fall
-					registry.deathTimers.emplace(motion_container.entities[i]);
-					for (Entity weapon : registry.weapons.entities)
-					{
-						registry.remove_all_components_of(weapon);
-					}
-					play_sound(SOUND_EFFECT::HERO_DEAD);
-
-					Motion &motion = registry.motions.get(player_hero);
-					motion.angle = M_PI / 2;
-					motion.velocity = vec2(0, 100);
-					registry.colors.get(player_hero) = vec3(1, 0, 0);
+					registry.remove_all_components_of(weapon);
 				}
+				
+				play_sound(SOUND_EFFECT::HERO_DEAD);
+				Motion &motion = registry.motions.get(player_hero);
+				motion.angle = M_PI / 2;
+				motion.velocity = vec2(0, 100);
+				registry.colors.get(player_hero) = vec3(1, 0, 0);
+			}
 		}
 
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
@@ -276,8 +274,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				ParallaxBackground &bg = registry.parallaxBackgrounds.get(e);
 				motion.position = bg.resetPosition;
 			}
-			if (!registry.players.has(e) && !registry.weapons.has(e) && !registry.blocks.has(e) && !registry.parallaxBackgrounds.has(e)) // only remove enemies
-				registry.remove_all_components_of(e);
 		}
 		
 	}
@@ -989,10 +985,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
+	mouse_pos = mouse_position;
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
-			update_weapon_angle(weapon, mouse_position);
-	mouse_pos = mouse_position;
+			update_weapon_angle(renderer, weapon, mouse_pos);
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
@@ -1008,7 +1004,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 				return;
 			}
 		}
-		if (!pause && !registry.gravities.get(player_hero).dashing) {
+		if (!pause && registry.players.size() > 0 && !registry.gravities.get(player_hero).dashing) {
 			for (Entity weapon : registry.weapons.entities)
 				do_weapon_action(renderer, weapon, mouse_pos);
 		}

@@ -12,6 +12,7 @@ class PhysicsSystem
 {
 public:
 	void step(float elapsed_ms);
+	static bool collides(const Entity &entity1, const Entity &entity2);
 
 	PhysicsSystem()
 	{

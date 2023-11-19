@@ -4,6 +4,7 @@
 #include "tiny_ecs.hpp"
 #include "render_system.hpp"
 #include <map>
+#include <vector>
 
 // These are hard coded to the dimensions of the entity texture
 
@@ -120,6 +121,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
+Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle);
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);

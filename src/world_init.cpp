@@ -140,6 +140,7 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -264,6 +265,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
          false,
          true,
          motion.scale});
+	registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -296,6 +298,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -360,6 +363,7 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -388,6 +392,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 			false,
 			true,
 			motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -420,6 +425,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -450,6 +456,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 			false,
 			true,
 			motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -483,6 +490,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 		 true,
 		 size * SPRITE_SCALE.at(TEXTURE_ASSET_ID::EXPLOSION),
 		 size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION)});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -509,6 +517,7 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -535,6 +544,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -561,6 +571,7 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -587,6 +598,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -634,6 +646,7 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -711,6 +724,29 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.positionOffset = offset;
+	motion.scale = scale;
+	motion.globalAngle = angle;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LINE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
 
 	return entity;
 }

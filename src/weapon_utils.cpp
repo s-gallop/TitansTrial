@@ -2,6 +2,7 @@
 #include "weapon_utils.hpp"
 #include "world_init.hpp"
 #include "sound_utils.hpp"
+#include "physics_system.hpp"
 
 float next_collectable_spawn = 1200.f;
 vec2 mouse_click_pos = {-1.f, -1.f};
@@ -18,7 +19,9 @@ const size_t EQUIPMENT_DURATION = 20000;
 const size_t ROCKET_COOLDOWN = 3000;
 const float ROCKET_EXPLOSION_FACTOR = 3.5f;
 const size_t GRENADE_COOLDOWN = 1750;
-const float GRENADE_SPEED_FACTOR = 2.f;
+const float GRENADE_SPEED_FACTOR = 1.f;
+const size_t GRENADE_TRAJECTORY_WIDTH = 3;
+const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
@@ -112,12 +115,38 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 	}
 }
 
-void update_weapon_angle(Entity weapon, vec2 mouse_pos) {
+std::vector<Entity> create_grenade_trajectory(RenderSystem* renderer, vec2 start, vec2 velocity) {
+	std::vector<Entity> lines;
+	vec2 start_point = start;
+	vec2 end_point = start;
+	float velocity_change = GRAVITY_ACCELERATION_FACTOR * GRENADE_TRAJECTORY_SEGMENT_TIME;
+	float segment_seconds = GRENADE_TRAJECTORY_SEGMENT_TIME / 1000.f;
+	while(end_point.y - start.y < window_height_px) {
+		start_point = end_point;
+		velocity.y += velocity_change;
+		end_point = start_point + velocity * segment_seconds;
+		vec2 line_position = start;
+		vec2 line_offset = (start_point + end_point) / 2.f - start;
+		vec2 line_scale = {sqrt(dot(end_point - start_point, end_point - start_point)), GRENADE_TRAJECTORY_WIDTH};
+		float line_angle = atan2(end_point.y - start_point.y, end_point.x - start_point.x);
+		lines.push_back(createLine(renderer, line_position, line_offset, line_scale, line_angle));		
+	}
+	return lines;
+}
+
+void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 	if (mouse_click_pos == vec2({-1.f, -1.f}))
 		rotate_weapon(weapon, mouse_pos);
 	else {
 		mouse_cur_pos = mouse_pos;
 		rotate_weapon(weapon, registry.motions.get(weapon).position + mouse_click_pos - mouse_cur_pos);
+		for (Entity line: registry.grenadeLaunchers.get(weapon).trajectory) {
+			registry.remove_all_components_of(line);
+		}
+		Motion& motion = registry.motions.get(weapon);
+		float angle = motion.angle;
+		mat2 rot_mat = {{cos(angle), -sin(angle)}, {sin(angle), cos(angle)}};
+		registry.grenadeLaunchers.get(weapon).trajectory = create_grenade_trajectory(renderer, motion.position + vec2(motion.positionOffset.x + motion.scale.x / 2.f, 0) * rot_mat, (mouse_click_pos - mouse_cur_pos) * GRENADE_SPEED_FACTOR);
 	}
 }
 
@@ -213,13 +242,21 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		} else if (mouse_click_pos != vec2({-1.f, -1.f}) && !mouse_clicked) {
 			Motion launcher_motion = registry.motions.get(weapon);
 			mat2 rot_mat = mat2({cos(launcher_motion.angle), -sin(launcher_motion.angle)}, {sin(launcher_motion.angle), cos(launcher_motion.angle)});
-			vec2 position = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * rot_mat;
+			vec2 position = launcher_motion.position + launcher_motion.positionOffset * rot_mat;
 			vec2 velocity = (mouse_click_pos - mouse_cur_pos) * GRENADE_SPEED_FACTOR;
 			createGrenade(renderer, position, velocity);
 			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			for (Entity line: launcher.trajectory)
+				registry.remove_all_components_of(line);
+			launcher.trajectory.clear();
 			launcher.cooldown = GRENADE_COOLDOWN;
 			launcher.loaded = false;
 			mouse_click_pos = {-1.f, -1.f};
+		} else if (mouse_click_pos != vec2({-1.f, -1.f}) && launcher.trajectory.size() > 0) {
+			for (Entity line: launcher.trajectory) {
+				float angle = weaponMot.angle;
+				registry.motions.get(line).position = weaponMot.position + vec2(weaponMot.positionOffset.x + weaponMot.scale.x / 2.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+			}
 		}
 	}
 }

@@ -2,13 +2,14 @@
 
 #include <vector>
 #include <random>
+#include <math.h>
 
 #include "tiny_ecs_registry.hpp"
 #include "common.hpp"
 #include "render_system.hpp"
 
 void collect(Entity weapon, Entity hero);
-void update_weapon_angle(Entity weapon, vec2 mouse_pos);
+void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos);
 void update_equipment(float elapsed_ms, Entity hero);
 void update_grenades(RenderSystem* renderer, float elapsed_ms);
 void explode(RenderSystem* renderer, vec2 position, Entity explodable);

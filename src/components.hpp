@@ -110,6 +110,7 @@ struct Rocket {
 struct GrenadeLauncher {
 	float cooldown = 0;
 	bool loaded = true;
+	std::vector<Entity> trajectory;
 };
 
 struct Grenade {
@@ -139,6 +140,7 @@ struct Motion
 	vec2 position = {0.f, 0.f};
 	float angle = 0.f;
 	float angleBackup = 0.f;
+	float globalAngle = 0.f;
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
@@ -299,7 +301,8 @@ enum class TEXTURE_ASSET_ID
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
 	HITBOX = TITLE_TEXT + 1,
-	PLAYER_HEART = HITBOX + 1,
+	LINE = HITBOX + 1,
+	PLAYER_HEART = LINE + 1,
 	PLAYER_HEART_STEEL = PLAYER_HEART + 1,
 	PLAYER_HEART_HEAL = PLAYER_HEART_STEEL + 1,
 	DIFFICULTY_BAR = PLAYER_HEART_HEAL + 1,
