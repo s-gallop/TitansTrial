@@ -471,7 +471,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
-	motion.position = position - size * vec2({8, 0});
+	motion.position = position + size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION);
 	motion.scale = size * ASSET_SIZE.at(TEXTURE_ASSET_ID::EXPLOSION);
 
 	registry.explosions.emplace(entity);
