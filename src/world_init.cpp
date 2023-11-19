@@ -424,7 +424,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
-Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
+Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
@@ -434,10 +434,10 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.velocity = velocity;
 	motion.scale = GRENADE_BB;
 	motion.isProjectile = true;
-	motion.friction = .8f;
+	motion.friction = .6f;
 
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);

@@ -4,6 +4,8 @@
 #include "sound_utils.hpp"
 
 float next_collectable_spawn = 1200.f;
+vec2 mouse_click_pos = {-1.f, -1.f};
+vec2 mouse_cur_pos = {-1.f, -1.f};
 float pickaxe_disable = 0.f;
 float dash_window = 0.f;
 float dash_time = 0.f;
@@ -16,6 +18,7 @@ const size_t EQUIPMENT_DURATION = 20000;
 const size_t ROCKET_COOLDOWN = 3000;
 const float ROCKET_EXPLOSION_FACTOR = 3.5f;
 const size_t GRENADE_COOLDOWN = 1750;
+const float GRENADE_SPEED_FACTOR = 2.f;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
@@ -109,6 +112,15 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 	}
 }
 
+void update_weapon_angle(Entity weapon, vec2 mouse_pos) {
+	if (mouse_click_pos == vec2({-1.f, -1.f}))
+		rotate_weapon(weapon, mouse_pos);
+	else {
+		mouse_cur_pos = mouse_pos;
+		rotate_weapon(weapon, registry.motions.get(weapon).position + mouse_click_pos - mouse_cur_pos);
+	}
+}
+
 void swing_sword(RenderSystem* renderer, Entity weapon) {
 	Motion &weaponMot = registry.motions.get(weapon);
 	int &swingState = registry.swords.get(weapon).swing;
@@ -166,7 +178,7 @@ void update_explosions(float elapsed_ms) {
 	}
 }
 
-void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero) {
+void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool mouse_clicked) {
 	Entity weapon = registry.players.get(hero).weapon;
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
@@ -198,6 +210,16 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero) {
 				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
 				launcher.loaded = true;
 			}
+		} else if (mouse_click_pos != vec2({-1.f, -1.f}) && !mouse_clicked) {
+			Motion launcher_motion = registry.motions.get(weapon);
+			mat2 rot_mat = mat2({cos(launcher_motion.angle), -sin(launcher_motion.angle)}, {sin(launcher_motion.angle), cos(launcher_motion.angle)});
+			vec2 position = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * rot_mat;
+			vec2 velocity = (mouse_click_pos - mouse_cur_pos) * GRENADE_SPEED_FACTOR;
+			createGrenade(renderer, position, velocity);
+			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			launcher.cooldown = GRENADE_COOLDOWN;
+			launcher.loaded = false;
+			mouse_click_pos = {-1.f, -1.f};
 		}
 	}
 }
@@ -271,12 +293,13 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	if (rand < 0.1)
-		createHeart(renderer, {x_pos, y_pos});
-	else if (rand < 0.5)
-		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	else
-		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	createGrenadeLauncher(renderer, {x_pos, y_pos});
+	// if (rand < 0.1)
+	// 	createHeart(renderer, {x_pos, y_pos});
+	// else if (rand < 0.5)
+	// 	spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+	// else
+	// 	spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
@@ -296,7 +319,7 @@ void update_collectable_timer(float elapsed_ms, RenderSystem* renderer, int ddl)
 	}
 }
 
-void do_weapon_action(RenderSystem* renderer, Entity weapon) {
+void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 	if (registry.swords.has(weapon)) {
 		int &swingState = registry.swords.get(weapon).swing;
 		if (swingState == 0) {
@@ -323,13 +346,14 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon) {
 	} else if (registry.grenadeLaunchers.has(weapon)) {
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown <= 0) {
-			Motion launcher_motion = registry.motions.get(weapon);
-			float angle = launcher_motion.angle;
-			vec2 grenade_pos = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-			createGrenade(renderer, grenade_pos, registry.motions.get(weapon).angle);
-			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
-			launcher.cooldown = GRENADE_COOLDOWN;
-			launcher.loaded = false;
+			// Motion launcher_motion = registry.motions.get(weapon);
+			// float angle = launcher_motion.angle;
+			// vec2 grenade_pos = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+			// createGrenade(renderer, grenade_pos, registry.motions.get(weapon).angle);
+			// play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			// launcher.cooldown = GRENADE_COOLDOWN;
+			// launcher.loaded = false;
+			mouse_click_pos = mouse_pos;
 		}
 	}
 }

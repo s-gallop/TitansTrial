@@ -99,7 +99,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 
-Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
+Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity);
 
 Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 

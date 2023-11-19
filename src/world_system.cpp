@@ -15,6 +15,7 @@
 vec2 mouse_pos = {0,0};
 bool WorldSystem::pause = false;
 bool WorldSystem::debug = false;
+bool WorldSystem::mouse_clicked = false;
 bool WorldSystem::isTitleScreen = true;
 std::bitset<2> motionKeyStatus("00");
 bool pickupKeyStatus = false;
@@ -282,7 +283,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	if (registry.players.get(player_hero).hasWeapon)
-		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero);
+		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
 	
 	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 	update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
@@ -990,12 +991,13 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
-			rotate_weapon(weapon, mouse_position);
+			update_weapon_angle(weapon, mouse_position);
 	mouse_pos = mouse_position;
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
     if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+		mouse_clicked = true;
 		for (Entity entity: registry.buttons.entities) {
 			Motion &button = registry.motions.get(entity);
         	GameButton &buttonInfo = registry.buttons.get(entity);
@@ -1008,9 +1010,10 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 		}
 		if (!pause && !registry.gravities.get(player_hero).dashing) {
 			for (Entity weapon : registry.weapons.entities)
-				do_weapon_action(renderer, weapon);
+				do_weapon_action(renderer, weapon, mouse_pos);
 		}
 	} else if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+		mouse_clicked = false;
 		for (Entity entity: registry.buttons.entities) {
         	GameButton &buttonInfo = registry.buttons.get(entity);
 			if (buttonInfo.clicked) {

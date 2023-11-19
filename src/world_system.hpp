@@ -63,6 +63,7 @@ public:
     // somehow pause it activated once
     static bool pause;
     static bool debug;
+	static bool mouse_clicked;
 	static bool isTitleScreen;
 	// Creates a window
 	GLFWwindow *create_window();
