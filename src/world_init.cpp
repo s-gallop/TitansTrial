@@ -186,6 +186,9 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	{
 		motion.scale = {(pos.x * 2) / mesh.original_size.x, (pos.y * 2) / mesh.original_size.y};
 	}
+	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
+		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	}
 	else
 	{
 		motion.scale = {1200 / mesh.original_size.x, 800 / mesh.original_size.y};
@@ -197,7 +200,7 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_RAIN) {
 		bg.resetPosition = vec2(400, 0);
 	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
-		bg.resetPosition = vec2(-600, 435);
+		bg.resetPosition = vec2(-600, 813);
 	}
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
@@ -208,7 +211,10 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
-		 motion.scale});
+		 texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA ? SPRITE_SCALE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA) : motion.scale,
+		 texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA ? SPRITE_OFFSET.at(TEXTURE_ASSET_ID::PARALLAX_LAVA) : vec2({0, 0})});
+	if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA)
+		registry.debugRenderRequests.emplace(entity);
 	return entity;
 }
 

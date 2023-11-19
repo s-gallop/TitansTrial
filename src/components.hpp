@@ -80,7 +80,7 @@ struct SpitterBullet
 struct Collectable
 {
 	COLLECTABLE_TYPE type;
-	float despawn_timer = 10000;
+	float despawn_timer = 15000;
 };
 
 struct Sword

@@ -249,24 +249,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		Motion &motion = motion_container.components[i];
 
-		if (registry.players.has(motion_container.entities[i]) && motion.position.y > window_height_px - 5) {
-			if (!registry.deathTimers.has(motion_container.entities[i]))
-			{
-				// Scream, reset timer, and make the hero fall
-				registry.deathTimers.emplace(motion_container.entities[i]);
-				for (Entity weapon : registry.weapons.entities)
-				{
-					registry.remove_all_components_of(weapon);
-				}
-				
-				play_sound(SOUND_EFFECT::HERO_DEAD);
-				Motion &motion = registry.motions.get(player_hero);
-				motion.angle = M_PI / 2;
-				motion.velocity = vec2(0, 100);
-				registry.colors.get(player_hero) = vec3(1, 0, 0);
-			}
-		}
-
 		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
 		{
 			Entity e = motion_container.entities[i];
@@ -276,6 +258,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			}
 		}
 		
+		if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
+			registry.remove_all_components_of(motion_container.entities[i]);
 	}
 
 	if (registry.players.get(player_hero).hasWeapon)
@@ -582,8 +566,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		if (spitterBullet.mass <= SPITTER_PROJECTILE_MIN_SIZE)
 		{
 			spitterBullet.mass = 0;
-			spitterBullets_container.remove(entity);
-			registry.motions.remove(entity);
+			registry.remove_all_components_of(entity);
 		}
 	}
 }
@@ -638,11 +621,11 @@ void WorldSystem::restart_game()
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
 	// left line
-	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
+	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2});
 	// right line
-	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px});
+	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2});
 	// top line
-	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
+	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
 
 	// left middle platform
 	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2});
@@ -696,9 +679,9 @@ void WorldSystem::create_parallax_background() {
 	parallax_rain_3 = createParallaxItem(renderer, {400, 400}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
 	parallax_rain_4 = createParallaxItem(renderer, {800, 100}, TEXTURE_ASSET_ID::PARALLAX_RAIN);
 	parallax_background = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND);
-	parallax_lava_1 = createParallaxItem(renderer, {600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
-	parallax_lava_2 = createParallaxItem(renderer, {-600, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
-	parallax_lava_3 = createParallaxItem(renderer, {-1200, 435}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	parallax_lava_1 = createParallaxItem(renderer, {600, 813}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	parallax_lava_2 = createParallaxItem(renderer, {-600, 813}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	parallax_lava_3 = createParallaxItem(renderer, {-1200, 813}, TEXTURE_ASSET_ID::PARALLAX_LAVA);
 }
 
 void WorldSystem::create_inGame_GUIs() {
@@ -743,6 +726,9 @@ void WorldSystem::handle_collisions()
 				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				ddf -= (player.hp_max - player.hp) * DDF_PUNISHMENT;
+
+				if (registry.spitterBullets.has(entity_other))
+					registry.remove_all_components_of(entity_other);
 
 				// initiate death unless already dying
 				if (player.hp == 0 && !registry.deathTimers.has(entity))
@@ -806,15 +792,32 @@ void WorldSystem::handle_collisions()
 				{
 					registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
 				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
+						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
 				{
 					use_pickaxe(player_hero, 0, MAX_JUMPS);
 				}
 				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE)
+						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
 				{
 					use_pickaxe(player_hero, 1, MAX_JUMPS);
 				}
+			}
+		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
+			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
+				registry.remove_all_components_of(entity_other);
+			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
+				// Scream, reset timer, and make the hero fall
+				registry.deathTimers.emplace(entity_other);
+				for (Entity weapon : registry.weapons.entities)
+				{
+					registry.remove_all_components_of(weapon);
+				}
+				
+				play_sound(SOUND_EFFECT::HERO_DEAD);
+				Motion &motion = registry.motions.get(player_hero);
+				motion.angle = M_PI / 2;
+				motion.velocity = vec2(0, 100);
+				registry.colors.get(player_hero) = vec3(1, 0, 0);
 			}
 		}
 	}

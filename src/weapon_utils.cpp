@@ -4,7 +4,7 @@
 #include "sound_utils.hpp"
 #include "physics_system.hpp"
 
-float next_collectable_spawn = 1200.f;
+float next_collectable_spawn = 600.f;
 vec2 mouse_click_pos = {-1.f, -1.f};
 vec2 mouse_cur_pos = {-1.f, -1.f};
 float pickaxe_disable = 0.f;
@@ -12,7 +12,7 @@ float dash_window = 0.f;
 float dash_time = 0.f;
 uint dash_direction = 0;
 
-const size_t COLLECTABLE_DELAY_MS = 12000;
+const size_t COLLECTABLE_DELAY_MS = 6000;
 const size_t MAX_COLLECTABLES = 3;
 const size_t GUN_COOLDOWN = 800;
 const size_t EQUIPMENT_DURATION = 20000;
@@ -330,13 +330,12 @@ float spawn_collectable(RenderSystem* renderer, int ddl) {
 
 	float rand = uniform_dist(rng);
 	
-	createGrenadeLauncher(renderer, {x_pos, y_pos});
-	// if (rand < 0.1)
-	// 	createHeart(renderer, {x_pos, y_pos});
-	// else if (rand < 0.5)
-	// 	spawn_powerup(renderer, {x_pos, y_pos}, ddl);
-	// else
-	// 	spawn_weapon(renderer, {x_pos, y_pos}, ddl);
+	if (rand < 0.1)
+		createHeart(renderer, {x_pos, y_pos});
+	else if (rand < 0.5)
+		spawn_powerup(renderer, {x_pos, y_pos}, ddl);
+	else
+		spawn_weapon(renderer, {x_pos, y_pos}, ddl);
 
 	return (COLLECTABLE_DELAY_MS / 2) + uniform_dist(rng) * (COLLECTABLE_DELAY_MS / 2);
 }
