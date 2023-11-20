@@ -150,6 +150,14 @@ struct Motion
 	float friction = 1.f;
 };
 
+struct Solid {
+
+};
+
+struct Projectile {
+	float friction = 1.f;
+};
+
 // just for milestone 1 sudden requirement
 struct TestAI
 {

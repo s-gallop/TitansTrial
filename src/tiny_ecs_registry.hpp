@@ -14,6 +14,8 @@ public:
 	// TODO: A1 add a LightUp component
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<Motion> motions;
+	ComponentContainer<Solid> solids;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<Gravity> gravities;
 	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
@@ -52,6 +54,8 @@ public:
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&motions);
+		registry_list.push_back(&solids);
+		registry_list.push_back(&projectiles);
 		registry_list.push_back(&gravities);
 		registry_list.push_back(&testAIs);
 		registry_list.push_back(&parallaxBackgrounds);

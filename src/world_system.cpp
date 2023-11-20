@@ -773,35 +773,60 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.blocks.has(entity))
 		{
-			if (registry.collectables.has(entity_other) || registry.spitterEnemies.has(entity_other)) {
-				registry.gravities.remove(entity_other);
-				registry.motions.get(entity_other).velocity = vec2(0, 0);
+			if (registry.solids.has(entity_other)) {
+				Motion& block_motion = registry.motions.get(entity);
+				Motion& solid_motion = registry.motions.get(entity_other);
+				vec2 scale1 = vec2({abs(block_motion.scale.x), abs(block_motion.scale.y)}) / 2.f;
+				vec2 scale2 = vec2({abs(solid_motion.scale.x), abs(solid_motion.scale.y)}) / 2.f;
+				float vCollisionDepth = scale1.y + scale2.y - abs(block_motion.position.y - solid_motion.position.y);
+				float hCollisionDepth = scale1.x + scale2.x - abs(block_motion.position.x - solid_motion.position.x);
+				if (vCollisionDepth > 0 && (hCollisionDepth <= 0 || vCollisionDepth < hCollisionDepth)) {
+					if (solid_motion.position.y < block_motion.position.y && solid_motion.velocity.y > 0) {
+						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.y;
+						solid_motion.velocity.y = 0;
+					} else if (solid_motion.position.y > block_motion.position.y && solid_motion.velocity.y < 0) {
+						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.y;
+						solid_motion.velocity.y = 0;
+					}
+				} else {
+					if (solid_motion.position.x < block_motion.position.x) {
+						solid_motion.position.x = block_motion.position.x - scale1.x - scale2.x;
+					} else {
+						solid_motion.position.x = block_motion.position.x + scale1.x + scale2.x;
+					}
+				}
 
-				if (registry.motions.get(entity_other).position.y > 600 && (registry.motions.get(entity_other).position.x < 190 || registry.motions.get(entity_other).position.x > 1010))
-				{
-					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 90);
+				if (registry.players.has(entity_other)) {
+					if ((solid_motion.position.y <= block_motion.position.y - block_motion.scale.y / 2 - solid_motion.scale.y / 2)) {
+						registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
+					} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2 - solid_motion.scale.x / 2 && 
+							motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) 
+					{
+						use_pickaxe(player_hero, 0, MAX_JUMPS);
+					} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2 + solid_motion.scale.x / 2 && 
+							motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0)
+					{
+						use_pickaxe(player_hero, 1, MAX_JUMPS);
+					}
 				}
-				else
-				{
-					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 55);
-				}
-			}
-			else if (registry.players.has(entity_other))
+			} 
+			else if (registry.projectiles.has(entity_other))
 			{
-				if ((registry.motions.get(entity_other).position.y <= registry.motions.get(entity).position.y - registry.motions.get(entity).scale.y / 2 - registry.motions.get(entity_other).scale.y / 2))
-				{
-					registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
-				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
-				{
-					use_pickaxe(player_hero, 0, MAX_JUMPS);
+				Motion& block_motion = registry.motions.get(entity);
+				Motion& projectile_motion = registry.motions.get(entity_other);
+				vec2 scale1 = vec2({abs(block_motion.scale.x), abs(block_motion.scale.y)}) / 2.f;
+				vec2 scale2 = vec2({abs(projectile_motion.scale.x), abs(projectile_motion.scale.y)}) / 2.f;
+				float vCollisionDepth = (scale1.y + scale2.y) - abs(projectile_motion.position.y - block_motion.position.y);
+				float hCollisionDepth = (scale1.x + scale2.x) - abs(projectile_motion.position.x - block_motion.position.x);
+				if (vCollisionDepth < hCollisionDepth) {
+					projectile_motion.velocity.y = -projectile_motion.velocity.y;
+					projectile_motion.position.y += vCollisionDepth * (projectile_motion.position.y < block_motion.position.y ? -1 : 1);
+				} else {
+					projectile_motion.velocity.x = -projectile_motion.velocity.x;
+					projectile_motion.position.x += hCollisionDepth * (projectile_motion.position.x < block_motion.position.x ? -1 : 1);
 				}
-				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
-				{
-					use_pickaxe(player_hero, 1, MAX_JUMPS);
-				}
-			}
+				projectile_motion.velocity *= projectile_motion.friction;
+			} 
 		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
 			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
 				registry.remove_all_components_of(entity_other);

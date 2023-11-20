@@ -21,6 +21,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	motion.isSolid = true;
 
 	registry.players.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::HERO));
 	registry.renderRequests.insert(
 		entity,
@@ -92,6 +93,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
 	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
+	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(
 		entity,
@@ -131,6 +133,7 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 
 	bullet.mass = 1;
 
+	registry.projectiles.emplace(entity);
 	AnimationInfo &animationInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET));
 	registry.renderRequests.insert(
 		entity,
@@ -263,6 +266,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::SWORD;
 	registry.swords.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SWORD,
@@ -296,6 +300,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::GUN;
 	registry.guns.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GUN,
@@ -361,6 +366,7 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::ROCKET_LAUNCHER;
 	registry.rocketLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::ROCKET_LAUNCHER,
@@ -423,6 +429,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::GRENADE_LAUNCHER;
 	registry.grenadeLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
@@ -454,6 +461,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.projectiles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
@@ -515,6 +523,7 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::HEART;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HEART,
@@ -542,6 +551,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::PICKAXE;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::PICKAXE,
@@ -569,6 +579,7 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::WINGED_BOOTS;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::WINGED_BOOTS,
@@ -596,6 +607,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::DASH_BOOTS;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::DASH_BOOTS,
