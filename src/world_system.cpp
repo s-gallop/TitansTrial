@@ -400,7 +400,10 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
 			//Time between blinks
-			enemy_reg.next_blink_time = 1500.f;
+			//enemy_reg.next_blink_time = 1500.f;
+			enemy_reg.next_blink_time = 10.f;
+
+			enemy_reg.hittable = true;
 
 			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
 				std::vector<std::vector<char>> vec = grid_vec;
@@ -431,7 +434,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			enemy_reg.next_blink_time = 500.f;
 			animation.oneTimeState = PHASE_OUT_STATE;
 			animation.oneTimer = glfwGetTime();
-
+			enemy_reg.hittable = false;
 			enemy_reg.blinked = false;
 		}
 		
@@ -606,7 +609,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).blinked) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;

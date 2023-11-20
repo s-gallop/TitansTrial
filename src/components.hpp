@@ -49,6 +49,7 @@ struct FollowingEnemies
 	std::list<vec2> path;
 	float next_blink_time = 0.f;
 	bool blinked = false;
+	bool hittable = true;
 };
 
 struct SpitterEnemy
