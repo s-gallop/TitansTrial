@@ -25,6 +25,7 @@ std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity indicator;
 std::vector<Entity> score_GUI = { };
+std::vector<Entity> following_enemies = { };
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -320,10 +321,27 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
-	spawn_move_following_enemies(elapsed_ms_since_last_update);
+	
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+
+	if (ddl == 2 && following_enemies.empty())
+	{
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
+		std::vector<std::vector<char>> vec = grid_vec;
+		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
+		following_enemies.push_back(newEnemy);
+	}
+	else if (ddl == 2 && !following_enemies.empty())
+	{
+		spawn_move_following_enemies(elapsed_ms_since_last_update);
+	}
+	else if (ddl != 2 && !following_enemies.empty())
+	{
+		registry.remove_all_components_of(following_enemies[0]);
+		following_enemies.clear();
+	}
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -467,6 +485,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	const uint PHASE_IN_STATE = 1;
 	const uint PHASE_OUT_STATE = 4;
 
+	/*
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
 	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
@@ -477,6 +496,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		std::vector<std::vector<char>> vec = grid_vec;
 		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
 	}
+	*/
 
 	Motion& hero_motion = registry.motions.get(player_hero);
 	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
@@ -489,7 +509,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
 			//Time between blinks
-			enemy_reg.next_blink_time = 1000.f;
+			enemy_reg.next_blink_time = 700.f;
 
 			enemy_reg.hittable = true;
 
@@ -519,7 +539,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		}
 
 		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
-			enemy_reg.next_blink_time = 300.f;
+			enemy_reg.next_blink_time = 100.f;
 			animation.oneTimeState = PHASE_OUT_STATE;
 			animation.oneTimer = glfwGetTime();
 			enemy_reg.hittable = false;
@@ -859,7 +879,7 @@ void WorldSystem::handle_collisions()
 				for (Entity weapon : registry.weapons.entities) {
 					registry.remove_all_components_of(weapon);
 				}
-        
+
 				registry.players.get(player_hero).hasWeapon = false;
 
 				play_sound(SOUND_EFFECT::HERO_DEAD);
