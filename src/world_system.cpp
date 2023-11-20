@@ -1007,14 +1007,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
         // h = new_h;
     }
 
-    float scaleX = static_cast<float>(w) / static_cast<float>(new_w);
-    float scaleY = static_cast<float>(h) / static_cast<float>(new_h);
-
-	printf("scaleX %f\n", scaleX);
-	printf("scaleY %f\n", scaleY);
-
-	mouse_pos.x = (mouse_position.x / scaleX) + ox;
-    mouse_pos.y = (mouse_position.y / scaleY) + oy;
+	mouse_pos.x = (mouse_position.x - ox) / new_w * window_width_px;
+    mouse_pos.y = (mouse_position.y - oy) / new_h * window_height_px;
 
 	printf("mouse_position.x %f\n", mouse_position.x);
 	printf("mouse_position.y %f\n", mouse_position.y);
