@@ -25,8 +25,14 @@ class RenderSystem
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
-		  // specify meshes of other assets here
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
+		// specify meshes of other assets here
+	};
+
+	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> collision_mesh_paths = 
+	{
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite_hull.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj"))
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -103,6 +109,7 @@ class RenderSystem
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
+	std::array<CollisionMesh, geometry_count> collisionMeshes;
 
 public:
 	// Initialize the window
@@ -117,6 +124,9 @@ public:
 
 	void initializeGlMeshes();
 	Mesh &getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
+	
+	void initializeCollisionMeshes();
+	CollisionMesh& getCollisionMesh(GEOMETRY_BUFFER_ID id) {return collisionMeshes[(int)id]; };
 
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target

@@ -14,6 +14,8 @@ public:
 	// TODO: A1 add a LightUp component
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<Motion> motions;
+	ComponentContainer<Solid> solids;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<Gravity> gravities;
 	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
@@ -21,6 +23,7 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
+	ComponentContainer<CollisionMesh *> collisionMeshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
     ComponentContainer<Blank> debugRenderRequests;
 	ComponentContainer<ScreenState> screenStates;
@@ -53,6 +56,8 @@ public:
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&motions);
+		registry_list.push_back(&solids);
+		registry_list.push_back(&projectiles);
 		registry_list.push_back(&gravities);
 		registry_list.push_back(&testAIs);
 		registry_list.push_back(&parallaxBackgrounds);
@@ -60,6 +65,7 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
+		registry_list.push_back(&collisionMeshPtrs);
 		registry_list.push_back(&renderRequests);
         registry_list.push_back(&debugRenderRequests);
 		registry_list.push_back(&screenStates);
