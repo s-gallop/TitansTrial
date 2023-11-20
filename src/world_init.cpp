@@ -37,11 +37,11 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
+Entity createEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
-    const float ACTUAL_SCALE_FACTOR = 0.5f;
-    const float OFFSET_FACTOR = 4.0f;
+    //const float ACTUAL_SCALE_FACTOR = 0.5f;
+    //const float OFFSET_FACTOR = 4.0f;
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -49,22 +49,23 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
-	motion.angle = angle;
+	motion.angle = 0.f;
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.velocity = velocity;
-	motion.scale = {scale.x*ACTUAL_SCALE_FACTOR, scale.y*ACTUAL_SCALE_FACTOR};
+	motion.velocity = vec2(0.0, 0.0);
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
 
 	registry.enemies.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
 	registry.renderRequests.insert(
 		entity,
-		{TEXTURE_ASSET_ID::ENEMY,
-		 EFFECT_ASSET_ID::TEXTURED,
+		{TEXTURE_ASSET_ID::FIRE_ENEMY,
+		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         scale,
-         {0, -scale.y/OFFSET_FACTOR}});
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::FIRE_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::FIRE_ENEMY) });
 
     registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);

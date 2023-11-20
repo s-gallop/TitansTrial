@@ -33,6 +33,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}}
@@ -40,6 +41,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
@@ -49,6 +51,7 @@ const float BULLET_MESH_SCALE = 4.0f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, { 0 * CHARACTER_SCALING, 0 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, { 2* CHARACTER_SCALING, 1 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {-8, 0}}
@@ -60,6 +63,12 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
                 {9, 1, 8, 4, 4, 4, 16, 4, 8, 4, 14, 2, 8},
                 0,
                 16
+        }},
+        {TEXTURE_ASSET_ID::FIRE_ENEMY, {
+            6,
+            {4, 4, 5, 5, 5},
+            0,
+            5
         }},
         {TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {
             5,
@@ -89,7 +98,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 // the player
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale);
+Entity createEnemy(RenderSystem *renderer, vec2 position);
 // the following & teleporting enemy
 Entity createFollowingEnemy(RenderSystem* renderer, vec2 position);
 // spitter enemy

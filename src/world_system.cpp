@@ -329,7 +329,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), ENEMY_BB);
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight));
 		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
@@ -369,6 +369,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
+		motion.dir = (motion.velocity.x >= 0) ? -1 : 1;
 	}
 }
 
@@ -409,7 +410,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
 			}
 
-			//Don't blink when not moving
+			//Don't blink when not moving: next pos in path is same pos as current
 			if (enemy_reg.path.size() != 0 && find_index_from_map(enemy_reg.path.back()) == enemy_motion.position) {
 				enemy_reg.path.pop_back();
 			}
@@ -417,10 +418,12 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			{
 				animation.oneTimeState = PHASE_IN_STATE;
 				animation.oneTimer = glfwGetTime();
-				enemy_motion.position = find_index_from_map(enemy_reg.path.back());
+				vec2 converted_pos = find_index_from_map(enemy_reg.path.back());
+				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
+				enemy_motion.position = converted_pos;
 				enemy_reg.path.pop_back();
 				
-				//Don't blink when not moving
+				//Don't blink when not moving: next loop will be to re-calc the path
 				if (enemy_reg.path.size() != 0) {
 					enemy_reg.blinked = true;
 				}
