@@ -121,7 +121,7 @@ std::vector<Entity> create_grenade_trajectory(RenderSystem* renderer, vec2 start
 	vec2 end_point = start;
 	float velocity_change = GRAVITY_ACCELERATION_FACTOR * GRENADE_TRAJECTORY_SEGMENT_TIME;
 	float segment_seconds = GRENADE_TRAJECTORY_SEGMENT_TIME / 1000.f;
-	while(end_point.y - start.y < window_height_px) {
+	while(end_point.y - start.y < 1.5 * window_height_px) {
 		start_point = end_point;
 		velocity.y += velocity_change;
 		end_point = start_point + velocity * segment_seconds;
@@ -381,16 +381,8 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 		}
 	} else if (registry.grenadeLaunchers.has(weapon)) {
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
-		if (launcher.cooldown <= 0) {
-			// Motion launcher_motion = registry.motions.get(weapon);
-			// float angle = launcher_motion.angle;
-			// vec2 grenade_pos = launcher_motion.position + vec2({launcher_motion.scale.x, 0}) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-			// createGrenade(renderer, grenade_pos, registry.motions.get(weapon).angle);
-			// play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
-			// launcher.cooldown = GRENADE_COOLDOWN;
-			// launcher.loaded = false;
+		if (launcher.cooldown <= 0)
 			mouse_click_pos = mouse_pos;
-		}
 	}
 }
 
