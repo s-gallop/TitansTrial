@@ -23,6 +23,7 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
+	ComponentContainer<CollisionMesh *> collisionMeshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
     ComponentContainer<Blank> debugRenderRequests;
 	ComponentContainer<ScreenState> screenStates;
@@ -63,6 +64,7 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
+		registry_list.push_back(&collisionMeshPtrs);
 		registry_list.push_back(&renderRequests);
         registry_list.push_back(&debugRenderRequests);
 		registry_list.push_back(&screenStates);

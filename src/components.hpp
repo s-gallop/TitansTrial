@@ -253,6 +253,13 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+struct CollisionMesh {
+	static bool loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<std::pair<int, int>>& out_edges, vec2 &out_size);
+	vec2 original_size = {1, 1};
+	std::vector<ColoredVertex> vertices;
+	std::vector<std::pair<int, int>> edges;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture

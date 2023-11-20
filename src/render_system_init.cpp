@@ -136,6 +136,20 @@ void RenderSystem::initializeGlMeshes()
 	}
 }
 
+void RenderSystem::initializeCollisionMeshes()
+{
+	for (uint i = 0; i < collision_mesh_paths.size(); i++)
+	{
+		// Initialize meshes
+		GEOMETRY_BUFFER_ID geom_index = collision_mesh_paths[i].first;
+		std::string name = collision_mesh_paths[i].second;
+		CollisionMesh::loadFromOBJFile(name,
+			collisionMeshes[(int)geom_index].vertices,
+			collisionMeshes[(int)geom_index].edges,
+			collisionMeshes[(int)geom_index].original_size);
+	}
+}
+
 void RenderSystem::initializeGlGeometryBuffers()
 {
 	// Vertex Buffer creation.

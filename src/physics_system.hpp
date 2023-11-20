@@ -4,6 +4,7 @@
 #include "tiny_ecs.hpp"
 #include "components.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "render_system.hpp"
 
 const float GRAVITY_ACCELERATION_FACTOR = 10.0 / 17.5;
 
@@ -11,10 +12,13 @@ const float GRAVITY_ACCELERATION_FACTOR = 10.0 / 17.5;
 class PhysicsSystem
 {
 public:
+	void init(RenderSystem* renderer);
 	void step(float elapsed_ms);
-	static bool collides(const Entity &entity1, const Entity &entity2);
+	bool collides(const Entity &entity1, const Entity &entity2);
 
 	PhysicsSystem()
 	{
 	}
+private:
+	RenderSystem* renderer;
 };

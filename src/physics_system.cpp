@@ -4,6 +4,11 @@
 #include "world_init.hpp"
 
 const float COLLISION_THRESHOLD = 0.0f;
+
+void PhysicsSystem::init(RenderSystem* renderer_arg) {
+    this->renderer = renderer_arg;
+}
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
 {
@@ -44,26 +49,47 @@ bool check_collision_conditions(Entity entity_i, Entity entity_j) {
     return false;
 }
 
-// assumes at least one collider is box shaped
-
-bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
-{
+bool precise_collision(const Entity& entity1, const Entity& entity2) {
     Motion& motion1 = registry.motions.get(entity1);
     Motion& motion2 = registry.motions.get(entity2);
     vec2 scale1 = get_bounding_box(motion1) / 2.0f;
     vec2 scale2 = get_bounding_box(motion2) / 2.0f;
-    Mesh* mesh1 = registry.meshPtrs.get(entity1);
-    Mesh* mesh2 = registry.meshPtrs.get(entity2);
-    if (!mesh1->vertices.empty()) {
-        for (ColoredVertex v: registry.meshPtrs.get(entity1)->vertices) {
+    return false;
+}
+
+// assumes at least one collider is box shaped
+
+bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
+{
+    // Motion& motion1 = registry.motions.get(entity1);
+    // Motion& motion2 = registry.motions.get(entity2);
+    // vec2 scale1 = get_bounding_box(motion1) / 2.0f;
+    // vec2 scale2 = get_bounding_box(motion2) / 2.0f;
+    // if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) &&
+    //     abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y))
+    // {
+    //     if (!registry.meshPtrs.get(entity1)->vertices.empty() || !registry.meshPtrs.get(entity2)->vertices.empty())
+    //         return precise_collision(entity1, entity2);
+    //     else
+    //         return true;
+    // }
+    // return false;
+    Motion& motion1 = registry.motions.get(entity1);
+    Motion& motion2 = registry.motions.get(entity2);
+    vec2 scale1 = get_bounding_box(motion1) / 2.0f;
+    vec2 scale2 = get_bounding_box(motion2) / 2.0f;
+    CollisionMesh* mesh1 = registry.collisionMeshPtrs.get(entity1);
+    CollisionMesh* mesh2 = registry.collisionMeshPtrs.get(entity2);
+    if (registry.renderRequests.get(entity1).used_geometry != GEOMETRY_BUFFER_ID::SPRITE) {
+        for (ColoredVertex v: mesh1->vertices) {
             if (abs(motion1.position.x + motion1.scale.x * v.position.x - motion2.position.x) < scale2.x && 
                 abs(motion1.position.y + motion1.scale.y * v.position.y - motion2.position.y) < scale2.y)
             {
                 return true;
             }
         }
-    } else if (!mesh2->vertices.empty()) {
-        for (ColoredVertex v: registry.meshPtrs.get(entity2)->vertices) {
+    } else if (registry.renderRequests.get(entity2).used_geometry != GEOMETRY_BUFFER_ID::SPRITE) {
+        for (ColoredVertex v: mesh2->vertices) {
             if (abs(motion2.position.x + motion2.scale.x * v.position.x - motion1.position.x) < scale1.x && 
                 abs(motion2.position.y + motion2.scale.y * v.position.y - motion1.position.y) < scale1.y)
             {
@@ -147,10 +173,10 @@ void PhysicsSystem::step(float elapsed_ms)
     }
 
     // Check for collisions between all entities with meshes
-    for (uint i = 0; i < registry.meshPtrs.size(); i++) {
-        for (uint j = i + 1; j < registry.meshPtrs.size(); j++) {
-            Entity entity_i = registry.meshPtrs.entities[i];
-            Entity entity_j = registry.meshPtrs.entities[j];            
+    for (uint i = 0; i < registry.collisionMeshPtrs.size(); i++) {
+        for (uint j = i + 1; j < registry.collisionMeshPtrs.size(); j++) {
+            Entity entity_i = registry.collisionMeshPtrs.entities[i];
+            Entity entity_j = registry.collisionMeshPtrs.entities[j];            
             if ((check_collision_conditions(entity_i, entity_j) || check_collision_conditions(entity_j, entity_i)) && PhysicsSystem::collides(entity_i, entity_j)) {
                 registry.collisions.emplace_with_duplicates(entity_i, entity_j);
                 registry.collisions.emplace_with_duplicates(entity_j, entity_i);
