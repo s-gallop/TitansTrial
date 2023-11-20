@@ -737,6 +737,7 @@ void WorldSystem::handle_collisions()
 					
 					for (Entity weapon : registry.weapons.entities)
 						registry.remove_all_components_of(weapon);
+					registry.players.get(player_hero).hasWeapon = false;
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -833,10 +834,10 @@ void WorldSystem::handle_collisions()
 			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
 				// Scream, reset timer, and make the hero fall
 				registry.deathTimers.emplace(entity_other);
-				for (Entity weapon : registry.weapons.entities)
-				{
+				for (Entity weapon : registry.weapons.entities) {
 					registry.remove_all_components_of(weapon);
 				}
+				registry.players.get(player_hero).hasWeapon = false;
 				
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				Motion &motion = registry.motions.get(player_hero);
