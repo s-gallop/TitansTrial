@@ -280,11 +280,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		current_spitter_spawning_speed = 1.0f;
 	}
 
-	//spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_move_following_enemies(elapsed_ms_since_last_update);
-	//spawn_spitter_enemy(elapsed_ms_since_last_update);
+	spawn_spitter_enemy(elapsed_ms_since_last_update);
 
-	//update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -400,12 +400,11 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
 			//Time between blinks
-			//enemy_reg.next_blink_time = 1500.f;
-			enemy_reg.next_blink_time = 10.f;
+			enemy_reg.next_blink_time = 500.f;
 
 			enemy_reg.hittable = true;
 
-			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
+			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position)) {
 				std::vector<std::vector<char>> vec = grid_vec;
 				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
 			}
@@ -426,8 +425,6 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 					enemy_reg.blinked = true;
 				}
 			}
-
-			
 		}
 
 		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
@@ -437,7 +434,6 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			enemy_reg.hittable = false;
 			enemy_reg.blinked = false;
 		}
-		
 	}
 }
 
