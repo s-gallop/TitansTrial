@@ -47,7 +47,8 @@ struct Enemies
 struct FollowingEnemies
 {
 	std::list<vec2> path;
-	float next_blink = 0.f;
+	float next_blink_time = 0.f;
+	bool blinked = false;
 };
 
 struct SpitterEnemy
@@ -251,7 +252,8 @@ enum class TEXTURE_ASSET_ID
 {
 	HERO = 0,
 	ENEMY = HERO + 1,
-	SPITTER_ENEMY = ENEMY + 1,
+	FOLLOWING_ENEMY = ENEMY + 1,
+	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
@@ -288,7 +290,8 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	SPITTER_ENEMY = EXPLOSION + 1,
+	FOLLOWING_ENEMY = EXPLOSION + 1,
+	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	EFFECT_COUNT = SPITTER_ENEMY_BULLET + 1
 };

@@ -20,7 +20,7 @@ struct Grid_square {
 
 struct LessThanByF
 {
-	bool compare(Grid_square comp1, Grid_square comp2) {
+	bool operator()(const Grid_square& comp1, const Grid_square& comp2) const {
 		return comp1.f < comp2.f;
 	}
 };
@@ -132,7 +132,17 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 
 	registry.followingEnemies.get(chaser).path = bfs_follow_iter(vec, pos_chase, path);
 
-	//printf("HELLOOO: %d-------------------------------------------\n", registry.enemies.get(chaser).path.size());
+	/*std::list<vec2> pth = astar_follow(vec, pos_chase, pos_chase);
+
+	printf("HELLOOO: %d-------------------------------------------\n", pth.size());
+
+	int i = pth.size();
+	while (i > 0) {
+		printf("Path %d: %f %f\n", i, pth.back().x, pth.back().y);
+		pth.push_front(pth.back());
+		pth.pop_back();
+		i--;
+	}*/
 
 	//int i = registry.enemies.get(chaser).path.size();
 	//while (i > 0) {
@@ -148,7 +158,7 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //	return dot(start - goal, start - goal);
 //}
 
-//std::list<vec2> reconstruct_path(Grid_square current, std::unordered_map<vec2, Grid_square> squares) {
+//std::list<vec2> reconstruct_path_astar(Grid_square current, std::map<std::pair<float, float>, Grid_square> squares) {
 //	std::list<vec2> path;
 //	vec2 pos;
 //
@@ -156,7 +166,7 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //	vec2 prev = current.pos;
 //
 //	while (1) {
-//		pos = squares.find(current.pos)->second.came_from;
+//		pos = squares.find({ current.pos.x, current.pos.y })->second.came_from;
 //		path.push_front(pos);
 //
 //		if (pos == prev) break;
@@ -168,11 +178,11 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //std::list<vec2> astar_follow(std::vector<std::vector<char>>& vec, vec2 start, vec2 goal) {
 //	// The set of discovered nodes that may need to be (re-)expanded.
 //	// Initially, only the start node is known.
-//	// This is usually implemented as a min-heap or priority queue rather than a hash-set.
+//	// Implemented as a priority queue.
 //	Grid_square new_square = Grid_square{ start, start, 0.f, 0.f + distance(start, goal) };
 //
 //	std::priority_queue<Grid_square, std::vector<Grid_square>, LessThanByF> open_set;
-//	std::unordered_map<vec2, Grid_square> squares;
+//	std::map<std::pair<float, float>, Grid_square> squares;
 //	std::unordered_set<vec2> visited;
 //	
 //
@@ -183,7 +193,7 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //	while (!open_set.empty()) {
 //		Grid_square current = open_set.top();
 //		if (vec[current.pos.x][current.pos.y] == 'g') {
-//			return reconstruct_path(current, squares);
+//			return reconstruct_path_astar(current, squares);
 //		}
 //
 //		visited.erase(current.pos);
@@ -196,9 +206,9 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //			}
 //
 //			float temp_g_score = current.g + distance(current.pos, neighbor_pos);
-//			if (squares.count(neighbor_pos) == 0 || temp_g_score < squares.find(neighbor_pos)->second.g) {
+//			if (squares.count({ neighbor_pos.x, neighbor_pos.y }) == 0 || temp_g_score < squares.find({ neighbor_pos.x, neighbor_pos.y })->second.g) {
 //				Grid_square neighbor_square = Grid_square{ neighbor_pos, current.pos, temp_g_score, (temp_g_score + distance(neighbor_pos, goal)) };
-//				squares[neighbor_pos] = neighbor_square;
+//				squares.insert_or_assign({ neighbor_pos.x, neighbor_pos.y }, neighbor_square);
 //
 //				if (visited.count(neighbor_pos) > 0) {
 //					open_set.emplace(neighbor_square);
@@ -210,9 +220,10 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //		}
 //	}
 //
-//	return reconstruct_path(new_square, squares);
+//	return reconstruct_path_astar(new_square, squares);
 //}
-//
+
+
 //void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 pos_prey, Entity& chaser) {
 //	std::list<vec2> path;
 //	pos_prey = find_map_index(pos_prey);

@@ -375,15 +375,15 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 // deal with normal eneimies' spawning and moving
 void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
 {
+	const uint PHASE_IN_STATE = 1;
+	const uint PHASE_OUT_STATE = 4;
+
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
 	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(15, 10)));
-
-		registry.colors.emplace(newEnemy);
-		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
 
 		std::vector<std::vector<char>> vec = grid_vec;
 		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
@@ -393,33 +393,46 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
 		Entity enemy = registry.followingEnemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
+		AnimationInfo& animation = registry.animated.get(enemy);
 		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
 
-		enemy_reg.next_blink -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-		if (enemy_reg.next_blink < 0.f)
+		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
-			enemy_reg.next_blink = 1000.f;
+			//Time between blinks
+			enemy_reg.next_blink_time = 1500.f;
 
-			//printf("POSITION: %f, %f\n", find_map_index(enemy_motion.position).x, find_map_index(enemy_motion.position).y);
-			//printf("GOAL: %f, %f\n", find_map_index(hero_motion.position).x, find_map_index(hero_motion.position).y);
-			if (enemy_reg.path.size() != 0)
-			{
-				//enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-				enemy_motion.position = find_index_from_map(enemy_reg.path.back());
-				//printf("POSITION GO: %f, %f\n", enemy_reg.path.back().x, enemy_reg.path.back().y);
-				//printf("POSITION: %f, %f\n", find_map_index(enemy_motion.position).x, find_map_index(enemy_motion.position).y);
-
-				enemy_reg.path.pop_back();
-			}
-			else if (find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
+			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position) && hero_motion.velocity.y == 0) {
 				std::vector<std::vector<char>> vec = grid_vec;
 				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
 			}
-			else {
-				enemy_motion.velocity = vec2(0, 0);
-				//printf("WE DID IT!!!!!!!!!!!!!!!!!!!\n");
+
+			//Don't blink when not moving
+			if (enemy_reg.path.size() != 0 && find_index_from_map(enemy_reg.path.back()) == enemy_motion.position) {
+				enemy_reg.path.pop_back();
+			}
+			 else if (enemy_reg.path.size() != 0)
+			{
+				animation.oneTimeState = PHASE_IN_STATE;
+				animation.oneTimer = glfwGetTime();
+				enemy_motion.position = find_index_from_map(enemy_reg.path.back());
+				enemy_reg.path.pop_back();
+				
+				//Don't blink when not moving
+				if (enemy_reg.path.size() != 0) {
+					enemy_reg.blinked = true;
+				}
 			}
 
+			
+		}
+
+		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
+			enemy_reg.next_blink_time = 500.f;
+			animation.oneTimeState = PHASE_OUT_STATE;
+			animation.oneTimer = glfwGetTime();
+
+			enemy_reg.blinked = false;
 		}
 		
 	}
@@ -593,7 +606,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).blinked) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;

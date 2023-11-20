@@ -75,8 +75,6 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velo
 Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
-	const float ACTUAL_SCALE_FACTOR = 0.5f;
-	const float OFFSET_FACTOR = 4.0f;
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -88,18 +86,19 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.f, 0.f);
-	motion.scale = { (ENEMY_BB).x * ACTUAL_SCALE_FACTOR, (ENEMY_BB).y * ACTUAL_SCALE_FACTOR };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY);
 
 	registry.followingEnemies.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ENEMY,
-		 EFFECT_ASSET_ID::TEXTURED,
+		{ TEXTURE_ASSET_ID::FOLLOWING_ENEMY,
+		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
-		 motion.scale,
-		 {0, -motion.scale.y / OFFSET_FACTOR} });
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY) });
 
 	registry.debugRenderRequests.emplace(entity);
 
