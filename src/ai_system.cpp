@@ -5,8 +5,8 @@
 #include <map>
 
 // 30 X 20 = last
-const float WIDTH = 30.f;
-const float HEIGHT = 20.f;
+const float WIDTH = 24.f;
+const float HEIGHT = 16.f;
 const vec2 next[] = { vec2(0,1), vec2(0,-1), vec2(1,0), vec2(-1,0) };
 //const vec2 next[] = { vec2(0,1), vec2(0,-1), vec2(1,0), vec2(-1,0) , vec2(1, 1), vec2(-1, -1), vec2(1, -1) , vec2(-1, 1) };
 
@@ -157,7 +157,7 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //float get_distance(vec2 start, vec2 goal) {
 //	return dot(start - goal, start - goal);
 //}
-
+//
 //std::list<vec2> reconstruct_path_astar(Grid_square current, std::map<std::pair<float, float>, Grid_square> squares) {
 //	std::list<vec2> path;
 //	vec2 pos;
@@ -184,7 +184,6 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //	std::priority_queue<Grid_square, std::vector<Grid_square>, LessThanByF> open_set;
 //	std::map<std::pair<float, float>, Grid_square> squares;
 //	std::unordered_set<vec2> visited;
-//	
 //
 //	open_set.emplace(new_square);
 //	squares.emplace(start, new_square);
@@ -222,7 +221,6 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 //
 //	return reconstruct_path_astar(new_square, squares);
 //}
-
 
 //void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 pos_prey, Entity& chaser) {
 //	std::list<vec2> path;

@@ -383,7 +383,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(15, 10)));
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
 
 		std::vector<std::vector<char>> vec = grid_vec;
 		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
@@ -400,7 +400,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
 			//Time between blinks
-			enemy_reg.next_blink_time = 500.f;
+			enemy_reg.next_blink_time = 1000.f;
 
 			enemy_reg.hittable = true;
 
@@ -428,7 +428,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		}
 
 		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
-			enemy_reg.next_blink_time = 500.f;
+			enemy_reg.next_blink_time = 300.f;
 			animation.oneTimeState = PHASE_OUT_STATE;
 			animation.oneTimer = glfwGetTime();
 			enemy_reg.hittable = false;
