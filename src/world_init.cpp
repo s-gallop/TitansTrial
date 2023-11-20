@@ -213,6 +213,7 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 
 Entity createHelperText(RenderSystem* renderer)
 {
+    const int PADDING = 20;
     Entity entity = Entity();
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
@@ -221,7 +222,7 @@ Entity createHelperText(RenderSystem* renderer)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HELPER);
-    motion.position = {window_width_px - motion.scale.x/2, window_height_px - motion.scale.y/2};
+    motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(

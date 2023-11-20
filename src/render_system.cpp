@@ -164,7 +164,88 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
-void RenderSystem::drawToScreen(bool pause)
+
+void RenderSystem::drawScreenLayer(const mat3 &projection, bool pause)
+{
+    Transform transform;
+    transform.translate(vec2(window_width_px/2.0, window_height_px/2.0));
+    transform.scale(vec2(window_width_px, window_height_px));
+
+    const GLuint program = (GLuint)effects[(GLuint)EFFECT_ASSET_ID::SCREEN_LAYER];
+
+    // Setting shaders
+    glUseProgram(program);
+    gl_has_errors();
+
+    const GLuint vbo = vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SPRITE];
+    const GLuint ibo = index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SPRITE];
+
+    // Setting vertex and index buffers
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    gl_has_errors();
+
+
+    GLint in_position_loc = glGetAttribLocation(program, "in_position");
+    GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+    gl_has_errors();
+
+    glEnableVertexAttribArray(in_position_loc);
+    glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(TexturedVertex), (void *)0);
+    gl_has_errors();
+
+    glEnableVertexAttribArray(in_texcoord_loc);
+    glVertexAttribPointer(
+            in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
+            (void *)sizeof(
+                    vec3)); // note the stride to skip the preceeding vertex position
+
+    // Enabling and binding texture to slot 0
+    glActiveTexture(GL_TEXTURE0);
+    gl_has_errors();
+
+    GLuint texture_id = texture_gl_handles[(GLuint) TEXTURE_ASSET_ID::BLACK_LAYER];
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    gl_has_errors();
+
+    // Set clock
+    GLuint time_uloc = glGetUniformLocation(program, "time");
+    GLuint dead_timer_uloc = glGetUniformLocation(program, "screen_darken_factor");
+    GLuint pause_uloc = glGetUniformLocation(program, "pause");
+    glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
+    ScreenState &screen = registry.screenStates.get(screen_state_entity);
+    glUniform1f(dead_timer_uloc, screen.screen_darken_factor);
+    glUniform1i(pause_uloc, pause);
+    gl_has_errors();
+
+    // Getting uniform locations for glUniform* calls
+    GLint color_uloc = glGetUniformLocation(program, "fcolor");
+    const vec3 color = vec3(1.f,1.f,1.f);
+    glUniform3fv(color_uloc, 1, (float *)&color);
+    gl_has_errors();
+
+    // Get number of indices from index buffer, which has elements uint16_t
+    GLint size = 0;
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+    gl_has_errors();
+
+    GLsizei num_indices = size / sizeof(uint16_t);
+    // GLsizei num_triangles = num_indices / 3;
+
+    GLint currProgram;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
+    // Setting uniform values to the currently bound program
+    GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
+    glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float *)&transform.mat);
+    GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
+    glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float *)&projection);
+    gl_has_errors();
+    // Drawing of num_indices/3 triangles specified in the index buffer
+    glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
+    gl_has_errors();
+}
+void RenderSystem::drawToScreen()
 {
 	// Setting shaders
 	// get the water texture, sprite mesh, and program
@@ -188,6 +269,7 @@ void RenderSystem::drawToScreen(bool pause)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(ox, oy, w, h);
 	glDepthRange(0, 10);
+    // black bar colors, can be changed
 	glClearColor(0, 0, 0, 1.0);
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -205,14 +287,6 @@ void RenderSystem::drawToScreen(bool pause)
 																	 // indices to the bound GL_ARRAY_BUFFER
 	gl_has_errors();
 	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::SCREEN];
-	// Set clock
-	GLuint time_uloc = glGetUniformLocation(water_program, "time");
-	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "screen_darken_factor");
-    GLuint pause_uloc = glGetUniformLocation(water_program, "pause");
-	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState &screen = registry.screenStates.get(screen_state_entity);
-	glUniform1f(dead_timer_uloc, screen.screen_darken_factor);
-    glUniform1i(pause_uloc, pause);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
 	// same VBO)
@@ -261,7 +335,7 @@ void RenderSystem::draw(bool pause, bool debug)
     std::vector<Entity> beyonders;
     // separates what needs the screen effects and what doesn't need screen effect, Not the most efficient, could look into it later
     // Truely render to the screen
-    drawToScreen(pause);
+    drawToScreen();
 	for (Entity entity : registry.renderRequests.entities)
 	{
         RenderRequest &render_request = registry.renderRequests.get(entity);
@@ -273,7 +347,7 @@ void RenderSystem::draw(bool pause, bool debug)
             drawTexturedMesh(entity, projection_2D, pause);
         }
 	}
-    //todo: add a new darken screen effect;
+    drawScreenLayer(projection_2D, pause);
     //draws whatever is filtered out as on top of the screen effects.
     for (Entity e : beyonders) {
         drawTexturedMesh(e, projection_2D, pause);

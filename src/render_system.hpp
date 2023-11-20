@@ -63,6 +63,7 @@ class RenderSystem
 		textures_path("buttons/play_pressed.png"),
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
+        textures_path("black_pixel.png"),
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
 		textures_path("pixel_heart_heal.png"),
@@ -92,7 +93,8 @@ class RenderSystem
 		shader_path("hero"),
 		shader_path("explosion"),
 		shader_path("spitter"),
-		shader_path("spitter_bullet")};
+		shader_path("spitter_bullet"),
+        shader_path("screen_layer")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
@@ -129,7 +131,8 @@ public:
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause, bool is_debug = false);
-	void drawToScreen(bool pause);
+	void drawToScreen();
+    void drawScreenLayer(const mat3 &projection, bool pause);
 
 	// Window handle
 	GLFWwindow *window;
