@@ -189,15 +189,7 @@ void RenderSystem::drawScreenLayer(const mat3 &projection, bool pause)
     gl_has_errors();
 
 
-    GLint in_position_loc = glGetAttribLocation(program, "in_position");
     GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-    gl_has_errors();
-
-    glEnableVertexAttribArray(in_position_loc);
-    glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(TexturedVertex), (void *)0);
-    gl_has_errors();
-
     glEnableVertexAttribArray(in_texcoord_loc);
     glVertexAttribPointer(
             in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
