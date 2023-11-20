@@ -94,10 +94,13 @@ GLFWwindow *WorldSystem::create_window()
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
-	window = glfwCreateWindow(window_width_px, window_height_px, "Titan's Trial", nullptr, nullptr);
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    float new_width = mode->width;
+    float new_height = mode->height;
+    window = glfwCreateWindow(new_width, new_height, "Titan's Trial", nullptr, nullptr);
 	if (window == nullptr)
 	{
 		fprintf(stderr, "Failed to glfwCreateWindow");
@@ -264,7 +267,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	if (registry.players.get(player_hero).hasWeapon)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
-	
+
 	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 	update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
 	update_pickaxe(elapsed_ms_since_last_update * current_speed);
@@ -272,7 +275,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
 
-	// Animation Stuff	
+	// Animation Stuff
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
@@ -507,7 +510,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
 				enemy_motion.position = converted_pos;
 				enemy_reg.path.pop_back();
-				
+
 				//Don't blink when not moving: next loop will be to re-calc the path
 				if (enemy_reg.path.size() != 0) {
 					enemy_reg.blinked = true;
@@ -615,7 +618,7 @@ void WorldSystem::restart_game()
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
-	
+
 	Player& player = registry.players.get(player_hero);
 	createSword(renderer, registry.motions.get(player_hero).position);
 
@@ -856,8 +859,9 @@ void WorldSystem::handle_collisions()
 				for (Entity weapon : registry.weapons.entities) {
 					registry.remove_all_components_of(weapon);
 				}
+        
 				registry.players.get(player_hero).hasWeapon = false;
-				
+
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				Motion &motion = registry.motions.get(player_hero);
 				motion.angle = M_PI / 2;
@@ -1033,7 +1037,31 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	mouse_pos = mouse_position;
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+
+    // Calculate the scaling factors for X and Y
+
+    // Scale the mouse position
+    float ox = 0, oy = 0;
+	int new_w = w, new_h = h;
+
+    float aspect_ratio = window_width_px / (float) window_height_px; // 16:9
+    float new_aspect_ratio = w / (float) h;
+
+    if (aspect_ratio < new_aspect_ratio) {
+        new_w = h * aspect_ratio;
+        ox = (w-new_w)/2.0;
+        // w = new_w;
+    } else {
+        new_h = w / aspect_ratio;
+        oy = (h-new_h) / 2.0;
+        // h = new_h;
+    }
+
+	mouse_pos.x = (mouse_position.x - ox) / new_w * window_width_px;
+    mouse_pos.y = (mouse_position.y - oy) / new_h * window_height_px;
+
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
 			update_weapon_angle(renderer, weapon, mouse_pos);
