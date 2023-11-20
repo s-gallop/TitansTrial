@@ -34,6 +34,7 @@ uint init_sound()
 	sound_effects.push_back(Mix_LoadWAV(audio_path("heal.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("pickaxe.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("dash.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("equipment_drop.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("button_click.wav").c_str()));
 
 	if (background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk *effect)
@@ -54,6 +55,7 @@ uint init_sound()
 				audio_path("heal.wav").c_str(),
 				audio_path("pickaxe.wav").c_str(),
 				audio_path("dash.wav").c_str(),
+				audio_path("equipment_drop.wav").c_str(),
 				audio_path("button_click.wav").c_str());
 		return 1;
 	}

@@ -15,12 +15,22 @@ enum class COLLECTABLE_TYPE
 	HEART = GRENADE_LAUNCHER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
-	DASH_BOOTS = WINGED_BOOTS + 1
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	COLLECTABLE_COUNT = DASH_BOOTS + 1
 };
+
+enum class INVULN_TYPE
+{
+	NONE = 0,
+	HIT = NONE + 1,
+	HEAL = HIT + 1
+};
+
 struct Blank
 {
 
 };
+
 // Player component
 struct Player
 {
@@ -29,15 +39,23 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::COLLECTABLE_COUNT;
+	float equipment_timer = 0;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
 	float invulnerable_timer = 0;
+	INVULN_TYPE invuln_type = INVULN_TYPE::NONE;
 };
 
 struct Block
 {
+};
+
+struct ParallaxBackground
+{
+	// where to reset entity to once it reaches end of screen
+	vec2 resetPosition;
 };
 
 struct Enemies
@@ -67,6 +85,7 @@ struct SpitterBullet
 struct Collectable
 {
 	COLLECTABLE_TYPE type;
+	float despawn_timer = 15000;
 };
 
 struct Sword
@@ -96,6 +115,7 @@ struct Rocket {
 struct GrenadeLauncher {
 	float cooldown = 0;
 	bool loaded = true;
+	std::vector<Entity> trajectory;
 };
 
 struct Grenade {
@@ -125,6 +145,7 @@ struct Motion
 	vec2 position = {0.f, 0.f};
 	float angle = 0.f;
 	float angleBackup = 0.f;
+	float globalAngle = 0.f;
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
@@ -216,6 +237,10 @@ struct GameButton {
     std::function<void ()> callback;
 };
 
+struct InGameGUI {
+
+};
+
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh
 {
@@ -269,7 +294,12 @@ enum class TEXTURE_ASSET_ID
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
 	BACKGROUND = DASH_BOOTS + 1,
-	QUIT = BACKGROUND + 1,
+	PARALLAX_RAIN = BACKGROUND + 1,
+	PARALLAX_MOON = PARALLAX_RAIN + 1,
+	PARALLAX_CLOUDS_CLOSE = PARALLAX_MOON + 1,
+	PARALLAX_CLOUDS_FAR = PARALLAX_CLOUDS_CLOSE + 1,
+	PARALLAX_LAVA = PARALLAX_CLOUDS_FAR + 1,
+	QUIT = PARALLAX_LAVA + 1,
 	QUIT_PRESSED = QUIT + 1,
 	MENU = QUIT_PRESSED + 1,
 	MENU_PRESSED = MENU + 1,
@@ -277,8 +307,25 @@ enum class TEXTURE_ASSET_ID
 	PLAY = HELPER + 1,
 	PLAY_PRESSED = PLAY + 1,
 	TITLE_TEXT = PLAY_PRESSED + 1,
-    HITBOX = TITLE_TEXT + 1,
-	TEXTURE_COUNT = HITBOX + 1,
+	HITBOX = TITLE_TEXT + 1,
+	LINE = HITBOX + 1,
+	PLAYER_HEART = LINE + 1,
+	PLAYER_HEART_STEEL = PLAYER_HEART + 1,
+	PLAYER_HEART_HEAL = PLAYER_HEART_STEEL + 1,
+	DIFFICULTY_BAR = PLAYER_HEART_HEAL + 1,
+	INDICATOR = DIFFICULTY_BAR + 1,
+	SCORE = INDICATOR + 1,
+	ZERO = SCORE + 1,
+	ONE = ZERO + 1,
+	TWO = ONE + 1,
+	THREE = TWO + 1,
+	FOUR = THREE + 1,
+	FIVE = FOUR + 1,
+	SIX = FIVE + 1,
+	SEVEN = SIX + 1,
+	EIGHT = SEVEN + 1,
+	NINE = EIGHT + 1,
+	TEXTURE_COUNT = NINE + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;

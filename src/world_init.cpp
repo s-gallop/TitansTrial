@@ -174,31 +174,81 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
 
-Entity createBackground(RenderSystem* renderer)
+Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
 	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
-	
+	vec2 vel;
+	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
+	{
+		vel = vec2();
+	}
+	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE)
+	{
+		// moves to the right
+		vel = vec2(10, 0);
+	}
+	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
+	{
+		// moves to the right slowly
+		vel = vec2(5, 0);
+	}
+	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_RAIN)
+	{
+		vel = vec2(40, 120);
+	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) 
+	{
+		vel = vec2(10, 0);
+	}
+	vel *= 5;
+
 	auto &motion = registry.motions.emplace(entity);
+
 	motion.angle = 0.f;
-	motion.velocity = {0.f, 0.f};
-	motion.position = {window_width_px / 2, window_height_px / 2};
-	motion.scale = {window_width_px, window_height_px};
+	motion.velocity = vel;
+	motion.position = pos;
+	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND ||
+		texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON ||
+		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE ||
+		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
+	{
+		motion.scale = {(pos.x * 2) / mesh.original_size.x, (pos.y * 2) / mesh.original_size.y};
+	}
+	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
+		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA);
+	}
+	else
+	{
+		motion.scale = {1200 / mesh.original_size.x, 800 / mesh.original_size.y};
+	}
+
+	ParallaxBackground &bg = registry.parallaxBackgrounds.emplace(entity);
+	if (texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE || texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR) {
+		bg.resetPosition = vec2(-800, 400);
+	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_RAIN) {
+		bg.resetPosition = vec2(400, 0);
+	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
+		bg.resetPosition = vec2(-600, 813);
+	}
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	registry.renderRequests.insert(
 		entity,
-		{TEXTURE_ASSET_ID::BACKGROUND,
+		{texture_id,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
-         false,
-         true,
-         motion.scale});
+		 false,
+		 true,
+		 texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA ? SPRITE_SCALE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA) : motion.scale,
+		 texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA ? SPRITE_OFFSET.at(TEXTURE_ASSET_ID::PARALLAX_LAVA) : vec2({0, 0})});
+	if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA)
+		registry.debugRenderRequests.emplace(entity);
 	return entity;
 }
 
@@ -255,6 +305,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
          false,
          true,
          motion.scale});
+	registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -287,6 +338,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -351,6 +403,7 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -379,6 +432,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 			false,
 			true,
 			motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -411,11 +465,12 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
 
-Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
+Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
@@ -425,10 +480,10 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
-	motion.velocity = vec2(500.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.velocity = velocity;
 	motion.scale = GRENADE_BB;
 	motion.isProjectile = true;
-	motion.friction = .8f;
+	motion.friction = .6f;
 
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
@@ -441,6 +496,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, float angle) {
 			false,
 			true,
 			motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -455,7 +511,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
-	motion.position = position - size * vec2({8, 0});
+	motion.position = position + size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION);
 	motion.scale = size * ASSET_SIZE.at(TEXTURE_ASSET_ID::EXPLOSION);
 
 	registry.explosions.emplace(entity);
@@ -474,6 +530,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 		 true,
 		 size * SPRITE_SCALE.at(TEXTURE_ASSET_ID::EXPLOSION),
 		 size * SPRITE_OFFSET.at(TEXTURE_ASSET_ID::EXPLOSION)});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -500,6 +557,7 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -526,6 +584,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -552,6 +611,7 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -578,6 +638,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 		 false,
 		 true,
 		 motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -626,6 +687,7 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
          false,
          true,
          motion.scale});
+    registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -679,5 +741,178 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
          true,
          motion.scale});
 	registry.showWhenPaused.emplace(entity);
+	return entity;
+}
+
+Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PLAYER_HEART);
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PLAYER_HEART,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 false,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.positionOffset = offset;
+	motion.scale = scale;
+	motion.globalAngle = angle;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LINE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
+
+	return entity;
+}
+
+Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 40.f, 40.f};
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 false,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 220.f, 40.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DIFFICULTY_BAR,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = M_PI;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 34.56f, 30.72f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INDICATOR,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createScore(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 140.f, 29.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::SCORE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createNumber(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 20.f, 29.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ZERO,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
 	return entity;
 }

@@ -4,6 +4,7 @@
 #include "tiny_ecs.hpp"
 #include "render_system.hpp"
 #include <map>
+#include <vector>
 
 // These are hard coded to the dimensions of the entity texture
 
@@ -24,6 +25,7 @@ const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
+        { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16 * CHARACTER_SCALING, 24 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::QUIT,{204, 56} },
         { TEXTURE_ASSET_ID::QUIT_PRESSED,{204, 56} },
         { TEXTURE_ASSET_ID::MENU,{30, 32} },
@@ -36,7 +38,10 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
+        { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
+        { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 42}},
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -44,7 +49,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::FIRE_ENEMY, {65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
 };
 
 const float BULLET_MESH_SCALE = 4.0f;
@@ -54,7 +60,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::FIRE_ENEMY, { 0 * CHARACTER_SCALING, 0 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, { 2* CHARACTER_SCALING, 1 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::EXPLOSION, {-8, 0}}
+        { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
+        { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -118,7 +125,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 
-Entity createGrenade(RenderSystem* renderer, vec2 position, float angle);
+Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity);
 
 Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 
@@ -129,8 +136,9 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position);
 Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
-// the background
-Entity createBackground(RenderSystem* renderer);
+
+// the parallax backgrounds
+Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
@@ -138,3 +146,10 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std:
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
+Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle);
+Entity createPlayerHeart(RenderSystem* renderer, vec2 pos);
+Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
+Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos);
+Entity createScore(RenderSystem* renderer, vec2 pos);
+Entity createNumber(RenderSystem* renderer, vec2 pos);
