@@ -79,8 +79,8 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto& motion = registry.motions.emplace(entity);

@@ -787,6 +787,8 @@ void WorldSystem::handle_collisions()
 				if (registry.rockets.has(entity))
 					explode(renderer, registry.motions.get(entity).position, entity);
 				registry.remove_all_components_of(entity);
+			} else if (registry.swords.has(entity) && registry.spitterBullets.has(entity_other)) {
+				registry.remove_all_components_of(entity_other);
 			}
 		}
 		else if (registry.blocks.has(entity))
