@@ -321,7 +321,7 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	CollisionMesh &collisionMesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::BULLET);
-	registry.collisionMeshPtrs.emplace(entity, &mesh);
+	registry.collisionMeshPtrs.emplace(entity, &collisionMesh);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);

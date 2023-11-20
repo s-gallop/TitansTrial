@@ -147,7 +147,7 @@ bool CollisionMesh::loadFromOBJFile(std::string obj_path, std::vector<ColoredVer
 			out_vertices.push_back(vertex);
 		} else if (strcmp(lineHeader, "l") == 0) {
 			std::pair<int, int> edge;
-			fscanf(file, "%d %d\n", &edge.first, edge.second);
+			fscanf(file, "%i %i\n", &edge.first, &edge.second);
 			out_edges.push_back(edge);
 		} else {
 			// Probably a comment, eat up the rest of the line

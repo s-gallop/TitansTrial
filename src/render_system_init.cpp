@@ -159,6 +159,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Index and Vertex buffer data initialization.
 	initializeGlMeshes();
+	initializeCollisionMeshes();
 
 	//////////////////////////
 	// Initialize sprite
