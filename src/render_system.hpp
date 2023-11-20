@@ -39,6 +39,8 @@ class RenderSystem
 	const std::array<std::string, texture_count> texture_paths = {
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
+		textures_path("fire_enemy.png"),
+		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
 		textures_path("sword.png"),
@@ -98,6 +100,7 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
+		shader_path("following_enemy"),
 		shader_path("spitter"),
 		shader_path("spitter_bullet")};
 

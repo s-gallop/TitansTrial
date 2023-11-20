@@ -26,8 +26,8 @@
 const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
-const size_t MAX_ENEMIES = 15;
-const size_t MAX_FOLLOWING_ENEMIES = MAX_ENEMIES/5;
+const size_t MAX_ENEMIES = 3;
+const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_SPITTERS = 3;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
