@@ -317,6 +317,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_move_following_enemies(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
@@ -413,7 +414,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), ENEMY_BB);
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight));
 		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
@@ -453,57 +454,73 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
+		motion.dir = (motion.velocity.x >= 0) ? -1 : 1;
 	}
 }
 
 // deal with normal eneimies' spawning and moving
 void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
 {
+	const uint PHASE_IN_STATE = 1;
+	const uint PHASE_OUT_STATE = 4;
+
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		srand(time(0));
-		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), ENEMY_BB / 2.f);
-		registry.enemies.get(newEnemy).follows = true;
-		registry.colors.emplace(newEnemy);
-		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
 
 		std::vector<std::vector<char>> vec = grid_vec;
-		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
-		registry.enemies.get(newEnemy).cur_dest = find_index_from_map(registry.enemies.get(newEnemy).path.back());
-		registry.enemies.get(newEnemy).path.pop_back();
+		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
 	}
-	float dist;
 
 	Motion& hero_motion = registry.motions.get(player_hero);
-	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
-		Entity enemy = registry.enemies.entities[i];
+	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
+		Entity enemy = registry.followingEnemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
-		Enemies& enemy_reg = registry.enemies.get(enemy);
-		
-		if(enemy_reg.follows)
-		{
-			dist = ((enemy_reg.cur_dest).x - enemy_motion.position.x) * ((enemy_reg.cur_dest).x - enemy_motion.position.x) + ((enemy_reg.cur_dest).y - enemy_motion.position.y) * ((enemy_reg.cur_dest).y - enemy_motion.position.y);
-			if (sqrt(dist) > 10) {
-				vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
-				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
-				enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
-			}
-			else if (enemy_reg.path.size() == 0) {
-				std::vector<std::vector<char>> vec = grid_vec;
-				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-				enemy_reg.path.pop_back();
-			}
-			else {
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
-				enemy_reg.path.pop_back();
+		AnimationInfo& animation = registry.animated.get(enemy);
+		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
 
-				enemy_motion.velocity = vec2(0, 0);
+		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
+		{
+			//Time between blinks
+			enemy_reg.next_blink_time = 1000.f;
+
+			enemy_reg.hittable = true;
+
+			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position)) {
+				std::vector<std::vector<char>> vec = grid_vec;
+				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
 			}
+
+			//Don't blink when not moving: next pos in path is same pos as current
+			if (enemy_reg.path.size() != 0 && find_index_from_map(enemy_reg.path.back()) == enemy_motion.position) {
+				enemy_reg.path.pop_back();
+			}
+			 else if (enemy_reg.path.size() != 0)
+			{
+				animation.oneTimeState = PHASE_IN_STATE;
+				animation.oneTimer = glfwGetTime();
+				vec2 converted_pos = find_index_from_map(enemy_reg.path.back());
+				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
+				enemy_motion.position = converted_pos;
+				enemy_reg.path.pop_back();
+				
+				//Don't blink when not moving: next loop will be to re-calc the path
+				if (enemy_reg.path.size() != 0) {
+					enemy_reg.blinked = true;
+				}
+			}
+		}
+
+		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
+			enemy_reg.next_blink_time = 300.f;
+			animation.oneTimeState = PHASE_OUT_STATE;
+			animation.oneTimer = glfwGetTime();
+			enemy_reg.hittable = false;
+			enemy_reg.blinked = false;
 		}
 	}
 }
@@ -619,37 +636,37 @@ void WorldSystem::restart_game()
 	create_inGame_GUIs();
 
 	// bottom line
-	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
 	// left line
-	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2});
+	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
 	// right line
-	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2});
+	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
 	// top line
-	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
 
 	// left middle platform
-	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
 
 	// top middle platform
-	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2}, grid_vec);
 
 	// right middle platform
-	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
 
 	// bottom middle left platform
-	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
 
 	// bottom middle right platform
-	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
 
 	// bottom left padding platform
-	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
 
 	// bottom right padding platform
-	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
 
 	// bottom center padding platform
-	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2}, grid_vec);
 	
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();
@@ -718,7 +735,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -755,7 +772,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				registry.remove_all_components_of(entity_other);
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
