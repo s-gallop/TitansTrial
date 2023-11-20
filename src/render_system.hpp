@@ -33,6 +33,8 @@ class RenderSystem
 	const std::array<std::string, texture_count> texture_paths = {
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
+		textures_path("fire_enemy.png"),
+		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
 		textures_path("sword.png"),
@@ -64,6 +66,7 @@ class RenderSystem
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
         textures_path("black_pixel.png"),
+		textures_path("line.png"),
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
 		textures_path("pixel_heart_heal.png"),
@@ -92,6 +95,7 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
+		shader_path("following_enemy"),
 		shader_path("spitter"),
 		shader_path("spitter_bullet"),
         shader_path("screen_layer")};

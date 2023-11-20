@@ -15,7 +15,8 @@ enum class COLLECTABLE_TYPE
 	HEART = GRENADE_LAUNCHER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
-	DASH_BOOTS = WINGED_BOOTS + 1
+	DASH_BOOTS = WINGED_BOOTS + 1,
+	COLLECTABLE_COUNT = DASH_BOOTS + 1
 };
 
 enum class INVULN_TYPE
@@ -38,7 +39,8 @@ struct Player
 	//  hasSword = 1
 	uint hasWeapon = 0;
 	Entity weapon;
-	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::SWORD;
+	COLLECTABLE_TYPE equipment_type = COLLECTABLE_TYPE::COLLECTABLE_COUNT;
+	float equipment_timer = 0;
 	uint jumps = 2; 
 	int hp_max = 5;
 	int hp = 5;
@@ -58,9 +60,14 @@ struct ParallaxBackground
 
 struct Enemies
 {
-	bool follows = false;
+};
+
+struct FollowingEnemies
+{
 	std::list<vec2> path;
-	vec2 cur_dest = vec2(0.f,0.f);
+	float next_blink_time = 0.f;
+	bool blinked = false;
+	bool hittable = true;
 };
 
 struct SpitterEnemy
@@ -78,6 +85,7 @@ struct SpitterBullet
 struct Collectable
 {
 	COLLECTABLE_TYPE type;
+	float despawn_timer = 15000;
 };
 
 struct Sword
@@ -107,6 +115,7 @@ struct Rocket {
 struct GrenadeLauncher {
 	float cooldown = 0;
 	bool loaded = true;
+	std::vector<Entity> trajectory;
 };
 
 struct Grenade {
@@ -136,6 +145,7 @@ struct Motion
 	vec2 position = {0.f, 0.f};
 	float angle = 0.f;
 	float angleBackup = 0.f;
+	float globalAngle = 0.f;
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
@@ -268,7 +278,9 @@ enum class TEXTURE_ASSET_ID
 {
 	HERO = 0,
 	ENEMY = HERO + 1,
-	SPITTER_ENEMY = ENEMY + 1,
+	FIRE_ENEMY = ENEMY + 1,
+	FOLLOWING_ENEMY = FIRE_ENEMY + 1,
+	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
 	GUN = SWORD + 1,
@@ -297,7 +309,8 @@ enum class TEXTURE_ASSET_ID
 	TITLE_TEXT = PLAY_PRESSED + 1,
 	HITBOX = TITLE_TEXT + 1,
     BLACK_LAYER = HITBOX + 1,
-    PLAYER_HEART = BLACK_LAYER + 1,
+	LINE = BLACK_LAYER + 1,
+	PLAYER_HEART = LINE + 1,
 	PLAYER_HEART_STEEL = PLAYER_HEART + 1,
 	PLAYER_HEART_HEAL = PLAYER_HEART_STEEL + 1,
 	DIFFICULTY_BAR = PLAYER_HEART_HEAL + 1,
@@ -327,7 +340,8 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	SPITTER_ENEMY = EXPLOSION + 1,
+	FOLLOWING_ENEMY = EXPLOSION + 1,
+	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
     SCREEN_LAYER = SPITTER_ENEMY_BULLET + 1,
 	EFFECT_COUNT = SCREEN_LAYER + 1
