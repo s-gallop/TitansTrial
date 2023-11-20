@@ -987,8 +987,40 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
-    //todo: set mouse pos
-    mouse_pos = mouse_position;
+
+    // Calculate the scaling factors for X and Y
+
+    // Scale the mouse position
+    float ox = 0, oy = 0;
+	int new_w = w, new_h = h;	
+
+    float aspect_ratio = window_width_px / (float) window_height_px; // 16:9
+    float new_aspect_ratio = w / (float) h;
+
+    if (aspect_ratio < new_aspect_ratio) {
+        new_w = h * aspect_ratio;
+        ox = (w-new_w)/2.0;
+        // w = new_w;
+    } else {
+        new_h = w / aspect_ratio;
+        oy = (h-new_h) / 2.0;
+        // h = new_h;
+    }
+
+    float scaleX = static_cast<float>(w) / static_cast<float>(new_w);
+    float scaleY = static_cast<float>(h) / static_cast<float>(new_h);
+
+	printf("scaleX %f\n", scaleX);
+	printf("scaleY %f\n", scaleY);
+
+	mouse_pos.x = (mouse_position.x / scaleX) + ox;
+    mouse_pos.y = (mouse_position.y / scaleY) + oy;
+
+	printf("mouse_position.x %f\n", mouse_position.x);
+	printf("mouse_position.y %f\n", mouse_position.y);
+	printf("mouse_pos.x %f\n", mouse_pos.x);
+	printf("mouse_pos.y %f\n", mouse_pos.y);
+
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
 			rotate_weapon(weapon, mouse_pos);

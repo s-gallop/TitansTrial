@@ -78,7 +78,7 @@ void destroy_sound()
 
 void play_music()
 {
-	Mix_PlayMusic(background_music, -1);
+	// Mix_PlayMusic(background_music, -1);
 	is_music_muted = false;
 	fprintf(stderr, "Loaded music\n");
 }
