@@ -11,6 +11,39 @@ vec2 get_bounding_box(const Motion &motion)
     return {abs(motion.scale.x), abs(motion.scale.y)};
 }
 
+bool check_collision_conditions(Entity entity_i, Entity entity_j) {
+    if (registry.players.has(entity_i)) {
+        if ((registry.enemies.has(entity_j) || 
+            registry.spitterBullets.has(entity_j) || 
+            registry.spitterEnemies.has(entity_j) || 
+            registry.explosions.has(entity_j) ||
+            registry.collectables.has(entity_j)))
+        {
+            return true;
+        }
+    } else if (registry.weaponHitBoxes.has(entity_i)) {
+        if (registry.enemies.has(entity_j) || registry.spitterEnemies.has(entity_j) || registry.blocks.has(entity_j))
+        {
+            return true;
+        }
+    } else if (registry.blocks.has(entity_i)) {
+        if (registry.solids.has(entity_j) || registry.projectiles.has(entity_j)) {
+            return true;
+        } 
+    } else if (registry.parallaxBackgrounds.has(entity_i)) {
+        if (registry.bullets.has(entity_j) ||
+            registry.rockets.has(entity_j) ||
+            registry.grenades.has(entity_j) ||
+            registry.spitterBullets.has(entity_j) ||
+            registry.collectables.has(entity_j) ||
+            registry.players.has(entity_j)) 
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 // assumes at least one collider is box shaped
 
 bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
@@ -113,22 +146,12 @@ void PhysicsSystem::step(float elapsed_ms)
         motion.position += motion.velocity * step_seconds;
     }
 
-    // Check for collisions between all moving entities
-    for (uint i = 0; i < motion_container.components.size(); i++)
-    {
-        Motion &motion_i = motion_container.components[i];
-        Entity entity_i = motion_container.entities[i];
-
-        // note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
-        for (uint j = i + 1; j < motion_container.components.size(); j++)
-        {
-            Motion &motion_j = motion_container.components[j];
-            Entity entity_j = motion_container.entities[j];
-
-            if (PhysicsSystem::collides(entity_i, entity_j))
-            {
-                // Create a collisions event
-                // We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
+    // Check for collisions between all entities with meshes
+    for (uint i = 0; i < registry.meshPtrs.size(); i++) {
+        for (uint j = i + 1; j < registry.meshPtrs.size(); j++) {
+            Entity entity_i = registry.meshPtrs.entities[i];
+            Entity entity_j = registry.meshPtrs.entities[j];            
+            if ((check_collision_conditions(entity_i, entity_j) || check_collision_conditions(entity_j, entity_i)) && PhysicsSystem::collides(entity_i, entity_j)) {
                 registry.collisions.emplace_with_duplicates(entity_i, entity_j);
                 registry.collisions.emplace_with_duplicates(entity_j, entity_i);
             }
