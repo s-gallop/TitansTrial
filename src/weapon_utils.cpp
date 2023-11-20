@@ -43,6 +43,7 @@ void collect_weapon(Entity weapon, Entity hero) {
 			Weapon& weapon_comp = registry.weapons.emplace(weapon);
 			weapon_comp.type = registry.collectables.get(weapon).type;
 			registry.collectables.remove(weapon);
+			registry.meshPtrs.remove(weapon);
 			
 			Motion& motion = registry.motions.get(weapon);
 			motion.position = registry.motions.get(hero).position;

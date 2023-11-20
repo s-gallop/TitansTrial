@@ -151,8 +151,6 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 	vec2 vel;
 	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
 	{
@@ -174,6 +172,8 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) 
 	{
 		vel = vec2(10, 0);
+		Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+		registry.meshPtrs.emplace(entity, &mesh);
 	}
 	vel *= 5;
 
@@ -187,14 +187,14 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
 	{
-		motion.scale = {(pos.x * 2) / mesh.original_size.x, (pos.y * 2) / mesh.original_size.y};
+		motion.scale = {pos.x * 2, pos.y * 2};
 	}
 	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
 		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA);
 	}
 	else
 	{
-		motion.scale = {1200 / mesh.original_size.x, 800 / mesh.original_size.y};
+		motion.scale = {1200, 800};
 	}
 
 	ParallaxBackground &bg = registry.parallaxBackgrounds.emplace(entity);
@@ -224,8 +224,6 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 Entity createHelperText(RenderSystem* renderer)
 {
     Entity entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
@@ -671,8 +669,6 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
     auto entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
@@ -699,8 +695,6 @@ Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std
 
 Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -723,8 +717,6 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -748,8 +740,6 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 
 Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -771,8 +761,6 @@ Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, flo
 
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -796,8 +784,6 @@ Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
 
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -821,8 +807,6 @@ Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
 
 Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = M_PI;
@@ -846,8 +830,6 @@ Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
 
 Entity createScore(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -871,8 +853,6 @@ Entity createScore(RenderSystem* renderer, vec2 pos) {
 
 Entity createNumber(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
