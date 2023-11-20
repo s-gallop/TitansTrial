@@ -116,3 +116,64 @@ bool Mesh::loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out
 
 	return true;
 }
+
+bool CollisionMesh::loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<std::pair<int, int>>& out_edges, vec2& out_size) {
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#endif
+
+	printf("Loading OBJ file %s...\n", obj_path.c_str());
+
+	FILE* file = fopen(obj_path.c_str(), "r");
+	if (file == NULL) {
+		printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+		getchar();
+		return false;
+	}
+
+	while (1) {
+		char lineHeader[128];
+		// read the first word of the line
+		int res = fscanf(file, "%s", lineHeader);
+		if (res == EOF)
+			break; // EOF = End Of File. Quit the loop.
+
+		if (strcmp(lineHeader, "v") == 0) {
+			ColoredVertex vertex;
+			int matches = fscanf(file, "%f %f %f %f %f %f\n", &vertex.position.x, &vertex.position.y, &vertex.position.z,
+				&vertex.color.x, &vertex.color.y, &vertex.color.z);
+			if (matches == 3)
+				vertex.color = { 1,1,1 };
+			out_vertices.push_back(vertex);
+		} else if (strcmp(lineHeader, "l") == 0) {
+			std::pair<int, int> edge;
+			fscanf(file, "%i %i\n", &edge.first, &edge.second);
+			out_edges.push_back(edge);
+		} else {
+			// Probably a comment, eat up the rest of the line
+			char stupidBuffer[1000];
+			fgets(stupidBuffer, 1000, file);
+		}
+	}
+	fclose(file);
+
+	// Compute bounds of the mesh
+	vec3 max_position = { -99999,-99999,-99999 };
+	vec3 min_position = { 99999,99999,99999 };
+	for (ColoredVertex& pos : out_vertices)
+	{
+		max_position = glm::max(max_position, pos.position);
+		min_position = glm::min(min_position, pos.position);
+	}
+	if(abs(max_position.z - min_position.z)<0.001)
+		max_position.z = min_position.z+1; // don't scale z direction when everythin is on one plane
+
+	vec3 size3d = max_position - min_position;
+	out_size = size3d;
+
+	// Normalize mesh to range -0.5 ... 0.5
+	for (ColoredVertex& pos : out_vertices)
+		pos.position = ((pos.position - min_position) / size3d) - vec3(0.5f, 0.5f, 0.5f);
+
+	return true;
+}

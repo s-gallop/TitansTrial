@@ -155,6 +155,14 @@ struct Motion
 	float friction = 1.f;
 };
 
+struct Solid {
+
+};
+
+struct Projectile {
+	float friction = 1.f;
+};
+
 // just for milestone 1 sudden requirement
 struct TestAI
 {
@@ -248,6 +256,13 @@ struct Mesh
 	vec2 original_size = {1, 1};
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
+};
+
+struct CollisionMesh {
+	static bool loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<std::pair<int, int>>& out_edges, vec2 &out_size);
+	vec2 original_size = {1, 1};
+	std::vector<ColoredVertex> vertices;
+	std::vector<std::pair<int, int>> edges;
 };
 
 /**
