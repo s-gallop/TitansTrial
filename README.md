@@ -2,7 +2,17 @@
 
 Titan's Trial - A 2D Endless survival game
 
+## Write-up Milestone 3
+
+Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:
+
+* Additional implementations
+  * GUI for game data including current difficulty, player health, and score
+  * Seperate out hitbox and sprite systems
+  * Consistent game resolution (can resize, opens as windowed fullscreen)
+
 ## M3 Features
+
 * Complete GUI
   * world_init.cpp:
     * func createPlayerHeart
@@ -68,6 +78,7 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
   * Simple path finding was started
   
 ## M2 Features
+
 * Button System
   * world_init.cpp:
     * func createButton
