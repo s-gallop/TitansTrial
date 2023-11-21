@@ -9,8 +9,8 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -21,6 +21,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	motion.isSolid = true;
 
 	registry.players.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::HERO));
 	registry.renderRequests.insert(
 		entity,
@@ -37,37 +38,71 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float angle, vec2 velocity, vec2 scale)
+Entity createEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
-    const float ACTUAL_SCALE_FACTOR = 0.5f;
-    const float OFFSET_FACTOR = 4.0f;
+    //const float ACTUAL_SCALE_FACTOR = 0.5f;
+    //const float OFFSET_FACTOR = 4.0f;
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
-	motion.angle = angle;
+	motion.angle = 0.f;
 	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.velocity = velocity;
-	motion.scale = {scale.x*ACTUAL_SCALE_FACTOR, scale.y*ACTUAL_SCALE_FACTOR};
+	motion.velocity = vec2(0.0, 0.0);
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
 
 	registry.enemies.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
 	registry.renderRequests.insert(
 		entity,
-		{TEXTURE_ASSET_ID::ENEMY,
-		 EFFECT_ASSET_ID::TEXTURED,
+		{TEXTURE_ASSET_ID::FIRE_ENEMY,
+		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         scale,
-         {0, -scale.y/OFFSET_FACTOR}});
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::FIRE_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::FIRE_ENEMY) });
 
     registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.position = position;
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.velocity = vec2(0.f, 0.f);
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY);
+
+	registry.followingEnemies.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::FOLLOWING_ENEMY,
+		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY) });
+
+	registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -77,8 +112,8 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -92,6 +127,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
 	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
+	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(
 		entity,
@@ -114,8 +150,8 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -131,6 +167,7 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 
 	bullet.mass = 1;
 
+	registry.projectiles.emplace(entity);
 	AnimationInfo &animationInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY_BULLET));
 	registry.renderRequests.insert(
 		entity,
@@ -148,8 +185,6 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 	vec2 vel;
 	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
 	{
@@ -171,6 +206,8 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	} else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) 
 	{
 		vel = vec2(10, 0);
+		CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+		registry.collisionMeshPtrs.emplace(entity, &mesh);
 	}
 	vel *= 5;
 
@@ -184,14 +221,14 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
 	{
-		motion.scale = {(pos.x * 2) / mesh.original_size.x, (pos.y * 2) / mesh.original_size.y};
+		motion.scale = {pos.x * 2, pos.y * 2};
 	}
 	else if (texture_id == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
 		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::PARALLAX_LAVA);
 	}
 	else
 	{
-		motion.scale = {1200 / mesh.original_size.x, 800 / mesh.original_size.y};
+		motion.scale = {1200, 800};
 	}
 
 	ParallaxBackground &bg = registry.parallaxBackgrounds.emplace(entity);
@@ -220,15 +257,14 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 
 Entity createHelperText(RenderSystem* renderer)
 {
+    const int PADDING = 20;
     Entity entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HELPER);
-    motion.position = {window_width_px - motion.scale.x/2, window_height_px - motion.scale.y/2};
+    motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
@@ -248,8 +284,8 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
@@ -263,6 +299,7 @@ Entity createSword(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::SWORD;
 	registry.swords.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::SWORD,
@@ -281,8 +318,8 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
@@ -296,6 +333,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::GUN;
 	registry.guns.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GUN,
@@ -316,6 +354,9 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	// Store a reference to the potentially re-used mesh object
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::BULLET);
 	registry.meshPtrs.emplace(entity, &mesh);
+
+	CollisionMesh &collisionMesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::BULLET);
+	registry.collisionMeshPtrs.emplace(entity, &collisionMesh);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -346,8 +387,8 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
@@ -361,6 +402,7 @@ Entity createRocketLauncher(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::ROCKET_LAUNCHER;
 	registry.rocketLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::ROCKET_LAUNCHER,
@@ -378,8 +420,8 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -408,8 +450,8 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
@@ -423,6 +465,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	collectable.type = COLLECTABLE_TYPE::GRENADE_LAUNCHER;
 	registry.grenadeLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
@@ -440,8 +483,8 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -454,6 +497,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.projectiles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
@@ -472,8 +516,8 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -504,8 +548,8 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
@@ -515,6 +559,7 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::HEART;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::HEART,
@@ -531,8 +576,8 @@ Entity createHeart(RenderSystem* renderer, vec2 position) {
 Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
@@ -542,6 +587,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::PICKAXE;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::PICKAXE,
@@ -558,8 +604,8 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position) {
 Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
@@ -569,6 +615,7 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::WINGED_BOOTS;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::WINGED_BOOTS,
@@ -585,8 +632,8 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position) {
 Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
@@ -596,6 +643,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	collectable.type = COLLECTABLE_TYPE::DASH_BOOTS;
 
 	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::DASH_BOOTS,
@@ -609,11 +657,11 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid)
 {
 	auto entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -621,6 +669,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	motion.velocity = {0.f, 0.f};
 	motion.scale = size;
 	motion.isSolid = true;
+	fill_grid(grid, pos, size);
 	registry.blocks.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
@@ -637,8 +686,8 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
 
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -659,8 +708,6 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility) {
     auto entity = Entity();
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
@@ -687,8 +734,6 @@ Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std
 
 Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -711,8 +756,6 @@ Entity createTitleText(RenderSystem* renderer, vec2 pos) {
 
 Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -736,8 +779,6 @@ Entity createPlayerHeart(RenderSystem* renderer, vec2 pos) {
 
 Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -759,8 +800,6 @@ Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, flo
 
 Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -784,8 +823,6 @@ Entity createPowerUpIcon(RenderSystem* renderer, vec2 pos) {
 
 Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -809,8 +846,6 @@ Entity createDifficultyBar(RenderSystem* renderer, vec2 pos) {
 
 Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = M_PI;
@@ -834,8 +869,6 @@ Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos) {
 
 Entity createScore(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
@@ -859,8 +892,6 @@ Entity createScore(RenderSystem* renderer, vec2 pos) {
 
 Entity createNumber(RenderSystem* renderer, vec2 pos) {
 	Entity entity = Entity();
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;

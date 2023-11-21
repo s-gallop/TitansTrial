@@ -14,6 +14,8 @@ public:
 	// TODO: A1 add a LightUp component
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<Motion> motions;
+	ComponentContainer<Solid> solids;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<Gravity> gravities;
 	ComponentContainer<TestAI> testAIs;
 	ComponentContainer<Collision> collisions;
@@ -21,11 +23,13 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
+	ComponentContainer<CollisionMesh *> collisionMeshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
     ComponentContainer<Blank> debugRenderRequests;
 	ComponentContainer<ScreenState> screenStates;
 	ComponentContainer<SpitterEnemy> spitterEnemies;
 	ComponentContainer<SpitterBullet> spitterBullets;
+	ComponentContainer<FollowingEnemies> followingEnemies;
 	ComponentContainer<Enemies> enemies;
 	ComponentContainer<Collectable> collectables;
 	ComponentContainer<Sword> swords;
@@ -52,6 +56,8 @@ public:
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&motions);
+		registry_list.push_back(&solids);
+		registry_list.push_back(&projectiles);
 		registry_list.push_back(&gravities);
 		registry_list.push_back(&testAIs);
 		registry_list.push_back(&parallaxBackgrounds);
@@ -59,12 +65,14 @@ public:
 		registry_list.push_back(&players);
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
+		registry_list.push_back(&collisionMeshPtrs);
 		registry_list.push_back(&renderRequests);
         registry_list.push_back(&debugRenderRequests);
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&spitterEnemies);
 		registry_list.push_back(&spitterBullets);
 		registry_list.push_back(&enemies);
+		registry_list.push_back(&followingEnemies);
 		registry_list.push_back(&collectables);
 		registry_list.push_back(&swords);
 		registry_list.push_back(&guns);
