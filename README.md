@@ -2,6 +2,60 @@
 
 Titan's Trial - A 2D Endless survival game
 
+## M3 Features
+* Complete GUI
+  * world_init.cpp:
+    * func createPlayerHeart
+    * func createPowerUpIcon
+    * func createDifficultyBar
+    * func createDifficultyIndicator
+    * func createScore
+    * func createNumber
+  * world_system.cpp:
+    * func create_inGame_GUIs
+    * func changeScore
+    * func connectNumber
+    * func step
+* More Weapons and Powerups
+  * world_init.cpp:
+    * func createRocketLauncher
+    * func createRocket
+    * func createGrenadeLauncher
+    * func createGrenade
+    * func createExplosion
+    * func createHeart
+    * func createPickaxe
+    * func createWingedBoots
+    * func createDashBoots
+  * world_system.cpp:
+    * func on_mouse_click
+  * weapon_utils.cpp:
+    * everything
+* New Path Finding Enemy
+  * world_init.cpp:
+    * func createFollowingEnemy
+  * world_system.cpp:
+    * func spawn_move_following_enemies
+  * ai_system.cpp:
+    * everything
+* Paralax Background
+  * world_init.cpp:
+    * func createParallaxItem
+  * world_system.cpp:
+    * func create_parallax_background
+* Powerful Debugging System
+  * world_system.cpp:
+    * func on_key
+* Total Collision and World System Refactoring
+  * world_system.hpp:
+    * everything
+  * world_system.cpp:
+    * func handle_collision
+  * physics_system.cpp:
+    * everything
+* Complete Tutorial
+* Different Resolutions
+
 ## Write-up Milestone 2
 
 Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal document. The changes include:
