@@ -274,6 +274,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	update_pickaxe(elapsed_ms_since_last_update * current_speed);
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
+	update_lasers(renderer, elapsed_ms_since_last_update* current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
 
 	// Animation Stuff
@@ -991,6 +992,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             next_spitter_spawn = -1.0;
             spawn_spitter_enemy(0);
         }
+		else if (key == GLFW_KEY_0 && action == GLFW_PRESS && !pause && debug) {
+			createLaserRifle(renderer, registry.motions.get(player_hero).position);
+		}
 
 		if (key == GLFW_KEY_I && action == GLFW_PRESS && debug)
 		{

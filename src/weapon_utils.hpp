@@ -12,6 +12,7 @@ void collect(Entity weapon, Entity hero);
 void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos);
 void update_equipment(float elapsed_ms, Entity hero);
 void update_grenades(RenderSystem* renderer, float elapsed_ms);
+void update_lasers(RenderSystem* renderer, float elapsed_ms);
 void explode(RenderSystem* renderer, vec2 position, Entity explodable);
 void update_explosions(float elapsed_ms);
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool mouse_clicked);

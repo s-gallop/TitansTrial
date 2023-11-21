@@ -545,6 +545,64 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	return entity;
 }
 
+Entity createLaserRifle(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+	motion.scale = LASER_RIFLE_BB;
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::LASER_RIFLE;
+	registry.laserRifles.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LASER_RIFLE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
+Entity createLaser(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.velocity = vec2(2000, 0) * mat2({ cos(angle), -sin(angle) }, { sin(angle), cos(angle) });
+	motion.scale = LASER_BB;
+
+	registry.lasers.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LASER,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 

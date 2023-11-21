@@ -12,7 +12,8 @@ enum class COLLECTABLE_TYPE
 	GUN = SWORD + 1,
 	ROCKET_LAUNCHER = GUN + 1,
 	GRENADE_LAUNCHER = ROCKET_LAUNCHER + 1,
-	HEART = GRENADE_LAUNCHER + 1,
+	LASER_RIFLE = GRENADE_LAUNCHER + 1,
+	HEART = LASER_RIFLE + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -124,6 +125,15 @@ struct Grenade {
 
 struct Explosion {
 	float timer = 1000;
+};
+
+struct LaserRifle {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Laser {
+	float timer = 500;
 };
 
 // Weapon the player has picked up
@@ -304,7 +314,9 @@ enum class TEXTURE_ASSET_ID
 	GRENADE_LAUNCHER = ROCKET + 1,
 	GRENADE = GRENADE_LAUNCHER + 1,
 	EXPLOSION = GRENADE + 1,
-	HEART = EXPLOSION + 1,
+	LASER_RIFLE = EXPLOSION + 1,
+	LASER = LASER_RIFLE + 1,
+	HEART = LASER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
