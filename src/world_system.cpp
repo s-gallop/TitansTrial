@@ -156,10 +156,24 @@ void WorldSystem::create_title_screen()
     //these magic number are just the vertical position of where the buttons are
 	createTitleText(renderer, { window_width_px / 2, 150 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
-	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
+	createButton(renderer, {window_width_px / 2, 550}, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_tutorial_screen();});
+	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
 	
 }
 
+void WorldSystem::create_tutorial_screen() {
+	isTitleScreen = true;
+	pause = false;
+
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+
+	Entity helper = createHelperText(renderer);
+	Motion& motion = registry.motions.get(helper);
+	motion.position = {window_width_px / 2, 150};
+	registry.renderRequests.get(helper).visibility = true;
+	createSword(renderer, {window_width_px / 6, 300});
+}
 
 
 // Update our game world
@@ -1018,6 +1032,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 			if (buttonInfo.clicked) {
 				buttonInfo.clicked = false;
             	buttonInfo.callback();
+				return;
 			}
 		}
 	}

@@ -227,8 +227,8 @@ Entity createHelperText(RenderSystem* renderer)
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HELPER);
-    motion.position = {window_width_px - motion.scale.x/2, window_height_px - motion.scale.y/2};
+    motion.scale = HELPER_BB;
+    motion.position = {window_width_px - motion.scale.x/2, motion.scale.y/2};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
