@@ -12,8 +12,8 @@ float dash_window = 0.f;
 float dash_time = 0.f;
 uint dash_direction = 0;
 
-const size_t COLLECTABLE_DELAY_MS = 6000;
-const size_t MAX_COLLECTABLES = 3;
+const size_t COLLECTABLE_DELAY_MS = 3000;
+const size_t MAX_COLLECTABLES = 6;
 const size_t GUN_COOLDOWN = 800;
 const size_t EQUIPMENT_DURATION = 20000;
 const size_t ROCKET_COOLDOWN = 3000;
@@ -283,18 +283,18 @@ void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
 		else
 			createGun(renderer, pos);
 	else if (ddl == 1)
-		if (rand < 0.6)
+		if (rand < 0.2)
 			createSword(renderer, pos);
-		else if (rand < 0.9)
+		else if (rand < 0.7)
 			createGun(renderer, pos);
-		else if (rand < 0.1)
+		else
 			createGrenadeLauncher(renderer, pos);
 	else
-		if (rand < 0.3)
+		if (rand < 0.1)
 			createSword(renderer, pos);
-		else if (rand < 0.6)
+		else if (rand < 0.4)
 			createGun(renderer, pos);
-		else if (rand < 0.8)
+		else if (rand < 0.7)
 			createGrenadeLauncher(renderer, pos);
 		else
 			createRocketLauncher(renderer, pos);

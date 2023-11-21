@@ -334,12 +334,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	else if (ddl == 1)
 	{
 		current_enemy_spawning_speed = 1.2f;
-		current_spitter_spawning_speed = 0.0f;
+		current_spitter_spawning_speed = 1.0f;
 	}
 	else
 	{
-		current_enemy_spawning_speed = 1.0f;
-		current_spitter_spawning_speed = 1.0f;
+		current_enemy_spawning_speed = 1.2f;
+		current_spitter_spawning_speed = 1.5f;
 	}
 	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
 		Entity curHeart = player_hearts_GUI[i];
@@ -535,7 +535,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		AnimationInfo& animation = registry.animated.get(enemy);
 		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
 
-		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_speed;
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
 			//Time between blinks
