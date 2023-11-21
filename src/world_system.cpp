@@ -160,10 +160,40 @@ void WorldSystem::create_title_screen()
     //these magic number are just the vertical position of where the buttons are
 	createTitleText(renderer, { window_width_px / 2, 150 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
-	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
+	createButton(renderer, {window_width_px / 2, 550}, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen();});
+	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
 	
 }
 
+void WorldSystem::create_almanac_screen() {
+	isTitleScreen = true;
+	pause = false;
+
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
+
+	Entity helper = createHelperText(renderer);
+	Motion& motion = registry.motions.get(helper);
+	motion.position = {window_width_px / 2, 150};
+	registry.renderRequests.get(helper).visibility = true;
+
+	createSword(renderer, {window_width_px / 6, 300});
+	createToolTip(renderer, {window_width_px * 2 / 3, 300}, TEXTURE_ASSET_ID::SWORD_HELPER);
+	createGun(renderer, {window_width_px / 6, 350});
+	createToolTip(renderer, {window_width_px * 2 / 3, 350}, TEXTURE_ASSET_ID::GUN_HELPER);
+	createGrenadeLauncher(renderer, {window_width_px / 6, 400});
+	createToolTip(renderer, {window_width_px * 2 / 3, 400}, TEXTURE_ASSET_ID::GRENADE_HELPER);
+	createRocketLauncher(renderer, {window_width_px / 6, 450});
+	createToolTip(renderer, {window_width_px * 2 / 3, 450}, TEXTURE_ASSET_ID::ROCKET_HELPER);
+	createWingedBoots(renderer, {window_width_px / 6, 500});
+	createToolTip(renderer, {window_width_px * 2 / 3, 500}, TEXTURE_ASSET_ID::WINGED_BOOTS_HELPER);
+	createPickaxe(renderer, {window_width_px / 6, 550});
+	createToolTip(renderer, {window_width_px * 2 / 3, 550}, TEXTURE_ASSET_ID::PICKAXE_HELPER);
+	createDashBoots(renderer, {window_width_px / 6, 600});
+	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
+
+	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
+}
 
 
 // Update our game world
@@ -704,7 +734,7 @@ void WorldSystem::restart_game()
 
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
-    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::QUIT, [&]() {create_title_screen(); }, false);
+    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen(); }, false);
     createHelperText(renderer);
 }
 
@@ -1111,6 +1141,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 			if (buttonInfo.clicked) {
 				buttonInfo.clicked = false;
             	buttonInfo.callback();
+				return;
 			}
 		}
 	}

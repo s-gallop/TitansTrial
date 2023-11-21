@@ -263,7 +263,7 @@ Entity createHelperText(RenderSystem* renderer)
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HELPER);
+    motion.scale = HELPER_BB;
     motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
@@ -276,6 +276,25 @@ Entity createHelperText(RenderSystem* renderer)
              false,
              motion.scale});
     registry.showWhenPaused.emplace(entity);
+    return entity;
+}
+
+Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type) {
+    auto entity = Entity();
+
+    Motion &motion = registry.motions.emplace(entity);
+    motion.position = pos;
+    motion.scale = ASSET_SIZE.at(type) * 2.f;
+    
+	registry.renderRequests.insert(
+            entity,
+            {type,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             true,
+             true,
+            motion.scale});
+
     return entity;
 }
 
