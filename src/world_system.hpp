@@ -113,7 +113,7 @@ private:
     // creates pause gui
     void create_pause_screen();
 	void create_title_screen();
-	void create_tutorial_screen();
+	void create_almanac_screen();
 	void create_inGame_GUIs();
 	// OpenGL window handle
 	GLFWwindow *window;
