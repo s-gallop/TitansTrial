@@ -25,14 +25,22 @@ class RenderSystem
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
-		  // specify meshes of other assets here
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
+		// specify meshes of other assets here
+	};
+
+	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> collision_mesh_paths = 
+	{
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite_hull.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj"))
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
+		textures_path("fire_enemy.png"),
+		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
 		textures_path("sword.png"),
@@ -65,6 +73,7 @@ class RenderSystem
 		textures_path("buttons/almanac_pressed.png"),
 		textures_path("titans_trial_logo.png"),
         textures_path("hitbox.png"),
+        textures_path("black_pixel.png"),
 		textures_path("line.png"),
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
@@ -94,12 +103,15 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
+		shader_path("following_enemy"),
 		shader_path("spitter"),
-		shader_path("spitter_bullet")};
+		shader_path("spitter_bullet"),
+        shader_path("screen_layer")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
+	std::array<CollisionMesh, geometry_count> collisionMeshes;
 
 public:
 	// Initialize the window
@@ -114,6 +126,9 @@ public:
 
 	void initializeGlMeshes();
 	Mesh &getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
+	
+	void initializeCollisionMeshes();
+	CollisionMesh& getCollisionMesh(GEOMETRY_BUFFER_ID id) {return collisionMeshes[(int)id]; };
 
 	void initializeGlGeometryBuffers();
 	// Initialize the screen texture used as intermediate render target
@@ -132,7 +147,8 @@ public:
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause, bool is_debug = false);
-	void drawToScreen(bool pause);
+	void drawToScreen();
+    void drawScreenLayer(const mat3 &projection, bool pause);
 
 	// Window handle
 	GLFWwindow *window;

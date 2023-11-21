@@ -25,6 +25,7 @@ std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity indicator;
 std::vector<Entity> score_GUI = { };
+std::vector<Entity> following_enemies = { };
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -94,10 +95,13 @@ GLFWwindow *WorldSystem::create_window()
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
-	window = glfwCreateWindow(window_width_px, window_height_px, "Titan's Trial", nullptr, nullptr);
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    float new_width = mode->width;
+    float new_height = mode->height;
+    window = glfwCreateWindow(new_width, new_height, "Titan's Trial", nullptr, nullptr);
 	if (window == nullptr)
 	{
 		fprintf(stderr, "Failed to glfwCreateWindow");
@@ -278,7 +282,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	if (registry.players.get(player_hero).hasWeapon)
 		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
-	
+
 	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 	update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
 	update_pickaxe(elapsed_ms_since_last_update * current_speed);
@@ -286,7 +290,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
 
-	// Animation Stuff	
+	// Animation Stuff
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
 	if (playerVelocity.y > 0)
@@ -331,9 +335,27 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+
+	if (ddl == 2 && following_enemies.empty())
+	{
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
+		std::vector<std::vector<char>> vec = grid_vec;
+		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
+		following_enemies.push_back(newEnemy);
+	}
+	else if (ddl == 2 && !following_enemies.empty())
+	{
+		spawn_move_following_enemies(elapsed_ms_since_last_update);
+	}
+	else if (ddl != 2 && !following_enemies.empty())
+	{
+		registry.remove_all_components_of(following_enemies[0]);
+		following_enemies.clear();
+	}
 
 	// Processing the hero state
 	assert(registry.screenStates.components.size() <= 1);
@@ -427,7 +449,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight), 0.0, vec2(0.0, 0.0), ENEMY_BB);
+		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight));
 		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
@@ -467,57 +489,75 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
+		motion.dir = (motion.velocity.x >= 0) ? -1 : 1;
 	}
 }
 
 // deal with normal eneimies' spawning and moving
 void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
 {
+	const uint PHASE_IN_STATE = 1;
+	const uint PHASE_OUT_STATE = 4;
+
+	/*
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		srand(time(0));
-		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		Entity newEnemy = createEnemy(renderer, find_index_from_map(vec2(7, 4)), 0.0, vec2(0.0, 0.0), ENEMY_BB / 2.f);
-		registry.enemies.get(newEnemy).follows = true;
-		registry.colors.emplace(newEnemy);
-		registry.colors.get(newEnemy) = vec3(0.f, 1.f, 0.f);
+		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
 
 		std::vector<std::vector<char>> vec = grid_vec;
-		registry.enemies.get(newEnemy).path = dfs_follow_start(vec, find_map_index(registry.motions.get(newEnemy).position), find_map_index(registry.motions.get(player_hero).position));
-		registry.enemies.get(newEnemy).cur_dest = find_index_from_map(registry.enemies.get(newEnemy).path.back());
-		registry.enemies.get(newEnemy).path.pop_back();
+		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
 	}
-	float dist;
+	*/
 
 	Motion& hero_motion = registry.motions.get(player_hero);
-	for (uint i = 0; i < registry.enemies.entities.size(); i++) {
-		Entity enemy = registry.enemies.entities[i];
+	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
+		Entity enemy = registry.followingEnemies.entities[i];
 		Motion& enemy_motion = registry.motions.get(enemy);
-		Enemies& enemy_reg = registry.enemies.get(enemy);
-		
-		if(enemy_reg.follows)
+		AnimationInfo& animation = registry.animated.get(enemy);
+		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
+
+		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
 		{
-			dist = ((enemy_reg.cur_dest).x - enemy_motion.position.x) * ((enemy_reg.cur_dest).x - enemy_motion.position.x) + ((enemy_reg.cur_dest).y - enemy_motion.position.y) * ((enemy_reg.cur_dest).y - enemy_motion.position.y);
-			if (sqrt(dist) > 10) {
-				vec2 following_direction = enemy_reg.cur_dest - enemy_motion.position;
-				following_direction = following_direction / sqrt(dot(following_direction, following_direction));
-				enemy_motion.velocity = following_direction * (BASIC_SPEED / 4.f);
-			}
-			else if (enemy_reg.path.size() == 0) {
+			//Time between blinks
+			enemy_reg.next_blink_time = 700.f;
+
+			enemy_reg.hittable = true;
+
+			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position)) {
 				std::vector<std::vector<char>> vec = grid_vec;
-				enemy_reg.path = dfs_follow_start(vec, find_map_index(enemy_motion.position), find_map_index(hero_motion.position));
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
+			}
+
+			//Don't blink when not moving: next pos in path is same pos as current
+			if (enemy_reg.path.size() != 0 && find_index_from_map(enemy_reg.path.back()) == enemy_motion.position) {
 				enemy_reg.path.pop_back();
 			}
-			else {
-				enemy_reg.cur_dest = find_index_from_map(enemy_reg.path.back());
+			 else if (enemy_reg.path.size() != 0)
+			{
+				animation.oneTimeState = PHASE_IN_STATE;
+				animation.oneTimer = glfwGetTime();
+				vec2 converted_pos = find_index_from_map(enemy_reg.path.back());
+				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
+				enemy_motion.position = converted_pos;
 				enemy_reg.path.pop_back();
 
-				enemy_motion.velocity = vec2(0, 0);
+				//Don't blink when not moving: next loop will be to re-calc the path
+				if (enemy_reg.path.size() != 0) {
+					enemy_reg.blinked = true;
+				}
 			}
+		}
+
+		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
+			enemy_reg.next_blink_time = 100.f;
+			animation.oneTimeState = PHASE_OUT_STATE;
+			animation.oneTimer = glfwGetTime();
+			enemy_reg.hittable = false;
+			enemy_reg.blinked = false;
 		}
 	}
 }
@@ -612,7 +652,7 @@ void WorldSystem::restart_game()
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
-	
+
 	Player& player = registry.players.get(player_hero);
 	createSword(renderer, registry.motions.get(player_hero).position);
 
@@ -633,37 +673,37 @@ void WorldSystem::restart_game()
 	create_inGame_GUIs();
 
 	// bottom line
-	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
 	// left line
-	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2});
+	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
 	// right line
-	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2});
+	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
 	// top line
-	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2});
+	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
 
 	// left middle platform
-	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
 
 	// top middle platform
-	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2}, grid_vec);
 
 	// right middle platform
-	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
 
 	// bottom middle left platform
-	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
 
 	// bottom middle right platform
-	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2});
+	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
 
 	// bottom left padding platform
-	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
 
 	// bottom right padding platform
-	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4});
+	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
 
 	// bottom center padding platform
-	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2});
+	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2}, grid_vec);
 	
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();
@@ -732,7 +772,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -751,6 +791,7 @@ void WorldSystem::handle_collisions()
 					
 					for (Entity weapon : registry.weapons.entities)
 						registry.remove_all_components_of(weapon);
+					registry.players.get(player_hero).hasWeapon = false;
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -769,7 +810,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				registry.remove_all_components_of(entity_other);
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
@@ -783,50 +824,78 @@ void WorldSystem::handle_collisions()
 				if (registry.rockets.has(entity))
 					explode(renderer, registry.motions.get(entity).position, entity);
 				registry.remove_all_components_of(entity);
+			} else if (registry.swords.has(entity) && registry.spitterBullets.has(entity_other)) {
+				registry.remove_all_components_of(entity_other);
 			}
 		}
 		else if (registry.blocks.has(entity))
 		{
-			if (registry.collectables.has(entity_other) || registry.spitterEnemies.has(entity_other)) {
-				registry.gravities.remove(entity_other);
-				registry.motions.get(entity_other).velocity = vec2(0, 0);
+			if (registry.solids.has(entity_other)) {
+				Motion& block_motion = registry.motions.get(entity);
+				Motion& solid_motion = registry.motions.get(entity_other);
+				vec2 scale1 = vec2({abs(block_motion.scale.x), abs(block_motion.scale.y)}) / 2.f;
+				vec2 scale2 = vec2({abs(solid_motion.scale.x), abs(solid_motion.scale.y)}) / 2.f;
+				float vCollisionDepth = scale1.y + scale2.y - abs(block_motion.position.y - solid_motion.position.y);
+				float hCollisionDepth = scale1.x + scale2.x - abs(block_motion.position.x - solid_motion.position.x);
+				if (vCollisionDepth > 0 && (hCollisionDepth <= 0 || vCollisionDepth < hCollisionDepth)) {
+					if (solid_motion.position.y < block_motion.position.y && solid_motion.velocity.y > 0) {
+						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.y;
+						solid_motion.velocity.y = 0;
+					} else if (solid_motion.position.y > block_motion.position.y && solid_motion.velocity.y < 0) {
+						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.y;
+						solid_motion.velocity.y = 0;
+					}
+				} else {
+					if (solid_motion.position.x < block_motion.position.x) {
+						solid_motion.position.x = block_motion.position.x - scale1.x - scale2.x;
+					} else {
+						solid_motion.position.x = block_motion.position.x + scale1.x + scale2.x;
+					}
+				}
 
-				if (registry.motions.get(entity_other).position.y > 600 && (registry.motions.get(entity_other).position.x < 190 || registry.motions.get(entity_other).position.x > 1010))
-				{
-					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 90);
+				if (registry.players.has(entity_other)) {
+					if ((solid_motion.position.y <= block_motion.position.y - block_motion.scale.y / 2 - solid_motion.scale.y / 2)) {
+						registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
+					} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2 - solid_motion.scale.x / 2 && 
+							motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) 
+					{
+						use_pickaxe(player_hero, 0, MAX_JUMPS);
+					} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2 + solid_motion.scale.x / 2 && 
+							motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0)
+					{
+						use_pickaxe(player_hero, 1, MAX_JUMPS);
+					}
 				}
-				else
-				{
-					registry.motions.get(entity_other).position = vec2(registry.motions.get(entity_other).position.x, registry.motions.get(entity).position.y - 55);
-				}
-			}
-			else if (registry.players.has(entity_other))
+			} 
+			else if (registry.projectiles.has(entity_other))
 			{
-				if ((registry.motions.get(entity_other).position.y <= registry.motions.get(entity).position.y - registry.motions.get(entity).scale.y / 2 - registry.motions.get(entity_other).scale.y / 2))
-				{
-					registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
-				} else if (registry.motions.get(entity_other).position.x <= registry.motions.get(entity).position.x - registry.motions.get(entity).scale.x / 2 - registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
-				{
-					use_pickaxe(player_hero, 0, MAX_JUMPS);
+				Motion& block_motion = registry.motions.get(entity);
+				Motion& projectile_motion = registry.motions.get(entity_other);
+				vec2 scale1 = vec2({abs(block_motion.scale.x), abs(block_motion.scale.y)}) / 2.f;
+				vec2 scale2 = vec2({abs(projectile_motion.scale.x), abs(projectile_motion.scale.y)}) / 2.f;
+				float vCollisionDepth = (scale1.y + scale2.y) - abs(projectile_motion.position.y - block_motion.position.y);
+				float hCollisionDepth = (scale1.x + scale2.x) - abs(projectile_motion.position.x - block_motion.position.x);
+				if (vCollisionDepth < hCollisionDepth) {
+					projectile_motion.velocity.y = -projectile_motion.velocity.y;
+					projectile_motion.position.y += vCollisionDepth * (projectile_motion.position.y < block_motion.position.y ? -1 : 1);
+				} else {
+					projectile_motion.velocity.x = -projectile_motion.velocity.x;
+					projectile_motion.position.x += hCollisionDepth * (projectile_motion.position.x < block_motion.position.x ? -1 : 1);
 				}
-				else if (registry.motions.get(entity_other).position.x >= registry.motions.get(entity).position.x + registry.motions.get(entity).scale.x / 2 + registry.motions.get(entity_other).scale.x / 2 && 
-						motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && registry.motions.get(player_hero).position.y > 0)
-				{
-					use_pickaxe(player_hero, 1, MAX_JUMPS);
-				}
-			}
+				projectile_motion.velocity *= projectile_motion.friction;
+			} 
 		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
 			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
 				registry.remove_all_components_of(entity_other);
 			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
 				// Scream, reset timer, and make the hero fall
 				registry.deathTimers.emplace(entity_other);
-				for (Entity weapon : registry.weapons.entities)
-				{
+				for (Entity weapon : registry.weapons.entities) {
 					registry.remove_all_components_of(weapon);
 				}
-				
+
+				registry.players.get(player_hero).hasWeapon = false;
+
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				Motion &motion = registry.motions.get(player_hero);
 				motion.angle = M_PI / 2;
@@ -1002,7 +1071,31 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	mouse_pos = mouse_position;
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+
+    // Calculate the scaling factors for X and Y
+
+    // Scale the mouse position
+    float ox = 0, oy = 0;
+	int new_w = w, new_h = h;
+
+    float aspect_ratio = window_width_px / (float) window_height_px; // 16:9
+    float new_aspect_ratio = w / (float) h;
+
+    if (aspect_ratio < new_aspect_ratio) {
+        new_w = h * aspect_ratio;
+        ox = (w-new_w)/2.0;
+        // w = new_w;
+    } else {
+        new_h = w / aspect_ratio;
+        oy = (h-new_h) / 2.0;
+        // h = new_h;
+    }
+
+	mouse_pos.x = (mouse_position.x - ox) / new_w * window_width_px;
+    mouse_pos.y = (mouse_position.y - oy) / new_h * window_height_px;
+
 	if (!registry.deathTimers.has(player_hero) && !pause)
 		for (Entity weapon : registry.weapons.entities)
 			update_weapon_angle(renderer, weapon, mouse_pos);
