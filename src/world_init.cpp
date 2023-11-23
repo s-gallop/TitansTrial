@@ -61,7 +61,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::FIRE_ENEMY,
-		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
+		 EFFECT_ASSET_ID::ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
@@ -70,6 +70,41 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 
     registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createGhoul(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.position = position;
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.velocity = vec2(0.f, -0.1f);
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
+
+	registry.ghouls.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GHOUL_ENEMY));
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GHOUL_ENEMY,
+		 EFFECT_ASSET_ID::ENEMY,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GHOUL_ENEMY) });
+
+	registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -95,7 +130,7 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::FOLLOWING_ENEMY,
-		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
+		 EFFECT_ASSET_ID::ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
