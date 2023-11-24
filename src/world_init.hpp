@@ -94,7 +94,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
        {TEXTURE_ASSET_ID::GHOUL_ENEMY, {
             6,
             {4, 9, 7, 4, 7, 11},
-            0,
+            1,
             11
         }},
         {TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {

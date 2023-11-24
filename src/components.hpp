@@ -66,6 +66,7 @@ struct Ghoul
 {
 	float right_x = -1.f;
 	float left_x = -1.f;
+	bool hittable = false;
 };
 
 struct FollowingEnemies

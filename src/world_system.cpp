@@ -514,6 +514,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 {
 	float GHOUL_SPEED = 100.f;
 	float EDGE_DISTANCE = 0.f;
+	int BLANK_STATE = 2;
 
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
 	if (registry.ghouls.components.size() < MAX_GHOULS && next_enemy_spawn < 0.f)
@@ -523,6 +524,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 		Entity newEnemy = createGhoul(renderer, vec2(x_pos, y_pos));
+		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
 	}
 	
 
@@ -532,6 +534,16 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		Motion& enemy_motion = registry.motions.get(enemy);
 		AnimationInfo& animation = registry.animated.get(enemy);
 		Ghoul& enemy_reg = registry.ghouls.get(enemy);
+		//printf("Position: %f\n", enemy_motion.position.x);
+		if (enemy_motion.velocity.y != 0.f) {
+			animation.oneTimeState = BLANK_STATE;
+			animation.oneTimer = glfwGetTime() * 1.5;
+		}
+		else if (enemy_reg.left_x == -1.f && enemy_reg.right_x == -1.f && enemy_motion.velocity.y == 0.f) {
+			enemy_reg.hittable = true;
+			animation.oneTimeState = 5;
+			animation.oneTimer = glfwGetTime();
+		}
 
 		if (enemy_reg.left_x == -1.f && enemy_reg.right_x == -1.f && enemy_motion.velocity.y == 0.f) {
 			vec2 closest_pos = vec2(10000.f, 10000.f);
@@ -540,10 +552,9 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 			for (int j = 0; j < registry.blocks.entities.size(); j++) {
 				vec2 temp_pos = registry.motions.get(registry.blocks.entities[j]).position;
 				float temp_scale = registry.motions.get(registry.blocks.entities[j]).scale.x;
-				//printf("Temp block: %f, %f, %f\n", temp_block.position.x, temp_block.position.y, temp_block.scale.x);
+				//printf("Temp block: %f, %f, %f\n", temp_pos.x, temp_pos.y, temp_scale);
 
 				if (temp_pos.y >= enemy_motion.position.y && temp_pos.y < closest_pos.y && (temp_pos.x - temp_scale) <= enemy_motion.position.x && (temp_pos.x + temp_scale) >= enemy_motion.position.x) {
-					//printf("HIHIHIHIHI\n");
 					closest_pos = temp_pos;
 					closest_scale = temp_scale;
 				}
@@ -551,18 +562,24 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 
 			enemy_reg.left_x = (closest_pos.x - closest_scale / 2) + enemy_motion.scale.x / 2;
 			enemy_reg.right_x = (closest_pos.x + closest_scale / 2) - enemy_motion.scale.x / 2;
-			printf("CLOSEST BLOCK: %f,%f|%f, %f, %f\n", closest_pos.x, closest_pos.y, closest_scale, enemy_reg.left_x, enemy_reg.right_x);
-		} else if (enemy_motion.velocity.x == 0.f) {
-			// go in a random direction
-			float random_direction = (uniform_dist(rng) - 0.5f);
-			random_direction = random_direction / abs(random_direction);
-			enemy_motion.velocity.x = random_direction * GHOUL_SPEED * current_speed;
-			enemy_motion.dir = (int)random_direction;
+			// Account for left and right blocks
+			enemy_reg.left_x = max(enemy_reg.left_x, 75.f);
+			enemy_reg.right_x = min(enemy_reg.right_x, 1120.f);
+			//printf("CLOSEST BLOCK: %f,%f|%f, %f, %f\n", closest_pos.x, closest_pos.y, closest_scale, enemy_reg.left_x, enemy_reg.right_x);
+		} else if (enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
+			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
+			direction = direction / abs(direction);
+			enemy_motion.velocity.x = direction * GHOUL_SPEED * current_speed;
+			enemy_motion.dir = (int)direction;
 		}
 		// Reverse direction
-		else if (enemy_motion.position.x - enemy_reg.left_x < EDGE_DISTANCE || enemy_reg.right_x - enemy_motion.position.x  < EDGE_DISTANCE) {
-			enemy_motion.velocity.x = enemy_motion.velocity.x * -1.f;
-			enemy_motion.dir = enemy_motion.dir * -1;
+		else if (enemy_motion.position.x - enemy_reg.left_x <= EDGE_DISTANCE && enemy_motion.velocity.y == 0.f && enemy_motion.velocity.x != 0.f) {
+			enemy_motion.velocity.x = GHOUL_SPEED * current_speed;
+			enemy_motion.dir = 1;
+		}
+		else if (enemy_reg.right_x - enemy_motion.position.x <= EDGE_DISTANCE && enemy_motion.velocity.y == 0.f && enemy_motion.velocity.x != 0.f) {
+			enemy_motion.velocity.x = -1.f * GHOUL_SPEED * current_speed;
+			enemy_motion.dir = -1;
 		}
 
 		
@@ -848,7 +865,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || registry.ghouls.has(entity_other) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((registry.enemies.has(entity_other) || (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).hittable) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -886,7 +903,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) || registry.ghouls.has(entity_other) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) || (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).hittable) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				registry.remove_all_components_of(entity_other);
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
