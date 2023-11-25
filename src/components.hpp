@@ -60,13 +60,18 @@ struct ParallaxBackground
 
 struct Enemies
 {
+	bool hittable = true;
+	bool hitting = true;
+};
+
+struct FireEnemy {
+
 };
 
 struct Ghoul
 {
 	float right_x = -1.f;
 	float left_x = -1.f;
-	bool hittable = false;
 };
 
 struct FollowingEnemies
@@ -74,7 +79,6 @@ struct FollowingEnemies
 	std::list<vec2> path;
 	float next_blink_time = 0.f;
 	bool blinked = false;
-	bool hittable = true;
 };
 
 struct SpitterEnemy

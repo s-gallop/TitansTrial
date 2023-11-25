@@ -18,18 +18,15 @@ vec2 get_bounding_box(const Motion &motion)
 
 bool check_collision_conditions(Entity entity_i, Entity entity_j) {
     if (registry.players.has(entity_i)) {
-        if ((registry.enemies.has(entity_j) || 
-            (registry.ghouls.has(entity_j) && registry.ghouls.get(entity_j).hittable) ||
-            registry.spitterBullets.has(entity_j) || 
-            registry.spitterEnemies.has(entity_j) || 
+        if ((registry.enemies.has(entity_j) && registry.enemies.get(entity_j).hitting) ||
+            registry.spitterBullets.has(entity_j) ||
             registry.explosions.has(entity_j) ||
-            registry.collectables.has(entity_j) ||
-            registry.followingEnemies.has(entity_j)))
+            registry.collectables.has(entity_j))
         {
             return true;
         }
     } else if (registry.weaponHitBoxes.has(entity_i)) {
-        if (registry.enemies.has(entity_j) || (registry.ghouls.has(entity_j) && registry.ghouls.get(entity_j).hittable) || registry.spitterEnemies.has(entity_j) || registry.blocks.has(entity_j) || registry.spitterBullets.has(entity_j))
+        if ((registry.enemies.has(entity_j) && registry.enemies.get(entity_j).hittable)|| registry.blocks.has(entity_j) || registry.spitterBullets.has(entity_j))
         {
             return true;
         }

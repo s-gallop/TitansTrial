@@ -125,7 +125,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 // the player
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem *renderer, vec2 position);
+Entity createFireEnemy(RenderSystem *renderer, vec2 position);
 // the ghoul enemy
 Entity createGhoul(RenderSystem* renderer, vec2 position);
 // the following & teleporting enemy

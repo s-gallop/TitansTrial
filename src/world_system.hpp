@@ -26,7 +26,7 @@
 const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
-const size_t MAX_ENEMIES = 10;
+const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_GHOULS = 1;
 const size_t MAX_SPITTERS = 3;
@@ -146,6 +146,7 @@ private:
 	float current_speed;
 	float current_enemy_spawning_speed;
 	float current_spitter_spawning_speed;
+	float current_ghoul_spawning_speed;
 	float next_enemy_spawn;
 	float next_spitter_spawn;
 	Entity player_hero;

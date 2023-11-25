@@ -38,7 +38,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position)
+Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
     //const float ACTUAL_SCALE_FACTOR = 0.5f;
@@ -57,6 +57,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
 
 	registry.enemies.emplace(entity);
+	registry.fireEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
 	registry.renderRequests.insert(
 		entity,
@@ -90,6 +91,9 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	motion.velocity = vec2(0.f, -0.1f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
 
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).hittable = false;
+	registry.enemies.get(entity).hitting = false;
 	registry.ghouls.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.solids.emplace(entity);
@@ -125,6 +129,8 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	motion.velocity = vec2(0.f, 0.f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY);
 
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).hittable = false;
 	registry.followingEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
 	registry.renderRequests.insert(
@@ -162,6 +168,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
 	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
+	registry.enemies.emplace(entity);
 	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(

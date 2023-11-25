@@ -32,6 +32,7 @@ public:
 	ComponentContainer<FollowingEnemies> followingEnemies;
 	ComponentContainer<Ghoul> ghouls;
 	ComponentContainer<Enemies> enemies;
+	ComponentContainer<FireEnemy> fireEnemies;
 	ComponentContainer<Collectable> collectables;
 	ComponentContainer<Sword> swords;
 	ComponentContainer<Gun> guns;
@@ -73,6 +74,7 @@ public:
 		registry_list.push_back(&spitterEnemies);
 		registry_list.push_back(&spitterBullets);
 		registry_list.push_back(&enemies);
+		registry_list.push_back(&fireEnemies);
 		registry_list.push_back(&ghouls);
 		registry_list.push_back(&followingEnemies);
 		registry_list.push_back(&collectables);

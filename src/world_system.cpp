@@ -330,16 +330,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	{
 		current_enemy_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 0.0f;
+		current_ghoul_spawning_speed = 0.0f;
 	}
 	else if (ddl == 1)
 	{
 		current_enemy_spawning_speed = 1.2f;
+		current_ghoul_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 1.0f;
 	}
 	else
 	{
 		current_enemy_spawning_speed = 1.2f;
 		current_spitter_spawning_speed = 1.5f;
+		current_ghoul_spawning_speed = 1.0f;
 	}
 	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
 		Entity curHeart = player_hearts_GUI[i];
@@ -350,12 +353,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.renderRequests.get(curHeart).visibility = false;
 	}
 
+	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_move_ghouls(elapsed_ms_since_last_update);
-	/*spawn_move_normal_enemies(elapsed_ms_since_last_update);
-	
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
-
-	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);*/
+	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 
 	if (ddl == 2 && following_enemies.empty())
 	{
@@ -457,7 +458,7 @@ TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
 void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 {
 	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_ENEMIES && next_enemy_spawn < 0.f)
+	if (registry.enemies.components.size() < MAX_FIRE_ENEMIES && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
@@ -466,7 +467,7 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
 		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createEnemy(renderer, vec2(window_width_px, rightHeight));
+		Entity newEnemy = createFireEnemy(renderer, vec2(window_width_px, rightHeight));
 		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
 		enemyTestAI.departFromRight = true;
 		enemyTestAI.a = (float)squareFactor;
@@ -516,7 +517,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	float EDGE_DISTANCE = 0.f;
 	int BLANK_STATE = 2;
 
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_ghoul_spawning_speed;
 	if (registry.ghouls.components.size() < MAX_GHOULS && next_enemy_spawn < 0.f)
 	{
 		// Reset timer
@@ -540,7 +541,8 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 			animation.oneTimer = glfwGetTime() * 1.5;
 		}
 		else if (enemy_reg.left_x == -1.f && enemy_reg.right_x == -1.f && enemy_motion.velocity.y == 0.f) {
-			enemy_reg.hittable = true;
+			registry.enemies.get(enemy).hittable = true;
+			registry.enemies.get(enemy).hitting = true;
 			animation.oneTimeState = 5;
 			animation.oneTimer = glfwGetTime();
 		}
@@ -563,9 +565,9 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 			enemy_reg.left_x = (closest_pos.x - closest_scale / 2) + enemy_motion.scale.x / 2;
 			enemy_reg.right_x = (closest_pos.x + closest_scale / 2) - enemy_motion.scale.x / 2;
 			// Account for left and right blocks
-			enemy_reg.left_x = max(enemy_reg.left_x, 75.f);
-			enemy_reg.right_x = min(enemy_reg.right_x, 1120.f);
-			//printf("CLOSEST BLOCK: %f,%f|%f, %f, %f\n", closest_pos.x, closest_pos.y, closest_scale, enemy_reg.left_x, enemy_reg.right_x);
+			enemy_reg.left_x = max(enemy_reg.left_x, 77.f);
+			enemy_reg.right_x = min(enemy_reg.right_x, 1117.f);
+			printf("EDGES: %f, %f\n",enemy_reg.left_x, enemy_reg.right_x);
 		} else if (enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
 			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
 			direction = direction / abs(direction);
@@ -581,8 +583,6 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 			enemy_motion.velocity.x = -1.f * GHOUL_SPEED * current_speed;
 			enemy_motion.dir = -1;
 		}
-
-		
 	}
 }
 
@@ -611,6 +611,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		Motion& enemy_motion = registry.motions.get(enemy);
 		AnimationInfo& animation = registry.animated.get(enemy);
 		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
+		Enemies enemies = registry.enemies.get(enemy);
 
 		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_speed;
 		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
@@ -618,7 +619,8 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			//Time between blinks
 			enemy_reg.next_blink_time = 700.f;
 
-			enemy_reg.hittable = true;
+			//enemies.hittable = true;
+			//enemy_reg.hittable = true;
 
 			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position)) {
 				std::vector<std::vector<char>> vec = grid_vec;
@@ -649,7 +651,8 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			enemy_reg.next_blink_time = 100.f;
 			animation.oneTimeState = PHASE_OUT_STATE;
 			animation.oneTimer = glfwGetTime();
-			enemy_reg.hittable = false;
+			//enemy_reg.hittable = false;
+			//enemies.hittable = false;
 			enemy_reg.blinked = false;
 		}
 	}
@@ -865,7 +868,7 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if ((registry.enemies.has(entity_other) || (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).hittable) || (registry.followingEnemies.has(entity_other) && registry.followingEnemies.get(entity_other).hittable) || registry.spitterBullets.has(entity_other) || registry.spitterEnemies.has(entity_other) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if (((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -903,7 +906,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) || (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).hittable) || registry.followingEnemies.has(entity_other) || registry.spitterEnemies.has(entity_other)) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				registry.remove_all_components_of(entity_other);
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
@@ -1116,6 +1119,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			std::vector<Entity> justKillThem = { };
 			for (uint i = 0; i < registry.enemies.size(); i++) justKillThem.push_back(registry.enemies.entities[i]);
+			for (uint i = 0; i < registry.ghouls.size(); i++) justKillThem.push_back(registry.ghouls.entities[i]);
+			for (uint i = 0; i < registry.followingEnemies.size(); i++) justKillThem.push_back(registry.followingEnemies.entities[i]);
 			for (uint i = 0; i < registry.spitterEnemies.size(); i++) justKillThem.push_back(registry.spitterEnemies.entities[i]);
 			for (uint i = 0; i < registry.spitterBullets.size(); i++) justKillThem.push_back(registry.spitterBullets.entities[i]);
 			for (Entity e : justKillThem) registry.remove_all_components_of(e);
