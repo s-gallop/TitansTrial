@@ -76,12 +76,15 @@ bool check_intersection(vec2 p1, vec2 q1, vec2 p2, vec2 q2) {
 bool check_inside(vec2 p1, vec2 q1, vec2 p2, vec2 q2) {
     vec2 c1 = q1 - p1;
     vec2 c2 = q2 - p2;
+    if (c2.x == 0 && c2.y == 0)
+        return true;
+    
     if (c1.x * c2.y == c1.y * c2.x)
         return false;
 
     vec2 t = get_parametrics(p1, c1, p2, c2);
 
-    if (isnan(t.x) || (t.x >= 0 && t.x <= 1 && t.y > 1))
+    if (t.x >= 0 && t.x <= 1 && t.y > 1)
         return true;
     return false;
 }
@@ -109,12 +112,12 @@ bool precise_collision(const Entity& entity1, const Entity& entity2) {
             if (check_intersection(vertices1[edge1.first - 1].position, vertices1[edge1.second - 1].position, vertices2[edge2.first - 1].position, vertices2[edge2.second - 1].position))
                 return true;
         }
-        if (check_inside(vertices1[edge1.first - 1].position, vertices1[edge1.second - 1].position, motion1.position, motion2.position))
+        if (check_inside(vertices1[edge1.first - 1].position, vertices1[edge1.second - 1].position, motion1.position + motion1.positionOffset * rotation_matrix1, motion2.position + motion2.positionOffset * rotation_matrix2))
             return true;
     }
 
     for (std::pair<int, int> edge2: mesh2->edges) {
-        if (check_inside(vertices2[edge2.first - 1].position, vertices2[edge2.second - 1].position, motion2.position, motion1.position))
+        if (check_inside(vertices2[edge2.first - 1].position, vertices2[edge2.second - 1].position, motion2.position + motion2.positionOffset * rotation_matrix2, motion1.position + motion1.positionOffset * rotation_matrix1))
             return true;
     }
 
