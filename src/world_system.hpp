@@ -30,6 +30,7 @@ const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_GHOULS = 1;
 const size_t MAX_SPITTERS = 3;
+const float ENEMY_INVULNERABILITY_TIME = 1000.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
@@ -81,6 +82,8 @@ public:
 	void changeScore(int score);
 
 	TEXTURE_ASSET_ID connectNumber(int digit);
+
+	void update_all_enemies(float elapsed_ms_since_last_update);
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);

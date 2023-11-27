@@ -62,6 +62,9 @@ struct Enemies
 {
 	bool hittable = true;
 	bool hitting = true;
+
+	float invulnerable_time = 0.f;
+	int health = 2;
 };
 
 struct FireEnemy {
@@ -86,6 +89,8 @@ struct SpitterEnemy
 	uint bulletsRemaining;
 	float timeUntilNextShotMs;
     bool canShoot;
+	float right_x = -1.f;
+	float left_x = -1.f;
 };
 
 struct SpitterBullet 
@@ -148,6 +153,7 @@ struct WeaponHitBox
 {
 	bool soundPlayed = false;
 	bool isActive = true;
+	int damage = 1;
 };
 
 // All data relevant to the shape and motion of entities

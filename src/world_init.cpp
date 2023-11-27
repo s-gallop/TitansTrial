@@ -56,6 +56,7 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	motion.velocity = vec2(0.0, 0.0);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
 
+	registry.colors.emplace(entity);
 	registry.enemies.emplace(entity);
 	registry.fireEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
@@ -169,6 +170,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
 	registry.enemies.emplace(entity);
+	registry.colors.emplace(entity);
 	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
 	registry.renderRequests.insert(

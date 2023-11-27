@@ -271,3 +271,29 @@ void fill_grid(std::vector<std::vector<char>>& grid, vec2 pos, vec2 size) {
 		}
 	}
 }
+
+vec2 find_edges(vec2 pos, float scale) {
+	vec2 closest_pos = vec2(10000.f, 10000.f);
+	float closest_scale = 0;
+	// left edge = x, right edge = y
+	vec2 edges;
+	//printf("Enemy: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
+	for (int j = 0; j < registry.blocks.entities.size(); j++) {
+		vec2 temp_pos = registry.motions.get(registry.blocks.entities[j]).position;
+		float temp_scale = registry.motions.get(registry.blocks.entities[j]).scale.x;
+		//printf("Temp block: %f, %f, %f\n", temp_pos.x, temp_pos.y, temp_scale);
+
+		if (temp_pos.y >= pos.y && temp_pos.y < closest_pos.y && (temp_pos.x - temp_scale) <= pos.x && (temp_pos.x + temp_scale) >= pos.x) {
+			closest_pos = temp_pos;
+			closest_scale = temp_scale;
+		}
+	}
+
+	edges.x = (closest_pos.x - closest_scale / 2) + scale / 2;
+	edges.y = (closest_pos.x + closest_scale / 2) - scale / 2;
+	// Account for left and right blocks
+	edges.x = max(edges.x, 77.f);
+	edges.y = min(edges.y, 1117.f);
+	printf("EDGES: %f, %f\n", edges.x, edges.y);
+	return edges;
+}

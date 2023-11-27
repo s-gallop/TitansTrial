@@ -357,6 +357,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+	update_all_enemies(elapsed_ms_since_last_update);
 
 	if (ddl == 2 && following_enemies.empty())
 	{
@@ -454,6 +455,28 @@ TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
 	}
 }
 
+//update elements of all enemies
+void WorldSystem::update_all_enemies(float elapsed_ms_since_last_update)
+{
+	for (uint i = 0; i < registry.enemies.size(); i++)
+	{ 
+		Enemies& enemy = registry.enemies.components[i];
+		Entity entity = registry.enemies.entities[i];
+
+		if (!registry.colors.has(entity)) continue;
+
+		enemy.invulnerable_time -= elapsed_ms_since_last_update;
+		if (enemy.invulnerable_time <= 0) {
+			enemy.hittable = true;
+			registry.colors.get(entity) = { 1, 0.8f, 0.8f };
+		}
+		else {
+			registry.colors.get(entity) = vec3(1, 0, 0);
+		}		
+	}
+
+}
+
 // deal with normal eneimies' spawning and moving
 void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 {
@@ -522,7 +545,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float x_pos = uniform_dist(rng) * (window_width_px - 110) + 65;
 		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 		Entity newEnemy = createGhoul(renderer, vec2(x_pos, y_pos));
 		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
@@ -545,29 +568,13 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 			registry.enemies.get(enemy).hitting = true;
 			animation.oneTimeState = 5;
 			animation.oneTimer = glfwGetTime();
+			registry.colors.emplace(enemy);
 		}
 
 		if (enemy_reg.left_x == -1.f && enemy_reg.right_x == -1.f && enemy_motion.velocity.y == 0.f) {
-			vec2 closest_pos = vec2(10000.f, 10000.f);
-			float closest_scale = 0;
-			//printf("Enemy: %f, %f\n", enemy_motion.position.x, enemy_motion.position.y);
-			for (int j = 0; j < registry.blocks.entities.size(); j++) {
-				vec2 temp_pos = registry.motions.get(registry.blocks.entities[j]).position;
-				float temp_scale = registry.motions.get(registry.blocks.entities[j]).scale.x;
-				//printf("Temp block: %f, %f, %f\n", temp_pos.x, temp_pos.y, temp_scale);
-
-				if (temp_pos.y >= enemy_motion.position.y && temp_pos.y < closest_pos.y && (temp_pos.x - temp_scale) <= enemy_motion.position.x && (temp_pos.x + temp_scale) >= enemy_motion.position.x) {
-					closest_pos = temp_pos;
-					closest_scale = temp_scale;
-				}
-			}
-
-			enemy_reg.left_x = (closest_pos.x - closest_scale / 2) + enemy_motion.scale.x / 2;
-			enemy_reg.right_x = (closest_pos.x + closest_scale / 2) - enemy_motion.scale.x / 2;
-			// Account for left and right blocks
-			enemy_reg.left_x = max(enemy_reg.left_x, 77.f);
-			enemy_reg.right_x = min(enemy_reg.right_x, 1117.f);
-			printf("EDGES: %f, %f\n",enemy_reg.left_x, enemy_reg.right_x);
+			vec2 edges = find_edges(enemy_motion.position, enemy_motion.scale.x);
+			enemy_reg.left_x = edges.x;
+			enemy_reg.right_x = edges.y;
 		} else if (enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
 			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
 			direction = direction / abs(direction);
@@ -661,6 +668,9 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
     const uint SHOOT_STATE = 2;
     const uint SPITTER_FIRE_FRAME = 4;
+	const uint WALKING_TIME = 5;
+	const float WALKING_SPEED = 1.f;
+
 	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
 	{
@@ -678,6 +688,38 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		Entity entity = spitterEnemy_container.entities[i];
 		Motion &motion = registry.motions.get(entity);
 		AnimationInfo &animation = registry.animated.get(entity);
+
+		//if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs >= 2000.f)
+		//{
+		//	
+		//	if (spitterEnemy.left_x == -1.f && spitterEnemy.right_x == -1.f && motion.velocity.y == 0.f) {
+		//		vec2 edges = find_edges(motion.position, motion.scale.x);
+		//		spitterEnemy.left_x = edges.x;
+		//		spitterEnemy.right_x = edges.y;
+		//	}
+
+		//	if (motion.velocity.x == 0.f && motion.velocity.y == 0.f && animation.oneTimeState == -1) {
+		//		float direction = max(motion.position.x - spitterEnemy.left_x, spitterEnemy.right_x - motion.position.x);
+		//		direction = direction / abs(direction);
+		//		motion.velocity.x = direction * WALKING_SPEED * current_speed;
+		//		motion.dir = (int)direction;
+		//	}
+		//	// Reverse direction
+		//	else if (motion.position.x - spitterEnemy.left_x <= 0 && motion.velocity.y == 0.f && motion.velocity.x != 0.f) {
+		//		motion.velocity.x = WALKING_SPEED * current_speed;
+		//		motion.dir = 1;
+		//	}
+		//	else if (spitterEnemy.right_x - motion.position.x <= 0 && motion.velocity.y == 0.f && motion.velocity.x != 0.f) {
+		//		motion.velocity.x = -1.f * WALKING_SPEED * current_speed;
+		//		motion.dir = -1;
+		//	}
+		//}
+
+		//if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs < 2000.f) {
+		//	motion.velocity.x = 0.f;
+		//	animation.curState = 0;
+		//}
+
         if ((int)floor((glfwGetTime() - animation.oneTimer) * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
             float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
@@ -908,7 +950,19 @@ void WorldSystem::handle_collisions()
 		{
 			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
 			{
-				registry.remove_all_components_of(entity_other);
+				if (registry.enemies.has(entity_other)) {
+					printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
+					registry.enemies.get(entity_other).health -= registry.weaponHitBoxes.get(entity).damage;
+
+					if (registry.enemies.get(entity_other).health <= 0) {
+						registry.remove_all_components_of(entity_other);
+					}
+					else {
+						registry.enemies.get(entity_other).hittable = false;
+						registry.enemies.get(entity_other).invulnerable_time = ENEMY_INVULNERABILITY_TIME; 
+					}
+				}
+				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
 					if (registry.rockets.has(entity) || registry.grenades.has(entity))
 						explode(renderer, registry.motions.get(entity).position, entity);
