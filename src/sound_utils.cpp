@@ -20,7 +20,7 @@ uint init_sound()
 	}
 
 	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
-	sound_effects.push_back(Mix_LoadWAV(audio_path("salmon_dead.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_hurt.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_jump.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("sword_swing.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("bullet_shoot.wav").c_str()));
@@ -42,7 +42,7 @@ uint init_sound()
 	{
 		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
 				audio_path("music.wav").c_str(),
-				audio_path("salmon_dead.wav").c_str(),
+				audio_path("hero_hurt.wav").c_str(),
 				audio_path("sword_swing.wav").c_str(),
 				audio_path("hero_jump.wav").c_str(),
 				audio_path("bullet_shoot.wav").c_str(),

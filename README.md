@@ -2,7 +2,17 @@
 
 Titan's Trial - A 2D Endless survival game
 
+## Write-up Milestone 3
+
+Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:
+
+* Additional implementations
+  * GUI for game data including current difficulty, player health, and score
+  * Seperate out hitbox and sprite systems
+  * Consistent game resolution (can resize, opens as windowed fullscreen)
+
 ## M3 Features
+
 * Complete GUI
   * world_init.cpp:
     * func createPlayerHeart
@@ -15,7 +25,7 @@ Titan's Trial - A 2D Endless survival game
     * func create_inGame_GUIs
     * func changeScore
     * func connectNumber
-    * func step
+    * func step - lines 202-261
 * More Weapons and Powerups
   * world_init.cpp:
     * func createRocketLauncher
@@ -30,7 +40,7 @@ Titan's Trial - A 2D Endless survival game
   * world_system.cpp:
     * func on_mouse_click
   * weapon_utils.cpp:
-    * everything
+    * everything (refactored)
 * New Path Finding Enemy
   * world_init.cpp:
     * func createFollowingEnemy
@@ -38,14 +48,14 @@ Titan's Trial - A 2D Endless survival game
     * func spawn_move_following_enemies
   * ai_system.cpp:
     * everything
-* Paralax Background
+* Parallax Background
   * world_init.cpp:
     * func createParallaxItem
   * world_system.cpp:
     * func create_parallax_background
 * Powerful Debugging System
   * world_system.cpp:
-    * func on_key
+    * func on_key - lines 1002-1045, 1066-1080
 * Total Collision and World System Refactoring
   * world_system.hpp:
     * everything
@@ -53,8 +63,20 @@ Titan's Trial - A 2D Endless survival game
     * func handle_collision
   * physics_system.cpp:
     * everything
+* Hitbox/sprite refactoring (smaller changes to most systems)
+  * world_init.hpp - lines 28-76
 * Complete Tutorial
+  * world_system.cpp:
+    * create_almanac_screen
+  * world_init.cpp:
+    * createTooltip
 * Different Resolutions
+  * world_system.cpp:
+    * create_window: lines 101-104
+    * on_mouse_move
+  * render_system.cpp:
+    * drawToScreen: lines 250-265
+    * drawScreenLayer
 
 ## Write-up Milestone 2
 
@@ -68,6 +90,7 @@ Changes from M1_Proposal_V2 can be seen highlighted in green in the M2_Proposal 
   * Simple path finding was started
   
 ## M2 Features
+
 * Button System
   * world_init.cpp:
     * func createButton
