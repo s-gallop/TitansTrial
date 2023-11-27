@@ -264,6 +264,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		
 		if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
 			registry.remove_all_components_of(motion_container.entities[i]);
+		else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
+			registry.remove_all_components_of(motion_container.entities[i]);
 	}
 
 	if (registry.players.get(player_hero).hasWeapon)
@@ -274,7 +276,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	update_pickaxe(elapsed_ms_since_last_update * current_speed);
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
-	update_lasers(renderer, elapsed_ms_since_last_update* current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
 
 	// Animation Stuff
@@ -979,22 +980,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		} else if (key == GLFW_KEY_4 && action == GLFW_PRESS && !pause && debug) {
 			createRocketLauncher(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_5 && action == GLFW_PRESS && !pause && debug) {
-			createHeart(renderer, registry.motions.get(player_hero).position);
+			createLaserRifle(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_6 && action == GLFW_PRESS && !pause && debug) {
-			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+			createHeart(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_7 && action == GLFW_PRESS && !pause && debug) {
+			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
 			createPickaxe(renderer, registry.motions.get(player_hero).position);
-		}else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
+		} else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug) {
 			createDashBoots(renderer, registry.motions.get(player_hero).position);
-		}
-        else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug)
-        {
+		} else if (key == GLFW_KEY_0 && action == GLFW_PRESS && !pause && debug) {
             next_spitter_spawn = -1.0;
             spawn_spitter_enemy(0);
         }
-		else if (key == GLFW_KEY_0 && action == GLFW_PRESS && !pause && debug) {
-			createLaserRifle(renderer, registry.motions.get(player_hero).position);
-		}
 
 		if (key == GLFW_KEY_I && action == GLFW_PRESS && debug)
 		{

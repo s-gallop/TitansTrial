@@ -133,7 +133,7 @@ struct LaserRifle {
 };
 
 struct Laser {
-	float timer = 500;
+
 };
 
 // Weapon the player has picked up

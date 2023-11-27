@@ -112,9 +112,11 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 		
 		if (registry.guns.has(weapon) || registry.rocketLaunchers.has(weapon) || registry.grenadeLaunchers.has(weapon) || registry.laserRifles.has(weapon)) {
 			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
-				render.scale.y = -1*abs(motion.scale.y);
+				render.scale.y = -1*abs(render.scale.y);
+				motion.scale.y = -1*abs(motion.scale.y);
 			} else {
-				render.scale.y = abs(motion.scale.y);
+				render.scale.y = abs(render.scale.y);
+				motion.scale.y = abs(motion.scale.y);
 			}
 		}
 	}
@@ -190,17 +192,6 @@ void update_grenades(RenderSystem* renderer, float elapsed_ms) {
 		if (explode_timer <= 0) {
 			explode(renderer, registry.motions.get(grenade).position, grenade);
 			registry.remove_all_components_of(grenade);
-		}
-	}
-}
-
-void update_lasers(RenderSystem* renderer, float elapsed_ms) {
-	for (Entity laser : registry.lasers.entities) {
-		float& destroy_timer = registry.lasers.get(laser).timer;
-		destroy_timer -= elapsed_ms;
-		if (destroy_timer <= 0) {
-
-			registry.remove_all_components_of(laser);
 		}
 	}
 }
@@ -414,16 +405,8 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 		 LaserRifle& launcher = registry.laserRifles.get(weapon);
 		 if (launcher.cooldown <= 0) {
 			 Motion& launcher_motion = registry.motions.get(weapon);
-			 
 			 float angle = launcher_motion.angle;
-			 float direction;
-			 if (registry.renderRequests.get(weapon).scale.y >= 0) {
-				 direction = 1;
-			 }
-			 else {
-				 direction = -1;
-			 }
-			 vec2 laser_pos = launcher_motion.position + (launcher_motion.positionOffset + vec2({ abs(LASER_BB.x / 2.f), -direction * abs(launcher_motion.scale.y) * 0.3f }))
+			 vec2 laser_pos = launcher_motion.position + (vec2({ abs(LASER_BB.x / 2.f), -launcher_motion.scale.y * 0.3f }))
 				 * mat2({ cos(angle), -sin(angle) }, { sin(angle), cos(angle) });
 			 createLaser(renderer, laser_pos, registry.motions.get(weapon).angle);
 			 play_sound(SOUND_EFFECT::LASER_RIFLE_FIRE);

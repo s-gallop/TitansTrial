@@ -28,19 +28,16 @@ bool check_collision_conditions(Entity entity_i, Entity entity_j) {
             return true;
         }
     } else if (registry.weaponHitBoxes.has(entity_i)) {
-        if (registry.enemies.has(entity_j) || registry.spitterEnemies.has(entity_j) || registry.blocks.has(entity_j) || registry.spitterBullets.has(entity_j))
+        if (registry.enemies.has(entity_j) || registry.spitterEnemies.has(entity_j) || registry.spitterBullets.has(entity_j))
         {
             return true;
         }
-    } else if (registry.blocks.has(entity_i)) {
-        if (registry.solids.has(entity_j) || registry.projectiles.has(entity_j)) {
-            return true;
-        } 
-    } else if (registry.parallaxBackgrounds.has(entity_i)) {
+    } else if (registry.blocks.has(entity_i) && (registry.solids.has(entity_j) || registry.projectiles.has(entity_j))) {
+        return true;
+    } else if (registry.parallaxBackgrounds.has(entity_i) || registry.blocks.has(entity_i)) {
         if (registry.bullets.has(entity_j) ||
             registry.rockets.has(entity_j) ||
             registry.grenades.has(entity_j) ||
-            registry.lasers.has(entity_j) ||
             registry.spitterBullets.has(entity_j) ||
             registry.collectables.has(entity_j) ||
             registry.players.has(entity_j)) 
@@ -84,7 +81,7 @@ bool check_inside(vec2 p1, vec2 q1, vec2 p2, vec2 q2) {
 
     vec2 t = get_parametrics(p1, c1, p2, c2);
 
-    if (t.x >= 0 && t.x <= 1 && t.y > 1)
+    if (isnan(t.x) || (t.x >= 0 && t.x <= 1 && t.y > 1))
         return true;
     return false;
 }
@@ -97,13 +94,13 @@ bool precise_collision(const Entity& entity1, const Entity& entity2) {
     
     std::vector<ColoredVertex> vertices1 = mesh1->vertices;
     mat2 rotation_matrix1 = mat2({cos(motion1.angle), -sin(motion1.angle)}, {sin(motion1.angle), cos(motion1.angle)});
-    for (ColoredVertex vertex: vertices1) {
+    for (ColoredVertex& vertex: vertices1) {
         vertex.position = vec3(motion1.position + (motion1.positionOffset + vec2(vertex.position.x * motion1.scale.x, vertex.position.y * motion1.scale.y)) * rotation_matrix1, 0);
     }
     
     std::vector<ColoredVertex> vertices2 = mesh2->vertices;
     mat2 rotation_matrix2 = mat2({cos(motion2.angle), -sin(motion2.angle)}, {sin(motion2.angle), cos(motion2.angle)});
-    for (ColoredVertex vertex: vertices2) {
+    for (ColoredVertex& vertex: vertices2) {
         vertex.position = vec3(motion2.position + (motion2.positionOffset + vec2(vertex.position.x * motion2.scale.x, vertex.position.y * motion2.scale.y)) * rotation_matrix2, 0);
     }
 
@@ -129,8 +126,7 @@ bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
     Motion& motion1 = registry.motions.get(entity1);
     Motion& motion2 = registry.motions.get(entity2);
     if (registry.lasers.has(entity1) || registry.lasers.has(entity2)) {
-
-        return laser_collides(motion1, motion2);
+        return precise_collision(entity1, entity2);
     }
     vec2 scale1 = get_bounding_box(motion1) / 2.0f;
     vec2 scale2 = get_bounding_box(motion2) / 2.0f;
@@ -145,48 +141,6 @@ bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
     return false;
 }
 
-bool PhysicsSystem::laser_collides(Motion& motion1, Motion& motion2) {
-    vec2 scale1 = get_bounding_box(motion1) / 2.0f;
-    vec2 scale2 = get_bounding_box(motion2) / 2.0f;
-    float angle1 = motion1.angle;
-    float angle2 = motion2.angle;
-    mat2 rotationMatrix = mat2(cos(angle2), sin(angle2),
-        -sin(angle2), cos(angle2));
-    vec2 v[4];
-    v[0] = motion2.position - motion1.position + rotationMatrix * vec2(-scale2.x, -scale2.y);
-    v[1] = motion2.position - motion1.position + rotationMatrix * vec2(-scale2.x, scale2.y);
-    v[2] = motion2.position - motion1.position + rotationMatrix * vec2(scale2.x, -scale2.y);
-    v[3] = motion2.position - motion1.position + rotationMatrix * vec2(scale2.x, scale2.y);
-    for (int i = 0; i < 4; i++) {
-        if (v[i].x * cos(angle1) + v[i].y * sin(angle1) - scale1.x < 0 &&
-            -v[i].x * cos(angle1) - v[i].y * sin(angle1) - scale1.x < 0 &&
-            -v[i].x * sin(angle1) + v[i].y * cos(angle1) - scale1.y < 0 &&
-            v[i].x * sin(angle1) - v[i].y * cos(angle1) - scale1.y < 0) {
-
-            return true;
-        }
-    }
-    rotationMatrix = mat2(cos(angle1), sin(angle1),
-        -sin(angle1), cos(angle1));
-
-
-    v[0] = motion1.position - motion2.position + rotationMatrix * vec2(-scale1.x, -scale1.y);
-    v[1] = motion1.position - motion2.position + rotationMatrix * vec2(-scale1.x, scale1.y);
-    v[2] = motion1.position - motion2.position + rotationMatrix * vec2(scale1.x, -scale1.y);
-    v[3] = motion1.position - motion2.position + rotationMatrix * vec2(scale1.x, scale1.y);
-    for (int i = 0; i < 4; i++) {
-        if (v[i].x * cos(angle2) + v[i].y * sin(angle2) - scale2.x < 0 &&
-            -v[i].x * cos(angle2) - v[i].y * sin(angle2) - scale2.x < 0 &&
-            -v[i].x * sin(angle2) + v[i].y * cos(angle2) - scale2.y < 0 &&
-            v[i].x * sin(angle2) - v[i].y * cos(angle2) - scale2.y < 0) {
-
-            return true;
-        }
-    }
-
-
-    return false;
-}
 void PhysicsSystem::step(float elapsed_ms)
 {
     // Move fish based on how much time has passed, this is to (partially) avoid
