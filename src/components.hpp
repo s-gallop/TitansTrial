@@ -65,6 +65,11 @@ struct Enemies
 
 	float invulnerable_time = 0.f;
 	int health = 2;
+	int hit_animation = -1;
+	
+	bool dying = false;
+	float death_time = 500.f;
+	int death_animation = -1;
 };
 
 struct FireEnemy {

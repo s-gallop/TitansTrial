@@ -294,6 +294,6 @@ vec2 find_edges(vec2 pos, float scale) {
 	// Account for left and right blocks
 	edges.x = max(edges.x, 77.f);
 	edges.y = min(edges.y, 1117.f);
-	printf("EDGES: %f, %f\n", edges.x, edges.y);
+	//printf("EDGES: %f, %f\n", edges.x, edges.y);
 	return edges;
 }

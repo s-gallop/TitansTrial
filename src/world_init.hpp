@@ -87,7 +87,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
         }},
         {TEXTURE_ASSET_ID::FIRE_ENEMY, {
             6,
-            {4, 4, 5, 5, 5},
+            {4, 4, 5, 5, 5, 5},
             0,
             5
         }},

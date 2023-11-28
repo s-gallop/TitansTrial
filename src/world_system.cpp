@@ -357,7 +357,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
-	update_all_enemies(elapsed_ms_since_last_update);
+	update_graphics_all_enemies(elapsed_ms_since_last_update);
 
 	if (ddl == 2 && following_enemies.empty())
 	{
@@ -456,23 +456,42 @@ TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
 }
 
 //update elements of all enemies
-void WorldSystem::update_all_enemies(float elapsed_ms_since_last_update)
+void WorldSystem::update_graphics_all_enemies(float elapsed_ms_since_last_update)
 {
 	for (uint i = 0; i < registry.enemies.size(); i++)
 	{ 
 		Enemies& enemy = registry.enemies.components[i];
 		Entity entity = registry.enemies.entities[i];
+		AnimationInfo& animation = registry.animated.get(entity);
 
-		if (!registry.colors.has(entity)) continue;
+		if (enemy.dying) {
+			animation.oneTimeState = enemy.death_animation;
+			animation.oneTimer = 500;
 
-		enemy.invulnerable_time -= elapsed_ms_since_last_update;
-		if (enemy.invulnerable_time <= 0) {
-			enemy.hittable = true;
-			registry.colors.get(entity) = { 1, 0.8f, 0.8f };
+			enemy.death_time -= elapsed_ms_since_last_update;
+			if (enemy.death_time <= 0) {
+				registry.remove_all_components_of(entity);
+			}
 		}
 		else {
-			registry.colors.get(entity) = vec3(1, 0, 0);
-		}		
+			if (!registry.colors.has(entity)) continue;
+
+			enemy.invulnerable_time -= elapsed_ms_since_last_update;
+			if (enemy.invulnerable_time <= 0) {
+				enemy.hittable = true;
+				registry.colors.get(entity) = { 1, 0.8f, 0.8f };
+			}
+			else {
+				if (enemy.hit_animation == -1) {
+					registry.colors.get(entity) = vec3(1, 0, 0);
+				}
+				else {
+					animation.oneTimeState = enemy.hit_animation;
+					animation.oneTimer = glfwGetTime() - .25;
+					printf("time: %f", glfwGetTime());
+				}
+			}
+		}
 	}
 
 }
@@ -545,7 +564,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	{
 		// Reset timer
 		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 110) + 65;
+		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
 		Entity newEnemy = createGhoul(renderer, vec2(x_pos, y_pos));
 		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
@@ -951,11 +970,11 @@ void WorldSystem::handle_collisions()
 			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
 			{
 				if (registry.enemies.has(entity_other)) {
-					printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
+					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
 					registry.enemies.get(entity_other).health -= registry.weaponHitBoxes.get(entity).damage;
 
 					if (registry.enemies.get(entity_other).health <= 0) {
-						registry.remove_all_components_of(entity_other);
+						registry.enemies.get(entity_other).dying = true;
 					}
 					else {
 						registry.enemies.get(entity_other).hittable = false;
