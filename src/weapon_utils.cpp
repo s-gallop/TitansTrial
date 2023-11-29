@@ -25,6 +25,7 @@ const float GRENADE_SPEED_FACTOR = 1.f;
 const size_t GRENADE_TRAJECTORY_WIDTH = 3;
 const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
+const size_t LASER_COOLDOWN = 2000;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -65,6 +66,8 @@ void collect_weapon(Entity weapon, Entity hero) {
 				motion.positionOffset.x = 20.f;
 			} else if (registry.grenadeLaunchers.has(weapon)) {
 				motion.positionOffset.x = 14.f;
+			} else if (registry.laserRifles.has(weapon)) {
+				motion.positionOffset.x = 25.f;
 			}
 		}
 	}
@@ -77,6 +80,7 @@ void collect(Entity collectable, Entity hero) {
 		case COLLECTABLE_TYPE::SWORD:
 		case COLLECTABLE_TYPE::ROCKET_LAUNCHER:
 		case COLLECTABLE_TYPE::GRENADE_LAUNCHER:
+		case COLLECTABLE_TYPE::LASER_RIFLE:
 			collect_weapon(collectable, hero);
 			break;
 		case COLLECTABLE_TYPE::HEART: {
@@ -112,11 +116,13 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 			motion.angle += M_PI/2;
 		motion.angleBackup = motion.angle;
 		
-		if (registry.guns.has(weapon) || registry.rocketLaunchers.has(weapon) || registry.grenadeLaunchers.has(weapon)) {
+		if (registry.guns.has(weapon) || registry.rocketLaunchers.has(weapon) || registry.grenadeLaunchers.has(weapon) || registry.laserRifles.has(weapon)) {
 			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
-				render.scale.y = -1*abs(motion.scale.y);
+				render.scale.y = -1*abs(render.scale.y);
+				motion.scale.y = -1*abs(motion.scale.y);
 			} else {
-				render.scale.y = abs(motion.scale.y);
+				render.scale.y = abs(render.scale.y);
+				motion.scale.y = abs(motion.scale.y);
 			}
 		}
 	}
@@ -238,7 +244,18 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 				launcher.loaded = true;
 			}
 		}
-	} else if (registry.grenadeLaunchers.has(weapon)) {
+	}
+	else if (registry.laserRifles.has(weapon)) {
+		LaserRifle& launcher = registry.laserRifles.get(weapon);
+		if (launcher.cooldown > 0) {
+			launcher.cooldown -= elapsed_ms;
+			if (launcher.cooldown <= LASER_COOLDOWN && !launcher.loaded) {
+				play_sound(SOUND_EFFECT::LASER_RIFLE_RELOAD);
+				launcher.loaded = true;
+			}
+		}
+	}
+	else if (registry.grenadeLaunchers.has(weapon)) {
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown > 0) {
 			launcher.cooldown -= elapsed_ms;
@@ -270,7 +287,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 				float angle = weaponMot.angle;
 				registry.motions.get(line).position = weaponMot.position + vec2(weaponMot.positionOffset.x + abs(weaponMot.scale.x) / 2.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
 			}
-		}
+		} 
 	}
 }
 
@@ -398,6 +415,18 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 			mouse_click_pos = mouse_pos;
 			grenade_launch_timer = GRENADE_LAUNCH_TIMER;
 		}
+	} else if (registry.laserRifles.has(weapon)) {
+		 LaserRifle& launcher = registry.laserRifles.get(weapon);
+		 if (launcher.cooldown <= 0) {
+			 Motion& launcher_motion = registry.motions.get(weapon);
+			 float angle = launcher_motion.angle;
+			 vec2 laser_pos = launcher_motion.position + (vec2({ abs(LASER_BB.x / 2.f), -launcher_motion.scale.y * 0.3f }))
+				 * mat2({ cos(angle), -sin(angle) }, { sin(angle), cos(angle) });
+			 createLaser(renderer, laser_pos, registry.motions.get(weapon).angle);
+			 play_sound(SOUND_EFFECT::LASER_RIFLE_FIRE);
+			 launcher.cooldown = LASER_COOLDOWN;
+			 launcher.loaded = false;
+		 }
 	}
 }
 
