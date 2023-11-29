@@ -74,6 +74,10 @@ struct FireEnemy {
 
 };
 
+struct Boulder {
+
+};
+
 struct Ghoul
 {
 	float right_x = -1.f;
@@ -178,10 +182,7 @@ struct Motion
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
-	bool isSolid = false;
-	bool isProjectile = false;
 	int dir = 1;
-	float friction = 1.f;
 };
 
 struct Solid {
@@ -189,7 +190,8 @@ struct Solid {
 };
 
 struct Projectile {
-	float friction = 1.f;
+	float friction_x = 1.f;
+	float friction_y = 1.f;
 };
 
 // just for milestone 1 sudden requirement

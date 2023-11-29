@@ -38,7 +38,8 @@ bool check_collision_conditions(Entity entity_i, Entity entity_j) {
             registry.grenades.has(entity_j) ||
             registry.spitterBullets.has(entity_j) ||
             registry.collectables.has(entity_j) ||
-            registry.players.has(entity_j)) 
+            registry.players.has(entity_j) ||
+            registry.boulders.has(entity_j)) 
         {
             return true;
         }

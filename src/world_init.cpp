@@ -18,7 +18,6 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HERO);
-	motion.isSolid = true;
 
 	registry.players.emplace(entity);
 	registry.solids.emplace(entity);
@@ -50,10 +49,13 @@ Entity createBoulder(RenderSystem* renderer, vec2 position, vec2 velocity, float
 	motion.position = position;
 	motion.velocity = velocity;
 	motion.scale = BOULDER_BB * size;
-	motion.friction = .9f;
+
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	projectile.friction_y = .8f;
 
 	registry.gravities.emplace(entity);
-	registry.projectiles.emplace(entity);
+	registry.boulders.emplace(entity);
+	registry.enemies.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::BOULDER,
@@ -244,7 +246,6 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	{ return rand() % 2 == 0 ? 1 : -1; };
 	motion.velocity = {dir() * 300, dir() * (rand() % 300)};
 	motion.scale = SPITTER_BULLET_BB;
-	motion.isProjectile = true;
 
 	SpitterBullet &bullet = registry.spitterBullets.emplace(entity);
 
@@ -593,13 +594,14 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	motion.position = position;
 	motion.velocity = velocity;
 	motion.scale = GRENADE_BB;
-	motion.isProjectile = true;
-	motion.friction = .6f;
+
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	projectile.friction_x = .6f;
+	projectile.friction_y = .6f;
 
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
-	registry.projectiles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
@@ -827,7 +829,6 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std:
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = size;
-	motion.isSolid = true;
 	fill_grid(grid, pos, size);
 	registry.blocks.emplace(entity);
 	registry.renderRequests.insert(
