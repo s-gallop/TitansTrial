@@ -55,17 +55,19 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.0, 0.0);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
+	motion.dir = -1;
 
-	registry.colors.emplace(entity);
-	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).death_animation = 5;
+	registry.colors.insert(entity, {1, .8f, .8f});
+	Enemies& enemy = registry.enemies.emplace(entity);
+	enemy.death_animation = 2;
+	enemy.hit_animation = 1;
 
 	registry.fireEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::FIRE_ENEMY,
-		 EFFECT_ASSET_ID::ENEMY,
+		 EFFECT_ASSET_ID::FIRE_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
@@ -107,7 +109,7 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GHOUL_ENEMY,
-		 EFFECT_ASSET_ID::ENEMY,
+		 EFFECT_ASSET_ID::GHOUL,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
@@ -137,14 +139,13 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 
 	registry.enemies.emplace(entity);
 	registry.enemies.get(entity).hittable = false;
-	registry.enemies.get(entity).death_animation = 5;
 
 	registry.followingEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::FOLLOWING_ENEMY,
-		 EFFECT_ASSET_ID::ENEMY,
+		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
@@ -179,7 +180,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	registry.enemies.emplace(entity);
 	registry.enemies.get(entity).hit_animation = 3;
 	registry.enemies.get(entity).death_animation = 4;
-	registry.colors.emplace(entity);
+	registry.colors.insert(entity, {1, .8f, .8f});
 
 	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
@@ -602,7 +603,6 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	
 	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
 	info.oneTimeState = 0;
-	info.oneTimer = glfwGetTime();
 
 	registry.renderRequests.insert(
 		entity,

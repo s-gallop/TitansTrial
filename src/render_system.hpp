@@ -113,9 +113,11 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
-		shader_path("enemy"),
+		shader_path("fire_enemy"),
+		shader_path("ghoul"),
 		shader_path("spitter"),
 		shader_path("spitter_bullet"),
+		shader_path("following_enemy"),
         shader_path("screen_layer")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;

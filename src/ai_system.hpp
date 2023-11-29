@@ -24,7 +24,5 @@ void fill_grid(std::vector<std::vector<char>>&, vec2, vec2);
 
 std::vector<std::vector<char>> create_grid();
 
-vec2 find_edges(vec2 pos, float scale);
-
 //void astar_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 pos_prey, Entity& chaser);
 //void point_checker(vec2& point);

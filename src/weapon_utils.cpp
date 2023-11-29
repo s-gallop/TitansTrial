@@ -200,7 +200,7 @@ void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
 
 void update_explosions(float elapsed_ms) {
 	for (Entity explosion: registry.explosions.entities) {
-		int frame = (int)floor((glfwGetTime() - registry.animated.get(explosion).oneTimer) * 10.0);
+		int frame = (int)floor(registry.animated.get(explosion).oneTimer * 10.f);
 		if (frame == 6)
 			registry.remove_all_components_of(explosion);
 		else if (frame == 2)
@@ -416,7 +416,6 @@ void check_dash_boots(Entity hero, uint direction) {
 			play_sound(SOUND_EFFECT::DASH);
             AnimationInfo& info = registry.animated.get(hero);
             info.oneTimeState = 5;
-            info.oneTimer = glfwGetTime();
 		} else {
 			dash_direction = direction;
 			dash_window = DASH_WINDOW;

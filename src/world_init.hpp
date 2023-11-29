@@ -58,7 +58,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::FIRE_ENEMY, {65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {-65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::GHOUL_ENEMY, {50 * CHARACTER_SCALING, 28 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
@@ -86,10 +86,10 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
                 16
         }},
         {TEXTURE_ASSET_ID::FIRE_ENEMY, {
-            6,
-            {4, 4, 5, 5, 5, 5},
+            3,
+            {4, 5, 10},
             0,
-            5
+            10
         }},
        {TEXTURE_ASSET_ID::GHOUL_ENEMY, {
             6,
@@ -107,7 +107,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             5,
             {6, 7, 8, 3, 8},
             0,
-            9
+            8
         }},
         {TEXTURE_ASSET_ID::EXPLOSION, {
             1,

@@ -63,13 +63,10 @@ struct Enemies
 	bool hittable = true;
 	bool hitting = true;
 
-	float invulnerable_time = 0.f;
 	int health = 2;
-	int hit_animation = -1;
+	int hit_animation = -2;
 	
-	bool dying = false;
-	float death_time = 500.f;
-	int death_animation = -1;
+	int death_animation = -2;
 };
 
 struct FireEnemy {
@@ -256,7 +253,7 @@ struct AnimationInfo
 	int curState;
 	int stateCycleLength;
     int oneTimeState = -1;
-    double oneTimer;
+	double oneTimer;
 };
 
 struct ShowWhenPaused {
@@ -389,10 +386,12 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	ENEMY = EXPLOSION + 1,
-	SPITTER_ENEMY = ENEMY + 1,
+	FIRE_ENEMY = EXPLOSION + 1,
+	GHOUL = FIRE_ENEMY + 1,
+	SPITTER_ENEMY = GHOUL + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
-    SCREEN_LAYER = SPITTER_ENEMY_BULLET + 1,
+	FOLLOWING_ENEMY = SPITTER_ENEMY_BULLET + 1,
+    SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	EFFECT_COUNT = SCREEN_LAYER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;

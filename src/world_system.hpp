@@ -83,7 +83,7 @@ public:
 
 	TEXTURE_ASSET_ID connectNumber(int digit);
 
-	void update_graphics_all_enemies(float elapsed_ms_since_last_update);
+	void update_graphics_all_enemies();
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
