@@ -18,6 +18,8 @@ const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
 const vec2 ROCKET_BB = vec2(43.f, 7.f);
 const vec2 GRENADE_LAUNCHER_BB = vec2(41.f, 18.f) * 1.3f;
 const vec2 GRENADE_BB = vec2(18.f, 19.f);
+const vec2 LASER_RIFLE_BB = vec2(83.f, 28.f) * .8f;
+const vec2 LASER_BB = vec2(window_width_px, 30.f * 0.4f);
 const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
 const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
@@ -150,6 +152,10 @@ Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity);
 
 Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
+
+Entity createLaserRifle(RenderSystem* renderer, vec2 position);
+
+Entity createLaser(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

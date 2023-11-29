@@ -51,6 +51,8 @@ class RenderSystem
 		textures_path("grenade_launcher.png"),
 		textures_path("grenade.png"),
 		textures_path("explosion.png"),
+		textures_path("laser_rifle.png"),
+		textures_path("laser.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
 		/*

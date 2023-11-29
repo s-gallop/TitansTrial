@@ -300,6 +300,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		
 		if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
 			registry.remove_all_components_of(motion_container.entities[i]);
+		else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
+			registry.remove_all_components_of(motion_container.entities[i]);
 	}
 
 	if (registry.players.get(player_hero).hasWeapon)
@@ -801,11 +803,11 @@ void WorldSystem::restart_game()
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
 	// left line
-	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
+	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
 	// right line
-	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
+	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
 	// top line
-	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
+	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
 
 	// left middle platform
 	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
@@ -1165,12 +1167,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				createRocketLauncher(renderer, registry.motions.get(player_hero).position);
 			}
 		} else if (key == GLFW_KEY_5 && action == GLFW_PRESS && !pause && debug) {
-			createHeart(renderer, registry.motions.get(player_hero).position);
+			createLaserRifle(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_6 && action == GLFW_PRESS && !pause && debug) {
-			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+			createHeart(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_7 && action == GLFW_PRESS && !pause && debug) {
+			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
 			createPickaxe(renderer, registry.motions.get(player_hero).position);
-		}else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
+		} else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug) {
 			createDashBoots(renderer, registry.motions.get(player_hero).position);
 		}
 
