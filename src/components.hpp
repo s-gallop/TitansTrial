@@ -61,6 +61,23 @@ struct ParallaxBackground
 
 struct Enemies
 {
+	bool hittable = true;
+	bool hitting = true;
+
+	int health = 2;
+	int hit_animation = -2;
+	
+	int death_animation = -2;
+};
+
+struct FireEnemy {
+
+};
+
+struct Ghoul
+{
+	float right_x = -1.f;
+	float left_x = -1.f;
 };
 
 struct FollowingEnemies
@@ -68,7 +85,6 @@ struct FollowingEnemies
 	std::list<vec2> path;
 	float next_blink_time = 0.f;
 	bool blinked = false;
-	bool hittable = true;
 };
 
 struct SpitterEnemy
@@ -76,6 +92,8 @@ struct SpitterEnemy
 	uint bulletsRemaining;
 	float timeUntilNextShotMs;
     bool canShoot;
+	float right_x = -1.f;
+	float left_x = -1.f;
 };
 
 struct SpitterBullet 
@@ -147,6 +165,7 @@ struct WeaponHitBox
 {
 	bool soundPlayed = false;
 	bool isActive = true;
+	int damage = 1;
 };
 
 // All data relevant to the shape and motion of entities
@@ -244,7 +263,7 @@ struct AnimationInfo
 	int curState;
 	int stateCycleLength;
     int oneTimeState = -1;
-    double oneTimer;
+	double oneTimer;
 };
 
 struct ShowWhenPaused {
@@ -304,7 +323,8 @@ enum class TEXTURE_ASSET_ID
 	HERO = 0,
 	ENEMY = HERO + 1,
 	FIRE_ENEMY = ENEMY + 1,
-	FOLLOWING_ENEMY = FIRE_ENEMY + 1,
+	GHOUL_ENEMY = FIRE_ENEMY + 1,
+	FOLLOWING_ENEMY = GHOUL_ENEMY + 1,
 	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
@@ -378,10 +398,12 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	FOLLOWING_ENEMY = EXPLOSION + 1,
-	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
+	FIRE_ENEMY = EXPLOSION + 1,
+	GHOUL = FIRE_ENEMY + 1,
+	SPITTER_ENEMY = GHOUL + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
-    SCREEN_LAYER = SPITTER_ENEMY_BULLET + 1,
+	FOLLOWING_ENEMY = SPITTER_ENEMY_BULLET + 1,
+    SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	EFFECT_COUNT = SCREEN_LAYER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;

@@ -38,7 +38,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position)
+Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
     //const float ACTUAL_SCALE_FACTOR = 0.5f;
@@ -55,13 +55,19 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.0, 0.0);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
+	motion.dir = -1;
 
-	registry.enemies.emplace(entity);
+	registry.colors.insert(entity, {1, .8f, .8f});
+	Enemies& enemy = registry.enemies.emplace(entity);
+	enemy.death_animation = 2;
+	enemy.hit_animation = 1;
+
+	registry.fireEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::FIRE_ENEMY,
-		 EFFECT_ASSET_ID::FOLLOWING_ENEMY,
+		 EFFECT_ASSET_ID::FIRE_ENEMY,
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
@@ -70,6 +76,47 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 
     registry.debugRenderRequests.emplace(entity);
 	registry.testAIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createGhoul(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.position = position;
+	// Setting initial values, scale is negative to make it face the opposite way
+	motion.velocity = vec2(0.f, -0.1f);
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
+
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).hittable = false;
+	registry.enemies.get(entity).hitting = false;
+	registry.enemies.get(entity).hit_animation = 3;
+	registry.enemies.get(entity).death_animation = 4;
+
+	registry.ghouls.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GHOUL_ENEMY));
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GHOUL_ENEMY,
+		 EFFECT_ASSET_ID::GHOUL,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GHOUL_ENEMY) });
+
+	registry.debugRenderRequests.emplace(entity);
 
 	return entity;
 }
@@ -89,6 +136,9 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.f, 0.f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY);
+
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).hittable = false;
 
 	registry.followingEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
@@ -126,6 +176,11 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	// wait 1s for first shot
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
 	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
+
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).hit_animation = 3;
+	registry.enemies.get(entity).death_animation = 4;
+	registry.colors.insert(entity, {1, .8f, .8f});
 
 	registry.solids.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::SPITTER_ENEMY));
@@ -548,7 +603,6 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	
 	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
 	info.oneTimeState = 0;
-	info.oneTimer = glfwGetTime();
 
 	registry.renderRequests.insert(
 		entity,
