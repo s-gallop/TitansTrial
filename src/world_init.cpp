@@ -989,3 +989,72 @@ Entity createNumber(RenderSystem* renderer, vec2 pos) {
 
 	return entity;
 }
+
+Entity createDBFlame(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 180.f, 75.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DB_BOSS_FLAME,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDBSkull(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 70.f, 60.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DB_BOSS_SKULL,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}
+
+Entity createDBSatan(RenderSystem* renderer, vec2 pos) {
+	Entity entity = Entity();
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.scale = { 210.f, 140.f };
+	motion.position = pos;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DB_SATAN,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 true,
+		 true,
+		 motion.scale });
+
+	registry.inGameGUIs.emplace(entity);
+
+	return entity;
+}

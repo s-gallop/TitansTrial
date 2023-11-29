@@ -89,7 +89,7 @@ class RenderSystem
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
 		textures_path("pixel_heart_heal.png"),
-		textures_path("difficulty_bar.png"),
+		textures_path("difficulty/difficulty_bar_new.png"),
 		textures_path("indicator.png"),
 		textures_path("scores/score.png"),
 		textures_path("scores/0.png"),
@@ -101,7 +101,12 @@ class RenderSystem
 		textures_path("scores/6.png"), 
 		textures_path("scores/7.png"), 
 		textures_path("scores/8.png"), 
-		textures_path("scores/9.png")};
+		textures_path("scores/9.png"),
+		textures_path("difficulty/difficulty_bar_boss.png"),
+		textures_path("difficulty/db_boss_flame.png"),
+		textures_path("difficulty/db_boss_skull.png"),
+		textures_path("difficulty/difficulty_bar_broken.png"),
+		textures_path("difficulty/satan_shader.png")};
 
 
 	std::array<GLuint, effect_count> effects;
