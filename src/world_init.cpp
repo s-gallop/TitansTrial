@@ -38,6 +38,34 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
+Entity createBoulder(RenderSystem* renderer, vec2 position, vec2 velocity, float size) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::CIRCLE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.velocity = velocity;
+	motion.scale = BOULDER_BB * size;
+	motion.friction = .9f;
+
+	registry.gravities.emplace(entity);
+	registry.projectiles.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BOULDER,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			motion.scale});
+
+	return entity;
+}
+
 Entity createEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
