@@ -294,6 +294,7 @@ struct CollisionMesh {
 	vec2 original_size = {1, 1};
 	std::vector<ColoredVertex> vertices;
 	std::vector<std::pair<int, int>> edges;
+	bool is_sprite = false;
 };
 
 /**

@@ -135,7 +135,7 @@ bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
     if (abs(motion1.position.x - motion2.position.x) < (scale1.x + scale2.x) &&
         abs(motion1.position.y - motion2.position.y) < (scale1.y + scale2.y))
     {
-        if (registry.renderRequests.get(entity1).used_geometry != GEOMETRY_BUFFER_ID::SPRITE || registry.renderRequests.get(entity2).used_geometry != GEOMETRY_BUFFER_ID::SPRITE)
+        if (!registry.collisionMeshPtrs.get(entity1)->is_sprite || !registry.collisionMeshPtrs.get(entity2)->is_sprite)
             return precise_collision(entity1, entity2);
         else
             return true;
