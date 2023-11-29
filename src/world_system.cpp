@@ -693,11 +693,11 @@ void WorldSystem::restart_game()
 	// bottom line
 	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
 	// left line
-	createBlock(renderer, {-base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
+	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
 	// right line
-	createBlock(renderer, {window_width_px + base_width, window_height_px / 2 - 100}, {base_width * 6, window_height_px}, grid_vec);
+	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
 	// top line
-	createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
+	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
 
 	// left middle platform
 	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
