@@ -42,6 +42,7 @@ class RenderSystem
 		textures_path("mock_enemy.png"),
 		textures_path("fire_enemy.png"),
 		textures_path("boulder.png"),
+		textures_path("ghoul.png"),
 		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
@@ -52,6 +53,8 @@ class RenderSystem
 		textures_path("grenade_launcher.png"),
 		textures_path("grenade.png"),
 		textures_path("explosion.png"),
+		textures_path("laser_rifle.png"),
+		textures_path("laser.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
 		/*
@@ -114,9 +117,11 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
-		shader_path("following_enemy"),
+		shader_path("fire_enemy"),
+		shader_path("ghoul"),
 		shader_path("spitter"),
 		shader_path("spitter_bullet"),
+		shader_path("following_enemy"),
         shader_path("screen_layer")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;

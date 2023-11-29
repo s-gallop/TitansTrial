@@ -12,7 +12,8 @@ enum class COLLECTABLE_TYPE
 	GUN = SWORD + 1,
 	ROCKET_LAUNCHER = GUN + 1,
 	GRENADE_LAUNCHER = ROCKET_LAUNCHER + 1,
-	HEART = GRENADE_LAUNCHER + 1,
+	LASER_RIFLE = GRENADE_LAUNCHER + 1,
+	HEART = LASER_RIFLE + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -60,6 +61,23 @@ struct ParallaxBackground
 
 struct Enemies
 {
+	bool hittable = true;
+	bool hitting = true;
+
+	int health = 2;
+	int hit_animation = -2;
+	
+	int death_animation = -2;
+};
+
+struct FireEnemy {
+
+};
+
+struct Ghoul
+{
+	float right_x = -1.f;
+	float left_x = -1.f;
 };
 
 struct FollowingEnemies
@@ -67,7 +85,6 @@ struct FollowingEnemies
 	std::list<vec2> path;
 	float next_blink_time = 0.f;
 	bool blinked = false;
-	bool hittable = true;
 };
 
 struct SpitterEnemy
@@ -75,6 +92,8 @@ struct SpitterEnemy
 	uint bulletsRemaining;
 	float timeUntilNextShotMs;
     bool canShoot;
+	float right_x = -1.f;
+	float left_x = -1.f;
 };
 
 struct SpitterBullet 
@@ -126,6 +145,15 @@ struct Explosion {
 	float timer = 1000;
 };
 
+struct LaserRifle {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct Laser {
+
+};
+
 // Weapon the player has picked up
 struct Weapon
 {
@@ -137,6 +165,7 @@ struct WeaponHitBox
 {
 	bool soundPlayed = false;
 	bool isActive = true;
+	int damage = 1;
 };
 
 // All data relevant to the shape and motion of entities
@@ -234,7 +263,7 @@ struct AnimationInfo
 	int curState;
 	int stateCycleLength;
     int oneTimeState = -1;
-    double oneTimer;
+	double oneTimer;
 };
 
 struct ShowWhenPaused {
@@ -295,7 +324,8 @@ enum class TEXTURE_ASSET_ID
 	ENEMY = HERO + 1,
 	FIRE_ENEMY = ENEMY + 1,
 	BOULDER = FIRE_ENEMY + 1,
-	FOLLOWING_ENEMY = BOULDER + 1,
+	GHOUL_ENEMY = BOULDER + 1,
+	FOLLOWING_ENEMY = GHOUL_ENEMY + 1,
 	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
 	SWORD = SPITTER_ENEMY_BULLET + 1,
@@ -305,7 +335,9 @@ enum class TEXTURE_ASSET_ID
 	GRENADE_LAUNCHER = ROCKET + 1,
 	GRENADE = GRENADE_LAUNCHER + 1,
 	EXPLOSION = GRENADE + 1,
-	HEART = EXPLOSION + 1,
+	LASER_RIFLE = EXPLOSION + 1,
+	LASER = LASER_RIFLE + 1,
+	HEART = LASER + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -367,10 +399,12 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	FOLLOWING_ENEMY = EXPLOSION + 1,
-	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
+	FIRE_ENEMY = EXPLOSION + 1,
+	GHOUL = FIRE_ENEMY + 1,
+	SPITTER_ENEMY = GHOUL + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
-    SCREEN_LAYER = SPITTER_ENEMY_BULLET + 1,
+	FOLLOWING_ENEMY = SPITTER_ENEMY_BULLET + 1,
+    SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	EFFECT_COUNT = SCREEN_LAYER + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;

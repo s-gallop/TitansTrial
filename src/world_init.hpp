@@ -19,6 +19,8 @@ const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
 const vec2 ROCKET_BB = vec2(43.f, 7.f);
 const vec2 GRENADE_LAUNCHER_BB = vec2(41.f, 18.f) * 1.3f;
 const vec2 GRENADE_BB = vec2(18.f, 19.f);
+const vec2 LASER_RIFLE_BB = vec2(83.f, 28.f) * .8f;
+const vec2 LASER_BB = vec2(window_width_px, 30.f * 0.4f);
 const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
 const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
@@ -48,6 +50,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GHOUL_ENEMY, {13 * CHARACTER_SCALING, 20 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
@@ -58,7 +61,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::FIRE_ENEMY, {65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {-65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GHOUL_ENEMY, {50 * CHARACTER_SCALING, 28 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57*CHARACTER_SCALING, 39*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
@@ -70,6 +74,7 @@ const float BULLET_MESH_SCALE = 4.0f;
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10*CHARACTER_SCALING, -1*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FIRE_ENEMY, { 0 * CHARACTER_SCALING, -6 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GHOUL_ENEMY, { 0 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, { -1 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10*CHARACTER_SCALING, -6*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
@@ -84,10 +89,16 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
                 16
         }},
         {TEXTURE_ASSET_ID::FIRE_ENEMY, {
-            6,
-            {4, 4, 5, 5, 5},
+            3,
+            {4, 5, 10},
             0,
-            5
+            10
+        }},
+       {TEXTURE_ASSET_ID::GHOUL_ENEMY, {
+            6,
+            {4, 9, 7, 4, 7, 11},
+            1,
+            11
         }},
         {TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {
             5,
@@ -99,7 +110,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             5,
             {6, 7, 8, 3, 8},
             0,
-            9
+            8
         }},
         {TEXTURE_ASSET_ID::EXPLOSION, {
             1,
@@ -117,8 +128,10 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 // the player
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem *renderer, vec2 position);
+Entity createFireEnemy(RenderSystem *renderer, vec2 position);
 Entity createBoulder(RenderSystem *renderer, vec2 position, vec2 velocity, float size);
+// the ghoul enemy
+Entity createGhoul(RenderSystem* renderer, vec2 position);
 // the following & teleporting enemy
 Entity createFollowingEnemy(RenderSystem* renderer, vec2 position);
 // spitter enemy
@@ -141,6 +154,10 @@ Entity createGrenadeLauncher(RenderSystem* renderer, vec2 position);
 Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity);
 
 Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
+
+Entity createLaserRifle(RenderSystem* renderer, vec2 position);
+
+Entity createLaser(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

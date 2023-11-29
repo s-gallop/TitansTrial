@@ -31,6 +31,8 @@ uint init_sound()
 	//Sound Effect by <a href="https://pixabay.com/users/jigokukarano_sisya-39731529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=168857">jigokukarano_sisya</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=168857">Pixabay</a>
 	sound_effects.push_back(Mix_LoadWAV(audio_path("grenade_launcher_reload.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("explosion.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_rifle_fire.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_rifle_reload.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("heal.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("pickaxe.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("dash.wav").c_str()));
@@ -52,6 +54,8 @@ uint init_sound()
 				audio_path("grenade_launcher_fire.wav").c_str(),
 				audio_path("grenade_launcher_reload.wav").c_str(),
 				audio_path("explosion.wav").c_str(),
+				audio_path("laser_rifle_fire.wav").c_str(),
+				audio_path("laser_rifle_reload.wav").c_str(),
 				audio_path("heal.wav").c_str(),
 				audio_path("pickaxe.wav").c_str(),
 				audio_path("dash.wav").c_str(),
