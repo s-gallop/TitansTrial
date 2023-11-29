@@ -32,6 +32,17 @@ const size_t DASH_TIME = 2250;
 std::default_random_engine rng = std::default_random_engine(std::random_device()());
 std::uniform_real_distribution<float> uniform_dist;
 
+void initiate_weapons() {
+	next_collectable_spawn = 600.f;
+	mouse_click_pos = {-1.f, -1.f};
+	mouse_cur_pos = {-1.f, -1.f};
+	grenade_launch_timer = 0.f;
+	pickaxe_disable = 0.f;
+	dash_window = 0.f;
+	dash_time = 0.f;
+	dash_direction = 0;
+}
+
 void collect_weapon(Entity weapon, Entity hero) {
 	if (!registry.deathTimers.has(hero)) {
 		if (registry.players.get(hero).hasWeapon && registry.weapons.get(registry.players.get(hero).weapon).type == registry.collectables.get(weapon).type) {

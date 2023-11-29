@@ -720,7 +720,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
                 registry.motions.get(entity).scale[0] = absolute_scale_x;
             spitterEnemy.canShoot = false;
         }
-		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f)
+		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f && registry.enemies.get(entity).hitting == true)
 		{
 			// attack animation
             animation.oneTimeState = SHOOT_STATE;
@@ -776,6 +776,7 @@ void WorldSystem::restart_game()
 	// add bg
 	
 	create_parallax_background();
+	initiate_weapons();
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -917,9 +918,13 @@ void WorldSystem::handle_collisions()
 				{
 					registry.deathTimers.emplace(entity);
 					
-					for (Entity weapon : registry.weapons.entities)
-						registry.remove_all_components_of(weapon);
-					registry.players.get(player_hero).hasWeapon = false;
+					if (player.hasWeapon) {
+						if (registry.grenadeLaunchers.has(player.weapon))
+							for(Entity line: registry.grenadeLaunchers.get(player.weapon).trajectory)
+								registry.remove_all_components_of(line);
+						registry.remove_all_components_of(player.weapon);
+					}
+					player.hasWeapon = false;
 
 					Motion &motion = registry.motions.get(player_hero);
 					motion.angle = M_PI / 2;
@@ -1047,11 +1052,17 @@ void WorldSystem::handle_collisions()
 			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
 				// Scream, reset timer, and make the hero fall
 				registry.deathTimers.emplace(entity_other);
-				for (Entity weapon : registry.weapons.entities) {
-					registry.remove_all_components_of(weapon);
+				Player& player = registry.players.get(entity_other);
+			
+				if (player.hasWeapon) {
+					if (registry.grenadeLaunchers.has(player.weapon))
+						for(Entity line: registry.grenadeLaunchers.get(player.weapon).trajectory)
+							registry.remove_all_components_of(line);
+					registry.remove_all_components_of(player.weapon);
 				}
-
-				registry.players.get(player_hero).hasWeapon = false;
+				player.hasWeapon = false;
+				player.invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
+				player.invuln_type = INVULN_TYPE::HIT;
 
 				play_sound(SOUND_EFFECT::HERO_DEAD);
 				Motion &motion = registry.motions.get(player_hero);
