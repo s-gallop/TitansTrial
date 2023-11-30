@@ -3,6 +3,7 @@
 #include "world_init.hpp"
 #include "physics_system.hpp"
 #include "ai_system.hpp"
+#include "json.hpp"
 
 // stlib
 #include <cassert>
@@ -10,6 +11,7 @@
 #include <bitset>
 #include <iostream>
 #include <map>
+#include <fstream>
 
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
@@ -28,6 +30,8 @@ Entity indicator;
 std::vector<Entity> score_GUI = { };
 std::vector<Entity> following_enemies = { };
 std::vector<Entity> db_decorator = { };
+
+json::JSON state;
 
 /* 
 * ddl = Dynamic Difficulty Level
@@ -161,22 +165,23 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 
 void WorldSystem::create_title_screen() 
 {
-	glfwSetWindowTitle(window, "Titan's Trial");
-	ScreenState& screen = registry.screenStates.components[0];
-	screen.screen_darken_factor = 0;
-	isTitleScreen = true;
-	
-	pause = false;
-	
-	while (registry.motions.entities.size() > 0)
-		registry.remove_all_components_of(registry.motions.entities.back());
+	if (ddl != 4) {
+		glfwSetWindowTitle(window, "Titan's Trial");
+		ScreenState& screen = registry.screenStates.components[0];
+		screen.screen_darken_factor = 0;
+		isTitleScreen = true;
 
-    //these magic number are just the vertical position of where the buttons are
-	createTitleText(renderer, { window_width_px / 2, 150 });
-	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
-	createButton(renderer, {window_width_px / 2, 550}, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen();});
-	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
-	
+		pause = false;
+
+		while (registry.motions.entities.size() > 0)
+			registry.remove_all_components_of(registry.motions.entities.back());
+
+		//these magic number are just the vertical position of where the buttons are
+		createTitleText(renderer, { window_width_px / 2, 150 });
+		createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
+		createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
+		createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
+	}
 }
 
 void WorldSystem::create_almanac_screen() {
@@ -307,7 +312,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
-	
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -892,9 +896,60 @@ void WorldSystem::restart_game()
 	}*/
 }
 
+void WorldSystem::save_game() {
+	state = {
+		"ddl", ddl,
+		"hp", registry.players.get(player_hero).hp,
+		"weapon", save_weapon(registry.players.get(player_hero).weapon),
+	};
+	std::ofstream out("game_save.json");
+	out << state;
+	out.close();
+	create_title_screen();
+}
+
+int WorldSystem::save_weapon(Entity weapon) {
+	if (registry.swords.has(weapon))
+		return 0;
+	else if (registry.guns.has(weapon))
+		return 1;
+	else if (registry.rocketLaunchers.has(weapon))
+		return 2;
+	else if (registry.grenadeLaunchers.has(weapon))
+		return 3;
+	else if (registry.laserRifles.has(weapon))
+		return 4;
+	else
+		return -1;
+}
+
+void WorldSystem::load_game() {
+	restart_game();
+	std::ifstream in("game_save.json");
+	std::stringstream buffer;
+	buffer << in.rdbuf();
+	std::string jsonString = buffer.str();
+	state = json::JSON::Load(jsonString);
+
+	ddf = state["ddl"].ToInt() * 100;
+	Player& player = registry.players.get(player_hero);
+	player.hp = state["hp"].ToInt();
+	int weapon = state["weapon"].ToInt();
+	if (weapon == 0)
+		collect(createSword(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 1)
+		collect(createGun(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 2)
+		collect(createRocketLauncher(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 3)
+		collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 4)
+		collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
+}
+
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
-    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen(); }, false);
+    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {save_game(); }, false);
     createHelperText(renderer);
 }
 
@@ -1266,6 +1321,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (key == GLFW_KEY_K && action == GLFW_PRESS && debug)
 		{
 			clear_enemies();
+		}
+
+		if (key == GLFW_KEY_X && action == GLFW_PRESS)
+		{
+			save_game();
 		}
 
 		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing) {

@@ -121,6 +121,11 @@ private:
 	// restart level
 	void restart_game();
 
+	void save_game();
+
+	void load_game();
+
+	int save_weapon(Entity weapon);
 
     // creates pause gui
     void create_pause_screen();
