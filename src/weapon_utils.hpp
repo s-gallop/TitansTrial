@@ -8,6 +8,7 @@
 #include "common.hpp"
 #include "render_system.hpp"
 
+void initiate_weapons();
 void collect(Entity weapon, Entity hero);
 void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos);
 void update_equipment(float elapsed_ms, Entity hero);
