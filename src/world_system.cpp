@@ -269,6 +269,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	changeScore(points);
 
+	ddf = max(ddf, 0.f);
 	if (ddf < 100)
 		ddl = 0;
 	else if (ddf >= 100 && ddf < 200)
@@ -285,8 +286,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
 		db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
 		db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
-		current_enemy_spawning_speed = 0.0f;
-		current_spitter_spawning_speed = 0.0f;
+		current_enemy_spawning_speed = 0.f;
+		current_spitter_spawning_speed = 0.f;
+		current_ghoul_spawning_speed = 0.f;
 		clear_enemies();
 	}
 
@@ -994,7 +996,10 @@ void WorldSystem::handle_collisions()
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
 					Enemies& enemy = registry.enemies.get(entity_other);
 					enemy.health -= registry.weaponHitBoxes.get(entity).damage;
-
+					if (enemy.health <= 0) {
+						points += 10;
+						ddf += 5.f;
+					}
 					enemy.hittable = false;
 					enemy.hitting = false;
 					if (!registry.fireEnemies.has(entity_other))
@@ -1007,8 +1012,6 @@ void WorldSystem::handle_collisions()
 						explode(renderer, registry.motions.get(entity).position, entity);
 					registry.remove_all_components_of(entity);
 				}
-				++points;
-				ddf += 10.0f;
 			} else if (registry.blocks.has(entity_other) && (registry.bullets.has(entity) || registry.rockets.has(entity))) {
 				if (registry.rockets.has(entity))
 					explode(renderer, registry.motions.get(entity).position, entity);
@@ -1145,9 +1148,13 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 void WorldSystem::clear_enemies()
 {
 	std::vector<Entity> justKillThem = { };
-	for (uint i = 0; i < registry.enemies.size(); i++) justKillThem.push_back(registry.enemies.entities[i]);
-	for (uint i = 0; i < registry.spitterEnemies.size(); i++) justKillThem.push_back(registry.spitterEnemies.entities[i]);
-	for (uint i = 0; i < registry.spitterBullets.size(); i++) justKillThem.push_back(registry.spitterBullets.entities[i]);
+	for (uint i = 0; i < registry.enemies.size(); i++)
+	{
+		Entity enemy = registry.enemies.entities[i];
+		if (!registry.followingEnemies.has(enemy)) {
+			justKillThem.push_back(registry.enemies.entities[i]);
+		}
+	}
 	for (Entity e : justKillThem) registry.remove_all_components_of(e);
 }
 
