@@ -184,3 +184,6 @@ Entity createDifficultyBar(RenderSystem* renderer, vec2 pos);
 Entity createDifficultyIndicator(RenderSystem* renderer, vec2 pos);
 Entity createScore(RenderSystem* renderer, vec2 pos);
 Entity createNumber(RenderSystem* renderer, vec2 pos);
+Entity createDBFlame(RenderSystem* renderer, vec2 pos);
+Entity createDBSkull(RenderSystem* renderer, vec2 pos);
+Entity createDBSatan(RenderSystem* renderer, vec2 pos);

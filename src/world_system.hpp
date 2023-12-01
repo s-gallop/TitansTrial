@@ -50,14 +50,17 @@ const float HEART_Y_CORD = 20.f;
 const vec2 POWER_CORD = { 20.f, 60.f };
 const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
 const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
-const vec2 INDICATOR_LEVEL_ONE_CORD = { 105.f, 710.f };
-const vec2 INDICATOR_LEVEL_TWO_CORD = { 175.f, 710.f };
-const vec2 INDICATOR_END_CORD = { 245.f, 710.f };
-const float INDICATOR_VECLOCITY = 70.f / 130.f;
+const vec2 INDICATOR_LEVEL_ONE_CORD = { 85.f, 710.f };
+const vec2 INDICATOR_LEVEL_TWO_CORD = { 140.f, 710.f };
+const vec2 INDICATOR_LEVEL_THREE_CORD = { 195.f, 710.f };
+const vec2 INDICATOR_END_CORD = { 250.f, 710.f };
+const float INDICATOR_VECLOCITY = 55.f / 100.f;
 const vec2 SCORE_CORD = { 1050.f, 700.f };
 const float NUMBER_START_POS = 992.f;
 const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
+const vec2 DB_FLAME_CORD = { 145.f, 693.f };
+const vec2 DB_SATAN_CORD = { 140.f, 730.f };
 
 class WorldSystem
 {
@@ -114,11 +117,18 @@ private:
 	void on_mouse_move(vec2 pos);
     void on_mouse_click(int button, int action, int mods);
 
+	void clear_enemies();
+
 	void motion_helper(Motion& playerMotion);
 
 	// restart level
 	void restart_game();
 
+	void save_game();
+
+	void load_game();
+
+	int save_weapon(Entity weapon);
 
     // creates pause gui
     void create_pause_screen();

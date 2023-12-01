@@ -3,6 +3,7 @@
 #include "world_init.hpp"
 #include "physics_system.hpp"
 #include "ai_system.hpp"
+#include "json.hpp"
 
 // stlib
 #include <cassert>
@@ -10,6 +11,7 @@
 #include <bitset>
 #include <iostream>
 #include <map>
+#include <fstream>
 
 // Global Variables (?)
 vec2 mouse_pos = {0,0};
@@ -23,24 +25,40 @@ vec3 player_color;
 std::vector<std::vector<char>> grid_vec = create_grid();
 std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
+Entity difficulty_bar;
 Entity indicator;
 std::vector<Entity> score_GUI = { };
 std::vector<Entity> following_enemies = { };
+std::vector<Entity> db_decorator = { };
+
+json::JSON state;
 
 /* 
 * ddl = Dynamic Difficulty Level
-* (0 <= ddf < 139) -> (ddl = 0)
-* (130 <= ddf < 260) -> (ddl = 1)
-* (260 <= ddf <= MAX) -> (ddl = 2)
-* Now MAX is 390
+* (0 <= ddf < 100) -> (ddl = 0)
+* (100 <= ddf < 200) -> (ddl = 1)
+* (200 <= ddf < 300) -> (ddl = 2)
+* (300 <= ddf < 400) -> (ddl = 3)
+* As soon as ddf reaches 400, change to boss level (ddl = 4), const ddf = 499
+* When boss is defeated, ddl = 5, ddf increases from 500 to MAX_FLOAT
+* ddl still increases and change the hp of enemy (when implemented)
 */
 int ddl = 0; 
 
 /*
 * ddf = Dynamic Difficulty Factor
-* formula: (points * 10 + absolute_time / 1000)
+* 1000 ms increases 1 ddf (at ddl = 0-3, 5-INF)
+* Every enemy death increases 5(?) ddf
 */
 float ddf = 0.0f;
+
+// These booleans should control the dialogue when first reaching a new level
+bool zerow = false;
+bool onew = false;
+bool twow = false;
+bool threew = false;
+bool inBossLevel = false;
+bool inDialogue = false;
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -147,22 +165,23 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 
 void WorldSystem::create_title_screen() 
 {
-	glfwSetWindowTitle(window, "Titan's Trial");
-	ScreenState& screen = registry.screenStates.components[0];
-	screen.screen_darken_factor = 0;
-	isTitleScreen = true;
-	
-	pause = false;
-	
-	while (registry.motions.entities.size() > 0)
-		registry.remove_all_components_of(registry.motions.entities.back());
+	if (ddl != 4) {
+		glfwSetWindowTitle(window, "Titan's Trial");
+		ScreenState& screen = registry.screenStates.components[0];
+		screen.screen_darken_factor = 0;
+		isTitleScreen = true;
 
-    //these magic number are just the vertical position of where the buttons are
-	createTitleText(renderer, { window_width_px / 2, 150 });
-	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {restart_game(); });
-	createButton(renderer, {window_width_px / 2, 550}, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen();});
-	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
-	
+		pause = false;
+
+		while (registry.motions.entities.size() > 0)
+			registry.remove_all_components_of(registry.motions.entities.back());
+
+		//these magic number are just the vertical position of where the buttons are
+		createTitleText(renderer, { window_width_px / 2, 150 });
+		createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
+		createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
+		createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
+	}
 }
 
 void WorldSystem::create_almanac_screen() {
@@ -233,7 +252,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART;
 		}
 	}
-		
 
 	switch (registry.players.get(player_hero).equipment_type)
 	{
@@ -254,26 +272,46 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(powerup_GUI).visibility = false;
 	}
 
-	ddf = min(ddf + elapsed_ms_since_last_update / 1000.0f, 390.0f);
-	ddf = max(0.f, ddf);
-	if (ddf >= 260)
-		ddl = 2;
-	else if (ddf >= 130 && ddf < 260)
-		ddl = 1;
-	else
-		ddl = 0;
-	registry.motions.get(indicator).position[0] = 35.f + ddf * INDICATOR_VECLOCITY;
-
 	changeScore(points);
 
+	ddf = max(ddf, 0.f);
+	if (ddf < 100)
+		ddl = 0;
+	else if (ddf >= 100 && ddf < 200)
+		ddl = 1;
+	else if (ddf >= 200 && ddf < 300)
+		ddl = 2;
+	else if (ddf >= 300 && ddf < 400)
+		ddl = 3;
+	else if (ddf >= 400 && !inBossLevel)
+	{
+		ddl = 4;   // Change to boss level
+		inBossLevel = true;
+		registry.remove_all_components_of(indicator);
+		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
+		db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
+		db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
+		current_enemy_spawning_speed = 0.f;
+		current_spitter_spawning_speed = 0.f;
+		current_ghoul_spawning_speed = 0.f;
+		clear_enemies();
+	}
+
+	if (ddl == 4)
+		ddf = 499.0;
+	else if (!inDialogue)
+		ddf += elapsed_ms_since_last_update / 1000.f;
+	
+	if (ddl < 4)
+		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
+
 	// Updating window title
-	/*
+	
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
 	title_ss << "; Dynamic Difficulty Factor: " << ddf;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
-	*/
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -348,12 +386,18 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		current_ghoul_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 1.0f;
 	}
-	else
+	else if (ddl == 2)
+	{
+		current_enemy_spawning_speed = 1.2f;
+		current_spitter_spawning_speed = 1.5f;
+	}
+	else if (ddl == 3)
 	{
 		current_enemy_spawning_speed = 1.2f;
 		current_spitter_spawning_speed = 1.5f;
 		current_ghoul_spawning_speed = 1.0f;
 	}
+
 	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
 		Entity curHeart = player_hearts_GUI[i];
 		registry.renderRequests.get(curHeart).visibility = true;
@@ -823,9 +867,16 @@ void WorldSystem::restart_game()
 	motionKeyStatus.reset();
 	ddl = 0;
 	ddf = 0.0f;
+	zerow = false;
+	onew = false;
+	twow = false;
+	threew = false;
+	inBossLevel = false;
+	inDialogue = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
+	db_decorator.clear();
 
 	create_inGame_GUIs();
 
@@ -873,9 +924,60 @@ void WorldSystem::restart_game()
 	}*/
 }
 
+void WorldSystem::save_game() {
+	state = {
+		"ddl", ddl,
+		"hp", registry.players.get(player_hero).hp,
+		"weapon", save_weapon(registry.players.get(player_hero).weapon),
+	};
+	std::ofstream out("game_save.json");
+	out << state;
+	out.close();
+	create_title_screen();
+}
+
+int WorldSystem::save_weapon(Entity weapon) {
+	if (registry.swords.has(weapon))
+		return 0;
+	else if (registry.guns.has(weapon))
+		return 1;
+	else if (registry.rocketLaunchers.has(weapon))
+		return 2;
+	else if (registry.grenadeLaunchers.has(weapon))
+		return 3;
+	else if (registry.laserRifles.has(weapon))
+		return 4;
+	else
+		return -1;
+}
+
+void WorldSystem::load_game() {
+	restart_game();
+	std::ifstream in("game_save.json");
+	std::stringstream buffer;
+	buffer << in.rdbuf();
+	std::string jsonString = buffer.str();
+	state = json::JSON::Load(jsonString);
+
+	ddf = state["ddl"].ToInt() * 100;
+	Player& player = registry.players.get(player_hero);
+	player.hp = state["hp"].ToInt();
+	int weapon = state["weapon"].ToInt();
+	if (weapon == 0)
+		collect(createSword(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 1)
+		collect(createGun(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 2)
+		collect(createRocketLauncher(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 3)
+		collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
+	else if (weapon == 4)
+		collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
+}
+
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
-    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen(); }, false);
+    createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {save_game(); }, false);
     createHelperText(renderer);
 }
 
@@ -902,7 +1004,7 @@ void WorldSystem::create_inGame_GUIs() {
 		heartPosition += HEART_GAP;
 	}
 	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
-	createDifficultyBar(renderer, DIFF_BAR_CORD);
+	difficulty_bar = createDifficultyBar(renderer, DIFF_BAR_CORD);
 	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
 	createScore(renderer, SCORE_CORD);
 	float numberPosition = NUMBER_START_POS;
@@ -977,7 +1079,10 @@ void WorldSystem::handle_collisions()
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
 					Enemies& enemy = registry.enemies.get(entity_other);
 					enemy.health -= registry.weaponHitBoxes.get(entity).damage;
-
+					if (enemy.health <= 0) {
+						points += 10;
+						ddf += 5.f;
+					}
 					enemy.hittable = false;
 					enemy.hitting = false;
 					if (!registry.fireEnemies.has(entity_other))
@@ -1130,6 +1235,19 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 	}
 }
 
+void WorldSystem::clear_enemies()
+{
+	std::vector<Entity> justKillThem = { };
+	for (uint i = 0; i < registry.enemies.size(); i++)
+	{
+		Entity enemy = registry.enemies.entities[i];
+		if (!registry.followingEnemies.has(enemy)) {
+			justKillThem.push_back(registry.enemies.entities[i]);
+		}
+	}
+	for (Entity e : justKillThem) registry.remove_all_components_of(e);
+}
+
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
@@ -1238,13 +1356,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 		if (key == GLFW_KEY_K && action == GLFW_PRESS && debug)
 		{
-			std::vector<Entity> justKillThem = { };
-			for (uint i = 0; i < registry.enemies.size(); i++) justKillThem.push_back(registry.enemies.entities[i]);
-			for (uint i = 0; i < registry.ghouls.size(); i++) justKillThem.push_back(registry.ghouls.entities[i]);
-			for (uint i = 0; i < registry.followingEnemies.size(); i++) justKillThem.push_back(registry.followingEnemies.entities[i]);
-			for (uint i = 0; i < registry.spitterEnemies.size(); i++) justKillThem.push_back(registry.spitterEnemies.entities[i]);
-			for (uint i = 0; i < registry.spitterBullets.size(); i++) justKillThem.push_back(registry.spitterBullets.entities[i]);
-			for (Entity e : justKillThem) registry.remove_all_components_of(e);
+			clear_enemies();
+		}
+
+		if (key == GLFW_KEY_X && action == GLFW_PRESS)
+		{
+			save_game();
 		}
 
 		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing) {
@@ -1270,18 +1387,27 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	{
 		debug = !debug;
 	}
-
-	// Control the current speed with `<` `>`
 	
-	if (key == GLFW_KEY_COMMA && action == GLFW_RELEASE && debug)
+	if (key == GLFW_KEY_COMMA && action == GLFW_RELEASE && debug && ddl < 4)
 	{
-		ddf -= 130;
+		ddf -= 100;
 	}
-	if (key == GLFW_KEY_PERIOD && action == GLFW_RELEASE && debug)
+	if (key == GLFW_KEY_PERIOD && action == GLFW_RELEASE && debug && ddl != 4)
 	{
-		ddf += 130;
+		ddf += 100;
 	}
-	current_speed = fmax(0.f, current_speed);
+
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && inBossLevel) {
+		ddf = 500;
+		ddl = 5;
+		for (Entity decorator : db_decorator) {
+			registry.remove_all_components_of(decorator);
+		}
+		db_decorator.clear();
+		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
+		registry.motions.get(difficulty_bar).position[1] = 730.f;
+		db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+	}
 	
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
 		toggle_mute_music();
