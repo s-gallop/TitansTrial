@@ -27,6 +27,7 @@ const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
 const size_t MAX_FIRE_ENEMIES = 10;
+const size_t MAX_BOULDERS = 2;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_GHOULS = 1;
 const size_t MAX_SPITTERS = 3;
@@ -87,6 +88,8 @@ public:
 
 	// spawn normal enemies (refactor)
 	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
+
+	void spawn_boulder(float elapsed_ms_since_last_update);
 
 	// spawn ghoul enemies (refactor)
 	void spawn_move_ghouls(float elapsed_ms_since_last_update);

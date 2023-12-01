@@ -12,6 +12,7 @@ const float CHARACTER_SCALING = 3.0f;
 const float EXPLOSION_SCALING = 2.0f;
 
 const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
+const vec2 BOULDER_BB = vec2(15.f, 14.f);
 const vec2 SWORD_BB = vec2(21.f, 50.f);
 const vec2 GUN_BB = vec2(32.f, 32.f);
 const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
@@ -128,6 +129,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
 Entity createFireEnemy(RenderSystem *renderer, vec2 position);
+Entity createBoulder(RenderSystem *renderer, vec2 position, vec2 velocity, float size);
 // the ghoul enemy
 Entity createGhoul(RenderSystem* renderer, vec2 position);
 // the following & teleporting enemy
