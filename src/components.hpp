@@ -64,7 +64,7 @@ struct Enemies
 	bool hittable = true;
 	bool hitting = true;
 
-	int health = 2;
+	int health = 5;
 	int hit_animation = -2;
 	
 	int death_animation = -2;
