@@ -131,9 +131,12 @@ GLFWwindow *WorldSystem::create_window()
 	{ ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_move({_0, _1}); };
     auto cursor_click_redirect = [](GLFWwindow *wnd, int _0, int _1, int _2)
     { ((WorldSystem *)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
+	auto window_close_redirect = [](GLFWwindow* wnd)
+	{ ((WorldSystem*)glfwGetWindowUserPointer(wnd))->save_game(); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
     glfwSetMouseButtonCallback(window, cursor_click_redirect);
+	glfwSetWindowCloseCallback(window, window_close_redirect);
 
 	// Initialize all sound
 	if (init_sound())
@@ -375,13 +378,14 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 	else if (ddl == 1)
 	{
-		current_enemy_spawning_speed = 1.2f;
-		current_ghoul_spawning_speed = 10.0f;
+		current_enemy_spawning_speed = 1.0f;
+		current_ghoul_spawning_speed = 0.8f;
 		current_spitter_spawning_speed = 1.0f;
 	}
 	else if (ddl == 2)
 	{
-		current_enemy_spawning_speed = 1.2f;
+		current_enemy_spawning_speed = 1.0f;
+		current_ghoul_spawning_speed = 1.0f;
 		current_spitter_spawning_speed = 1.5f;
 	}
 	else if (ddl == 3)
