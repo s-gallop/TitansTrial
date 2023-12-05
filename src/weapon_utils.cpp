@@ -470,6 +470,7 @@ void check_dash_boots(Entity hero, uint direction) {
 			play_sound(SOUND_EFFECT::DASH);
             AnimationInfo& info = registry.animated.get(hero);
             info.oneTimeState = 5;
+			info.oneTimer = 0;
 		} else {
 			dash_direction = direction;
 			dash_window = DASH_WINDOW;
