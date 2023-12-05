@@ -377,7 +377,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	if (ddl == 0)
 	{
 		current_enemy_spawning_speed = 1.0f;
-		current_spitter_spawning_speed = 5.0f;
+		current_spitter_spawning_speed = 0.0f;
 		current_ghoul_spawning_speed = 0.0f;
 	}
 	else if (ddl == 1)
@@ -407,9 +407,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.renderRequests.get(curHeart).visibility = false;
 	}
 
-	/*spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_move_normal_enemies(elapsed_ms_since_last_update);
 	spawn_boulder(elapsed_ms_since_last_update);
-	spawn_move_ghouls(elapsed_ms_since_last_update);*/
+	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 	update_graphics_all_enemies();
