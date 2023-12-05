@@ -147,6 +147,9 @@ void RenderSystem::initializeCollisionMeshes()
 			collisionMeshes[(int)geom_index].vertices,
 			collisionMeshes[(int)geom_index].edges,
 			collisionMeshes[(int)geom_index].original_size);
+		if (geom_index == GEOMETRY_BUFFER_ID::SPRITE) {
+			collisionMeshes[(int)geom_index].is_sprite = true;
+		}
 	}
 }
 

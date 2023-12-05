@@ -32,7 +32,8 @@ class RenderSystem
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> collision_mesh_paths = 
 	{
 		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite_hull.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj"))
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::CIRCLE, mesh_path("circle_hull.obj"))
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -40,6 +41,7 @@ class RenderSystem
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
 		textures_path("fire_enemy.png"),
+		textures_path("boulder.png"),
 		textures_path("ghoul.png"),
 		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),

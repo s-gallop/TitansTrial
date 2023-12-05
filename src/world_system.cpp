@@ -416,6 +416,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.remove_all_components_of(motion_container.entities[i]);
 		else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
 			registry.remove_all_components_of(motion_container.entities[i]);
+		else if (registry.boulders.has(motion_container.entities[i]) && motion.position.y > window_height_px + motion.scale.y)
+			registry.remove_all_components_of(motion_container.entities[i]);
 	}
 
 	if (registry.players.get(player_hero).hasWeapon)
@@ -458,6 +460,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	spawn_move_normal_enemies(elapsed_ms_since_last_update);
+	spawn_boulder(elapsed_ms_since_last_update);
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
@@ -565,6 +568,9 @@ void WorldSystem::update_graphics_all_enemies()
 	for (Entity entity: registry.enemies.entities)
 	{ 
 		Enemies& enemy = registry.enemies.get(entity);
+		
+		if (!registry.animated.has(entity))
+			continue;
 		AnimationInfo& animation = registry.animated.get(entity);
 
 		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
@@ -633,6 +639,28 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
 		float direction = testAI.departFromRight ? -1.0 : 1.0;
 		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
+	}
+}
+
+void WorldSystem::spawn_boulder(float elapsed_ms_since_last_update) {
+	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
+	if (registry.boulders.components.size() < MAX_BOULDERS && next_enemy_spawn < 0.f) {
+		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		srand(time(0));
+		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+		float x_speed = 50 + 100 * uniform_dist(rng);
+		x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
+		float size = 3 + uniform_dist(rng);
+		createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
+	}
+
+	for (Entity boulder: registry.boulders.entities) {
+		Motion& motion = registry.motions.get(boulder);
+		if (motion.velocity.x > 0) {
+			motion.angle += M_PI / 64;
+		} else if (motion.velocity.x < 0) {
+			motion.angle -= M_PI / 64;
+		}
 	}
 }
 
@@ -1276,7 +1304,7 @@ void WorldSystem::handle_collisions()
 		{
 			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
 			{
-				if (registry.enemies.has(entity_other)) {
+				if (registry.enemies.has(entity_other) && !registry.boulders.has(entity_other)) {
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
 					Enemies& enemy = registry.enemies.get(entity_other);
 					enemy.health -= registry.weaponHitBoxes.get(entity).damage;
@@ -1288,13 +1316,21 @@ void WorldSystem::handle_collisions()
 					enemy.hitting = false;
 					if (!registry.fireEnemies.has(entity_other))
 						registry.motions.get(entity_other).dir = registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x ? -1 : 1;
-					registry.animated.get(entity_other).oneTimeState = enemy.health <= 0 ? enemy.death_animation : enemy.hit_animation;
+					if (enemy.health <= 0) {
+						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+						++points;
+						ddf += 10.0f;
+					} else {
+					 	registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
+					}
 				}
 				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
 					if (registry.rockets.has(entity) || registry.grenades.has(entity))
 						explode(renderer, registry.motions.get(entity).position, entity);
 					registry.remove_all_components_of(entity);
+				} else if (registry.explosions.has(entity) && registry.boulders.has(entity_other)) {
+					registry.remove_all_components_of(entity_other);
 				}
 			} else if (registry.blocks.has(entity_other) && (registry.bullets.has(entity) || registry.rockets.has(entity))) {
 				if (registry.rockets.has(entity))
@@ -1328,43 +1364,38 @@ void WorldSystem::handle_collisions()
 						solid_motion.position.x = block_motion.position.x + scale1.x + scale2.x;
 					}
 				}
-
-				if (registry.ghouls.has(entity_other)) {
-					int a = 1;
-				}
-				// if (registry.players.has(entity_other)) {
-					if ((solid_motion.position.y <= block_motion.position.y - block_motion.scale.y / 2.f - solid_motion.scale.y / 2.f)) {
-						if (registry.players.has(entity_other)) {
-							registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
-						} else if (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).left_x == -1.f) {
-							registry.enemies.get(entity_other).hittable = true;
-							registry.enemies.get(entity_other).hitting = true;
-							registry.animated.get(entity_other).oneTimeState = 5;
-							registry.colors.insert(entity_other, {1, .8f, .8f});
-							registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
-							registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
-						}
-					} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2.f - solid_motion.scale.x / 2.f) {
-						if (registry.players.has(entity_other) && motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
-							use_pickaxe(player_hero, 0, MAX_JUMPS);
-						} else if (registry.ghouls.has(entity_other)) {
-							registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
-							registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
-						}
-					} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2.f + solid_motion.scale.x / 2.f) {
-						if (registry.players.has(entity_other) && motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
-							use_pickaxe(player_hero, 1, MAX_JUMPS);
-						} else if (registry.ghouls.has(entity_other)) {
-							registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
-							registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
-						}
+				if ((solid_motion.position.y <= block_motion.position.y - block_motion.scale.y / 2.f - solid_motion.scale.y / 2.f)) {
+					if (registry.players.has(entity_other)) {
+						registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
+					} else if (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).left_x == -1.f) {
+						registry.enemies.get(entity_other).hittable = true;
+						registry.enemies.get(entity_other).hitting = true;
+						registry.animated.get(entity_other).oneTimeState = 5;
+						registry.colors.insert(entity_other, {1, .8f, .8f});
+						registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
+						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
 					}
-				// }
+				} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2.f - solid_motion.scale.x / 2.f) {
+					if (registry.players.has(entity_other) && motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
+						use_pickaxe(player_hero, 0, MAX_JUMPS);
+					} else if (registry.ghouls.has(entity_other)) {
+						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
+						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					}
+				} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2.f + solid_motion.scale.x / 2.f) {
+					if (registry.players.has(entity_other) && motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
+						use_pickaxe(player_hero, 1, MAX_JUMPS);
+					} else if (registry.ghouls.has(entity_other)) {
+						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
+						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					}
+				}
 			} 
 			else if (registry.projectiles.has(entity_other))
 			{
 				Motion& block_motion = registry.motions.get(entity);
 				Motion& projectile_motion = registry.motions.get(entity_other);
+				Projectile& projectile = registry.projectiles.get(entity_other);
 				vec2 scale1 = vec2({abs(block_motion.scale.x), abs(block_motion.scale.y)}) / 2.f;
 				vec2 scale2 = vec2({abs(projectile_motion.scale.x), abs(projectile_motion.scale.y)}) / 2.f;
 				float vCollisionDepth = (scale1.y + scale2.y) - abs(projectile_motion.position.y - block_motion.position.y);
@@ -1376,7 +1407,7 @@ void WorldSystem::handle_collisions()
 					projectile_motion.velocity.x = -projectile_motion.velocity.x;
 					projectile_motion.position.x += hCollisionDepth * (projectile_motion.position.x < block_motion.position.x ? -1 : 1);
 				}
-				projectile_motion.velocity *= projectile_motion.friction;
+				projectile_motion.velocity = vec2(projectile_motion.velocity.x * projectile.friction_x, projectile_motion.velocity.y * projectile.friction_y);
 			} 
 		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
 			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
@@ -1401,6 +1432,10 @@ void WorldSystem::handle_collisions()
 				motion.angle = M_PI / 2;
 				motion.velocity = vec2(0, 100);
 				registry.colors.get(player_hero) = vec3(1, 0, 0);
+			} else if (registry.boulders.has(entity_other)) {
+				registry.gravities.remove(entity_other);
+				registry.motions.get(entity_other).velocity = {0, 50};
+				registry.enemies.get(entity_other).hitting = false;
 			}
 		}
 	}
@@ -1504,7 +1539,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_2 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-
+				next_enemy_spawn = -1.0;
+				spawn_boulder(0);
 			} else {
 				createGun(renderer, registry.motions.get(player_hero).position);
 			}
