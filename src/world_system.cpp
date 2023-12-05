@@ -691,8 +691,11 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		//printf("Position: %f\n", enemy_motion.position.x);
 		if (enemy_motion.velocity.y != 0.f) {
 			animation.oneTimeState = BLANK_STATE;
+			animation.oneTimer = 0;
 		} 
 		else if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
+			registry.enemies.get(enemy).hittable = true;
+			registry.enemies.get(enemy).hitting = true;
 			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
 			direction = direction / abs(direction);
 			enemy_motion.velocity.x = direction * GHOUL_SPEED * current_speed;
@@ -758,6 +761,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 			 else if (enemy_reg.path.size() != 0)
 			{
 				animation.oneTimeState = PHASE_IN_STATE;
+				animation.oneTimer = 0;
 				vec2 converted_pos = find_index_from_map(enemy_reg.path.back());
 				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
 				enemy_motion.position = converted_pos;
@@ -773,6 +777,7 @@ void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_updat
 		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
 			enemy_reg.next_blink_time = 100.f;
 			animation.oneTimeState = PHASE_OUT_STATE;
+			animation.oneTimer = 0;
 			//enemy_reg.hittable = false;
 			//enemies.hittable = false;
 			enemy_reg.blinked = false;
@@ -835,7 +840,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		//	animation.curState = 0;
 		//}
 
-        if ((int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
+        if (animation.oneTimeState == SHOOT_STATE && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
             float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
             if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
@@ -848,6 +853,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		{
 			// attack animation
             animation.oneTimeState = SHOOT_STATE;
+			animation.oneTimer = 0;
             spitterEnemy.canShoot = true;
 			// create bullet at same position as enemy
 
@@ -1313,15 +1319,13 @@ void WorldSystem::handle_collisions()
 					if (!registry.fireEnemies.has(entity_other))
 						registry.motions.get(entity_other).dir = registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x ? -1 : 1;
 					if (enemy.health <= 0) {
-						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 						points += 10;
-						if (ddl != 4)
-						{
-							ddf += 5.f;
-						}
+						ddf += 5.f;
+						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 					} else {
-					 	registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
+						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
 					}
+					registry.animated.get(entity_other).oneTimer = 0;
 				}
 				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
@@ -1363,13 +1367,13 @@ void WorldSystem::handle_collisions()
 						solid_motion.position.x = block_motion.position.x + scale1.x + scale2.x;
 					}
 				}
+
 				if ((solid_motion.position.y <= block_motion.position.y - block_motion.scale.y / 2.f - solid_motion.scale.y / 2.f)) {
 					if (registry.players.has(entity_other)) {
 						registry.players.get(entity_other).jumps = MAX_JUMPS + (registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::WINGED_BOOTS ? 1 : 0);
 					} else if (registry.ghouls.has(entity_other) && registry.ghouls.get(entity_other).left_x == -1.f) {
-						registry.enemies.get(entity_other).hittable = true;
-						registry.enemies.get(entity_other).hitting = true;
 						registry.animated.get(entity_other).oneTimeState = 5;
+						registry.animated.get(entity_other).oneTimer = 0;
 						registry.colors.insert(entity_other, {1, .8f, .8f});
 						registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
