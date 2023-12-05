@@ -61,6 +61,7 @@ struct Boss
     BOSS_STATE state = BOSS_STATE::SIZE;
     int phase = 0;
     int hp = 10;
+    std::vector<Entity> hurt_boxes;
 };
 
 struct Block
@@ -188,6 +189,8 @@ struct WeaponHitBox
 	bool soundPlayed = false;
 	bool isActive = true;
 	int damage = 1;
+    bool hurtsEnemy = true;
+    bool hurtsHero = false;
 };
 
 // All data relevant to the shape and motion of entities

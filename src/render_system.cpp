@@ -351,6 +351,9 @@ void RenderSystem::draw(bool pause, bool debug)
     if (debug) {
         for (Entity entity : registry.debugRenderRequests.entities)
         {
+            if (registry.weaponHitBoxes.has(entity) && !registry.weaponHitBoxes.get(entity).isActive) {
+                continue;
+            }
             drawTexturedMesh(entity, projection_2D, pause, true);
         }
     }

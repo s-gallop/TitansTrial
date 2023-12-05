@@ -284,7 +284,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			// STUB
 			printf("\nLv0\n");
 		}
-	}	
+	}
 	else if (ddf >= 100 && ddf < 200 && ddl != 1)
 	{
 		ddl = 1;
@@ -346,7 +346,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	state["history_max_ddf"] = max((float) state["history_max_ddf"].ToFloat(), ddf);
 	points = (points > (unsigned int) INT_MAX) ? INT_MAX : points;
 	state["history_max_score"] = max((int) state["history_max_score"].ToInt(), (int) points);
-	
+
 	if (ddl < 4)
 		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
 
@@ -396,7 +396,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		ddf += elapsed_ms_since_last_update / 1000.f;
 
 	// Updating window title
-	
+
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
@@ -523,7 +523,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-	
+
 	return true;
 }
 
@@ -584,7 +584,7 @@ void WorldSystem::update_graphics_all_enemies()
 	for (Entity entity: registry.enemies.entities)
 	{ 
 		Enemies& enemy = registry.enemies.get(entity);
-		
+
 		if (!registry.animated.has(entity))
 			continue;
 		AnimationInfo& animation = registry.animated.get(entity);
@@ -708,7 +708,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		if (enemy_motion.velocity.y != 0.f) {
 			animation.oneTimeState = BLANK_STATE;
 			animation.oneTimer = 0;
-		} 
+		}
 		else if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
 			registry.enemies.get(enemy).hittable = true;
 			registry.enemies.get(enemy).hitting = true;
@@ -945,6 +945,9 @@ void WorldSystem::boss_action_swipe(float elapsed_ms){
     AnimationInfo& info = registry.animated.get(boss);
     if (boss_state.phase == 0) {
         info.oneTimeState = SWIPE;
+        for (auto hurt_box : boss_state.hurt_boxes) {
+            registry.motions.get(hurt_box).position = registry.motions.get(boss).position;
+        }
         boss_state.phase++;
     } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
         boss_state.phase = 0;
@@ -953,11 +956,13 @@ void WorldSystem::boss_action_swipe(float elapsed_ms){
     Motion& motion = registry.motions.get(boss);
     int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
     if (frame == 1) {
-        motion.scale.x = boss_x*6;
+        registry.weaponHitBoxes.get(boss_state.hurt_boxes[0]).isActive = true;
     } else if (frame == 3) {
-        motion.scale.x = boss_x*7;
+        registry.weaponHitBoxes.get(boss_state.hurt_boxes[1]).isActive = true;
     } else {
-        motion.scale.x = boss_x;
+        for (auto hurt_box : boss_state.hurt_boxes) {
+            registry.weaponHitBoxes.get(hurt_box).isActive = false;
+        }
     }
 }
 void WorldSystem::boss_action_summon(float elapsed_ms){
@@ -993,7 +998,7 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
 
-    //boss = createBossEnemy(renderer, { 100, 200 });
+    boss = createBossEnemy(renderer, { 100, 200 });
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
@@ -1020,7 +1025,7 @@ void WorldSystem::restart_game()
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();
 
-	
+
 
 	//testing screen dimensions
 	/*for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
@@ -1343,7 +1348,11 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive) || registry.spitterBullets.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((
+                    (registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) ||
+                    (registry.weaponHitBoxes.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive && registry.weaponHitBoxes.get(entity_other).hurtsHero) ||
+                    registry.spitterBullets.has(entity_other)
+                ) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -1385,7 +1394,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive && registry.weaponHitBoxes.get(entity).hurtsEnemy)
 			{
 				if (registry.enemies.has(entity_other) && !registry.boulders.has(entity_other)) {
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);

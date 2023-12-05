@@ -123,7 +123,6 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     // Setting initial values, scale is negative to make it face the opposite way
-    motion.velocity = vec2(0.0, 0.0);
     motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS);
     motion.position = getRandomWalkablePos(motion.scale, 1, false);
     motion.dir = -1;
@@ -146,7 +145,54 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
              SPRITE_OFFSET.at(TEXTURE_ASSET_ID::BOSS) });
 
     registry.debugRenderRequests.emplace(entity);
-    registry.boss.emplace(entity);
+    auto &bossState = registry.boss.emplace(entity);
+
+
+    auto hb1 = Entity();
+    auto hb2 = Entity();
+    auto &motion1 = registry.motions.emplace(hb1);
+    motion1.scale = vec2(480, 40);
+    motion1.position = motion.position;
+    motion1.positionOffset = vec2(0,55);
+    auto &motion2 = registry.motions.emplace(hb2);
+    motion2.scale = vec2(560, 40);
+    motion2.position = motion.position;
+    motion2.positionOffset = vec2(0,15);
+    registry.weaponHitBoxes.insert(hb1, {
+        false,
+        true,
+        1,
+        false,
+        true
+    });
+    registry.weaponHitBoxes.insert(hb2, {
+            false,
+            true,
+            1,
+            false,
+            true
+    });
+    registry.renderRequests.insert(
+            hb1,
+            {TEXTURE_ASSET_ID::LINE,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             true,
+             false,
+             motion1.scale});
+    registry.renderRequests.insert(
+            hb2,
+            {TEXTURE_ASSET_ID::LINE,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             true,
+             false,
+             motion2.scale});
+    registry.debugRenderRequests.emplace(hb1);
+    registry.debugRenderRequests.emplace(hb2);
+    bossState.hurt_boxes = {hb1, hb2};
+
+
 
     return entity;
 }
@@ -670,8 +716,9 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	motion.scale = size * ASSET_SIZE.at(TEXTURE_ASSET_ID::EXPLOSION);
 
 	registry.explosions.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
-	
+	auto &hitbox = registry.weaponHitBoxes.emplace(entity);
+	hitbox.hurtsHero = true;
+
 	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
 	info.oneTimeState = 0;
 

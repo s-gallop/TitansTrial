@@ -20,8 +20,8 @@ bool check_collision_conditions(Entity entity_i, Entity entity_j) {
     if (registry.players.has(entity_i)) {
         if (registry.enemies.has(entity_j) ||
             registry.spitterBullets.has(entity_j) ||
-            registry.explosions.has(entity_j) ||
-            registry.collectables.has(entity_j))
+            registry.collectables.has(entity_j) ||
+            registry.weaponHitBoxes.has(entity_j))
         {
             return true;
         }
