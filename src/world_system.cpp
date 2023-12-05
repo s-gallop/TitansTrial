@@ -345,34 +345,40 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	switch (ddl)
 	{
 		case 0:
-			current_enemy_spawning_speed = 0.8f;
+			current_enemy_spawning_speed = 1.0f;
 			current_spitter_spawning_speed = 0.0f;
 			current_ghoul_spawning_speed = 0.0f;
+			current_boulder_spawning_speed = 0.0f;
 			break;
 		case 1:
-			current_enemy_spawning_speed = 1.0f;
+			current_enemy_spawning_speed = 0.5f;
 			current_ghoul_spawning_speed = 0.5f;
 			current_spitter_spawning_speed = 0.0f;
+			current_boulder_spawning_speed = 0.5f;
 			break;
 		case 2:
-			current_enemy_spawning_speed = 0.8f;
-			current_ghoul_spawning_speed = 0.8f;
-			current_spitter_spawning_speed = 0.5f;
+			current_enemy_spawning_speed = 0.0f;
+			current_ghoul_spawning_speed = 0.0f;
+			current_spitter_spawning_speed = 1.0f;
+			current_boulder_spawning_speed = 1.0f;
 			break;
 		case 3:
-			current_enemy_spawning_speed = 0.8f;
-			current_ghoul_spawning_speed = 0.8f;
+			current_enemy_spawning_speed = 0.0f;
+			current_ghoul_spawning_speed = 1.0f;
 			current_spitter_spawning_speed = 1.0f;
+			current_boulder_spawning_speed = 0.0f;
 			break;
 		case 4:
 			current_enemy_spawning_speed = 0.0f;
 			current_ghoul_spawning_speed = 0.0f;
 			current_spitter_spawning_speed = 0.0f;
+			current_boulder_spawning_speed = 0.0f;
 			break;
 		default:
 			current_enemy_spawning_speed = 1.0f;
 			current_ghoul_spawning_speed = 1.0f;
 			current_spitter_spawning_speed = 1.0f;
+			current_boulder_spawning_speed = 1.0f;
 			break;
 	}
 
@@ -896,9 +902,10 @@ void WorldSystem::restart_game()
 	current_enemy_spawning_speed = 0.f;
 	current_spitter_spawning_speed = 0.f;
 	points = 0;
-	next_enemy_spawn = 0.f;
-	next_ghoul_spawn = 0.f;
-	next_spitter_spawn = 0.f;
+	next_enemy_spawn = ENEMY_DELAY_MS / 2;
+	next_boulder_spawn = ENEMY_DELAY_MS / 2;
+	next_ghoul_spawn = ENEMY_DELAY_MS / 2;
+	next_spitter_spawn = SPITTER_SPAWN_DELAY_MS / 2;
 
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all, ... but that would be more cumbersome
@@ -996,9 +1003,10 @@ void WorldSystem::save_game() {
 			"player_y", registry.motions.get(player_hero).position.y,
 			"weapon", save_weapon(registry.players.get(player_hero).weapon),
 			"fire_enemy", json::Array(),
+			"ghoul", json::Array(),
 			"spitter", json::Array(),
 			"spitter_bullet", json::Array(),
-			"ghoul", json::Array(),
+			"boulder", json::Array(),
 		};
 
 		for (Entity fire_enemy : registry.fireEnemies.entities)
@@ -1015,6 +1023,21 @@ void WorldSystem::save_game() {
 				"from_right", registry.testAIs.get(fire_enemy).departFromRight,
 			};
 			state["fire_enemy"].append(sfes);
+		}
+
+		for (Entity ghoul : registry.ghouls.entities)
+		{
+			json::JSON sgs = json::Object();   // single_ghoul_save
+			sgs =
+			{
+				"hp", registry.enemies.get(ghoul).health,
+				"x_pos", registry.motions.get(ghoul).position.x,
+				"y_pos", registry.motions.get(ghoul).position.y,
+				"x_v", registry.motions.get(ghoul).velocity.x,
+				"y_v", registry.motions.get(ghoul).velocity.y,
+				"dir", registry.motions.get(ghoul).dir,
+			};
+			state["ghoul"].append(sgs);
 		}
 
 		for (Entity spitter : registry.spitterEnemies.entities)
@@ -1051,19 +1074,21 @@ void WorldSystem::save_game() {
 			state["spitter_bullet"].append(ssbs);
 		}
 
-		for (Entity ghoul : registry.ghouls.entities)
+		for (Entity boulder : registry.boulders.entities)
 		{
-			json::JSON sgs = json::Object();   // single_ghoul_save
-			sgs =
+			json::JSON sbs = json::Object();   // single_boulder_save
+			sbs =
 			{
-				"hp", registry.enemies.get(ghoul).health,
-				"x_pos", registry.motions.get(ghoul).position.x,
-				"y_pos", registry.motions.get(ghoul).position.y,
-				"x_v", registry.motions.get(ghoul).velocity.x,
-				"y_v", registry.motions.get(ghoul).velocity.y,
-				"dir", registry.motions.get(ghoul).dir,
+				"x_pos", registry.motions.get(boulder).position.x,
+				"y_pos", registry.motions.get(boulder).position.y,
+				"x_v", registry.motions.get(boulder).velocity.x,
+				"y_v", registry.motions.get(boulder).velocity.y,
+				"scale_x", registry.motions.get(boulder).scale.x,
+				"scale_y", registry.motions.get(boulder).scale.y,
+				"angle", registry.motions.get(boulder).angle,
+				"hitting", registry.enemies.get(boulder).hitting,
 			};
-			state["ghoul"].append(sgs);
+			state["boulder"].append(sbs);
 		}
 
 		std::ofstream out("game_save.json");
@@ -1152,6 +1177,22 @@ void WorldSystem::load_game() {
 			}
 		}
 
+		for (int i = 0; i < state["ghoul"].size(); i++)
+		{
+			json::JSON sg = state["ghoul"][i];
+			if (!sg["hp"].ToInt() <= 0)
+			{
+				Entity ng = createGhoul(renderer, { sg["x_pos"].ToFloat(), sg["y_pos"].ToFloat() });
+				Enemies& ng_basic = registry.enemies.get(ng);
+				ng_basic.health = sg["hp"].ToInt();
+				ng_basic.hittable = true;
+				ng_basic.hitting = true;
+				Motion& ng_mo = registry.motions.get(ng);
+				ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
+				ng_mo.dir = { sg["dir"].ToInt() };
+			}
+		}
+
 		for (int i = 0; i < state["spitter"].size(); i++)
 		{
 			json::JSON ss = state["spitter"][i];
@@ -1181,20 +1222,13 @@ void WorldSystem::load_game() {
 			nsb_mo.velocity = { ssb["x_v"].ToFloat(), ssb["y_v"].ToFloat() };
 		}
 
-		for (int i = 0; i < state["ghoul"].size(); i++)
+		for (int i = 0; i < state["boulder"].size(); i++)
 		{
-			json::JSON sg = state["ghoul"][i];
-			if (!sg["hp"].ToInt() <= 0)
-			{
-				Entity ng = createGhoul(renderer, { sg["x_pos"].ToFloat(), sg["y_pos"].ToFloat() });
-				Enemies& ng_basic = registry.enemies.get(ng);
-				ng_basic.health = sg["hp"].ToInt();
-				ng_basic.hittable = true;
-				ng_basic.hitting = true;
-				Motion& ng_mo = registry.motions.get(ng);
-				ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
-				ng_mo.dir = { sg["dir"].ToInt() };
-			}
+			json::JSON sb = state["boulder"][i];
+			Entity nb = createBoulder(renderer, { sb["x_pos"].ToFloat(), sb["y_pos"].ToFloat() }, { sb["x_v"].ToFloat(), sb["y_v"].ToFloat() }, 3.f);
+			registry.enemies.get(nb).hitting = sb["hitting"].ToBool();
+			Motion& nb_mo = registry.motions.get(nb);
+			nb_mo.scale = { sb["scale_x"].ToFloat(), sb["scale_y"].ToFloat() };
 		}
 
 		registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
@@ -1320,7 +1354,10 @@ void WorldSystem::handle_collisions()
 						registry.motions.get(entity_other).dir = registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x ? -1 : 1;
 					if (enemy.health <= 0) {
 						points += 10;
-						ddf += 5.f;
+						if (ddl != 4)
+						{
+							ddf += 5.f;
+						}
 						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
@@ -1593,7 +1630,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (key == GLFW_KEY_X && action == GLFW_PRESS)
 		{
-			save_game();
+			// save_game();
 		}
 
 		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing) {
@@ -1620,13 +1657,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		debug = !debug;
 	}
 	
-	if (key == GLFW_KEY_COMMA && action == GLFW_RELEASE && debug && ddl < 4)
+	if (key == GLFW_KEY_COMMA && action == GLFW_RELEASE && debug)
 	{
-		ddf -= 100;
+		if (ddl < 4)
+		{
+			ddf = (ddl - 1) * 100;
+		}
 	}
-	if (key == GLFW_KEY_PERIOD && action == GLFW_RELEASE && debug && ddl != 4)
+	if (key == GLFW_KEY_PERIOD && action == GLFW_RELEASE && debug)
 	{
-		ddf += 100;
+		if (ddl != 4)
+		{
+			ddf = (ddl + 1) * 100;
+		}
 	}
 
 	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && ddl == 4) {
