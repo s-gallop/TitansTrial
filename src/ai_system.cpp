@@ -4,7 +4,7 @@
 #include <queue>
 #include <map>
 
-// 30 X 20 = last
+// 30 X 20 = last , 24 X 16
 const float WIDTH = 24.f;
 const float HEIGHT = 16.f;
 const vec2 next[] = { vec2(0,1), vec2(0,-1), vec2(1,0), vec2(-1,0) };
@@ -123,12 +123,12 @@ void bfs_follow_start(std::vector<std::vector<char>>& vec, vec2 pos_chase, vec2 
 
 	vec[pos_prey.x][pos_prey.y] = 'g';
 
-	//for (int i = 0; i < vec.size(); i++) {
-	//	for (int j = 0; j < vec[0].size(); j++) {
-	//		printf("%c", vec[i][j]);
-	//	}
-	//	printf("\n");
-	//} 
+	/*for (int i = 0; i < vec[0].size(); i++) {
+		for (int j = 0; j < vec.size(); j++) {
+			printf("%c", vec[j][i]);
+		}
+		printf("\n");
+	} */
 
 	registry.followingEnemies.get(chaser).path = bfs_follow_iter(vec, pos_chase, path);
 
@@ -262,12 +262,17 @@ void fill_grid(std::vector<std::vector<char>>& grid, vec2 pos, vec2 size) {
 	vec2 point_start = pos - (size / 2.f);
 	vec2 point_end = pos + (size / 2.f);
 
+	//printf("++Point start real: %f, %f_____Point end real: %f, %f\n", point_start.x, point_start.y, point_end.x, point_end.y);
+
 	point_start = find_map_index(point_start);
 	point_end = find_map_index(point_end);
 
-	for (int i = point_start.x; i < point_end.x; i++) {
-		for (int j = point_start.y; j < point_end.y; j++) {
+	//printf("Point start GRID: %f, %f_____Point end GRID: %f, %f\n", point_start.x, point_start.y, point_end.x, point_end.y);
+
+	for (int i = point_start.x; i <= point_end.x; i++) {
+		for (int j = point_start.y; j <= point_end.y; j++) {
 			grid[i][j] = 'b';
 		}
 	}
+
 }
