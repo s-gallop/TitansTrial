@@ -74,6 +74,10 @@ struct FireEnemy {
 
 };
 
+struct Boulder {
+
+};
+
 struct Ghoul
 {
 	float right_x = -1.f;
@@ -178,10 +182,7 @@ struct Motion
 	vec2 velocity = {0.f, 0.f};
 	vec2 scale = {10.f, 10.f};
 	vec2 positionOffset = {0.f, 0.f};
-	bool isSolid = false;
-	bool isProjectile = false;
 	int dir = 1;
-	float friction = 1.f;
 };
 
 struct Solid {
@@ -189,7 +190,8 @@ struct Solid {
 };
 
 struct Projectile {
-	float friction = 1.f;
+	float friction_x = 1.f;
+	float friction_y = 1.f;
 };
 
 // just for milestone 1 sudden requirement
@@ -292,6 +294,7 @@ struct CollisionMesh {
 	vec2 original_size = {1, 1};
 	std::vector<ColoredVertex> vertices;
 	std::vector<std::pair<int, int>> edges;
+	bool is_sprite = false;
 };
 
 /**
@@ -323,7 +326,8 @@ enum class TEXTURE_ASSET_ID
 	HERO = 0,
 	ENEMY = HERO + 1,
 	FIRE_ENEMY = ENEMY + 1,
-	GHOUL_ENEMY = FIRE_ENEMY + 1,
+	BOULDER = FIRE_ENEMY + 1,
+	GHOUL_ENEMY = BOULDER + 1,
 	FOLLOWING_ENEMY = GHOUL_ENEMY + 1,
 	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
@@ -384,7 +388,12 @@ enum class TEXTURE_ASSET_ID
 	SEVEN = SIX + 1,
 	EIGHT = SEVEN + 1,
 	NINE = EIGHT + 1,
-	TEXTURE_COUNT = NINE + 1
+	DIFFICULTY_BAR_BOSS = NINE + 1,
+	DB_BOSS_FLAME = DIFFICULTY_BAR_BOSS + 1,
+	DB_BOSS_SKULL = DB_BOSS_FLAME + 1,
+	DIFFICULTY_BAR_BROKEN = DB_BOSS_SKULL + 1,
+	DB_SATAN = DIFFICULTY_BAR_BROKEN + 1,
+	TEXTURE_COUNT = DB_SATAN + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -412,7 +421,8 @@ enum class GEOMETRY_BUFFER_ID
 {
 	SPRITE = 0,
 	BULLET = SPRITE + 1,
-	DEBUG_LINE = BULLET + 1,
+	CIRCLE = BULLET + 1,
+	DEBUG_LINE = CIRCLE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };

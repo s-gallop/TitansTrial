@@ -32,7 +32,8 @@ class RenderSystem
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> collision_mesh_paths = 
 	{
 		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite_hull.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj"))
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::CIRCLE, mesh_path("circle_hull.obj"))
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -40,6 +41,7 @@ class RenderSystem
 		textures_path("hero.png"),
 		textures_path("mock_enemy.png"),
 		textures_path("fire_enemy.png"),
+		textures_path("boulder.png"),
 		textures_path("ghoul.png"),
 		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
@@ -90,7 +92,7 @@ class RenderSystem
 		textures_path("pixel_heart.png"),
 		textures_path("pixel_heart_steel.png"),
 		textures_path("pixel_heart_heal.png"),
-		textures_path("difficulty_bar.png"),
+		textures_path("difficulty/difficulty_bar_new.png"),
 		textures_path("indicator.png"),
 		textures_path("scores/score.png"),
 		textures_path("scores/0.png"),
@@ -102,7 +104,12 @@ class RenderSystem
 		textures_path("scores/6.png"), 
 		textures_path("scores/7.png"), 
 		textures_path("scores/8.png"), 
-		textures_path("scores/9.png")};
+		textures_path("scores/9.png"),
+		textures_path("difficulty/difficulty_bar_boss.png"),
+		textures_path("difficulty/db_boss_flame.png"),
+		textures_path("difficulty/db_boss_skull.png"),
+		textures_path("difficulty/difficulty_bar_broken.png"),
+		textures_path("difficulty/satan_shader.png")};
 
 
 	std::array<GLuint, effect_count> effects;
