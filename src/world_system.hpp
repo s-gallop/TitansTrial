@@ -104,6 +104,11 @@ public:
 	// spawn splitter enemies
 	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
 
+    void boss_action_decision(float elapsed_ms);
+    void boss_action_teleport(float elapsed_ms);
+    void boss_action_swipe(float elapsed_ms);
+    void boss_action_summon(float elapsed_ms);
+
 	// Check for collisions
 	void handle_collisions();
 
@@ -171,6 +176,7 @@ private:
 	float next_spitter_spawn;
 	float next_boulder_spawn;
 	Entity player_hero;
+    Entity boss;
 
 	// C++ random number generator
 	std::default_random_engine rng;

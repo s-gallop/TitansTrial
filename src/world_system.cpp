@@ -477,6 +477,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+    boss_action_decision(elapsed_ms_since_last_update);
 	update_graphics_all_enemies();
 
 	if ((ddl == 2 || ddl == 3) && following_enemies.empty())
@@ -898,6 +899,71 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	}
 }
 
+void WorldSystem::boss_action_decision(float elapsed_ms){
+    if (boss) {
+        Boss& boss_state = registry.boss.get(boss);
+        boss_state.state = BOSS_STATE::SWIPE;
+        switch (boss_state.state) {
+            case BOSS_STATE::TELEPORT:
+                boss_action_teleport(elapsed_ms);
+                break;
+            case BOSS_STATE::SWIPE:
+                boss_action_swipe(elapsed_ms);
+                break;
+            case BOSS_STATE::SUMMON:
+                boss_action_summon(elapsed_ms);
+                break;
+            case BOSS_STATE::SIZE:
+                boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
+                break;
+        }
+    }
+}
+void WorldSystem::boss_action_teleport(float elapsed_ms){
+    const int PHASE_OUT = 8;
+    const int PHASE_IN = 9;
+    const std::vector<int> boss_platforms{0,1,2,7};
+    AnimationInfo& info = registry.animated.get(boss);
+    Boss& boss_state = registry.boss.get(boss);
+    if (boss_state.phase == 0) {
+        info.oneTimeState = PHASE_OUT;
+        boss_state.phase++;
+    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
+        Motion& motion = registry.motions.get(boss);
+        motion.position = getRandomWalkablePos(motion.scale, boss_platforms[rand() % boss_platforms.size()], false);
+        boss_state.phase++;
+    } else if(boss_state.phase == 2) {
+        info.oneTimeState = PHASE_IN;
+        boss_state.phase++;
+    } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+    }
+}
+void WorldSystem::boss_action_swipe(float elapsed_ms){
+    const int SWIPE = 1;
+    Boss& boss_state = registry.boss.get(boss);
+    AnimationInfo& info = registry.animated.get(boss);
+    if (boss_state.phase == 0) {
+        info.oneTimeState = SWIPE;
+        boss_state.phase++;
+    } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+    }
+    float boss_x = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS).x;
+    Motion& motion = registry.motions.get(boss);
+    int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
+    if (frame == 1) {
+        motion.scale.x = boss_x*6;
+    } else if (frame == 3) {
+        motion.scale.x = boss_x*7;
+    } else {
+        motion.scale.x = boss_x;
+    }
+}
+void WorldSystem::boss_action_summon(float elapsed_ms){
+
+}
+
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
@@ -927,18 +993,13 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
 
+    //boss = createBossEnemy(renderer, { 100, 200 });
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
 
 	Player& player = registry.players.get(player_hero);
 	createSword(renderer, registry.motions.get(player_hero).position);
-
-	int background_pixels_width = 768;
-	int background_pixels_height = 432;
-
-	float base_height = 16.0 * window_height_px / background_pixels_height;
-	float base_width = 16.0 * window_width_px / background_pixels_width;
 
 	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
@@ -952,38 +1013,9 @@ void WorldSystem::restart_game()
 
 	create_inGame_GUIs();
 
-	// bottom line
-	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
-	// left line
-	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
-	// right line
-	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
-	// top line
-	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
-
-	// left middle platform
-	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
-
-	// top middle platform
-	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2}, grid_vec);
-
-	// right middle platform
-	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
-
-	// bottom middle left platform
-	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
-
-	// bottom middle right platform
-	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
-
-	// bottom left padding platform
-	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
-
-	// bottom right padding platform
-	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
-
-	// bottom center padding platform
-	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2}, grid_vec);
+    for(auto value : platforms) {
+        createBlock(renderer, value.x, value.y, grid_vec);
+    }
 	
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();

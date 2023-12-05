@@ -81,10 +81,10 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	// Initialize the motion
 	auto &motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
-	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.0, 0.0);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
+    motion.position = getRandomWalkablePos(motion.scale);
 	motion.dir = -1;
 
 	registry.colors.insert(entity, {1, .8f, .8f});
@@ -110,6 +110,47 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
+
+Entity createBossEnemy(RenderSystem *renderer, vec2 position)
+{
+    auto entity = Entity();
+
+    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+    CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+    registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+    // Initialize the motion
+    auto &motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    // Setting initial values, scale is negative to make it face the opposite way
+    motion.velocity = vec2(0.0, 0.0);
+    motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS);
+    motion.position = getRandomWalkablePos(motion.scale, 1, false);
+    motion.dir = -1;
+
+    registry.colors.insert(entity, {1, .8f, .8f});
+    Enemies& enemy = registry.enemies.emplace(entity);
+    enemy.death_animation = 11;
+    enemy.hit_animation = 1;
+
+    AnimationInfo& aniInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS));
+    aniInfo.oneTimeState = 9;
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::BOSS,
+             EFFECT_ASSET_ID::BOSS,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             false,
+             true,
+             SPRITE_SCALE.at(TEXTURE_ASSET_ID::BOSS),
+             SPRITE_OFFSET.at(TEXTURE_ASSET_ID::BOSS) });
+
+    registry.debugRenderRequests.emplace(entity);
+    registry.boss.emplace(entity);
+
+    return entity;
+}
+
 Entity createGhoul(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
@@ -121,10 +162,10 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	// Initialize the motion
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
-	motion.position = position;
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.f, -0.1f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
+    motion.position = getRandomWalkablePos(motion.scale);
 
 	registry.enemies.emplace(entity);
 	registry.enemies.get(entity).hittable = false;
@@ -197,10 +238,10 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
-	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY);
+    motion.position = getRandomWalkablePos(motion.scale);
 
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot
@@ -1168,4 +1209,13 @@ Entity createLavaPillar(RenderSystem* renderer, vec2 pos) {
 		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::LAVA_PILLAR) });
 	registry.debugRenderRequests.emplace(entity);
 	return entity;
+}
+
+vec2 getRandomWalkablePos(vec2 char_scale, int platform, bool randomness) {
+    vec3 values = walkable_area.at(platform == -1 ? rand() % walkable_area.size() : platform);
+    float no_over_edge = values[2] - char_scale.x/2.f;
+    // first tries to stay inside platform. If platform too small we let it overflow. Then pick a random offset position
+    float rand_offset = (no_over_edge > 0 ? no_over_edge : values[2]) * ((double)rand() / RAND_MAX) * (rand() % 2 == 0 ? 1.f : -1.f);
+    printf("value: %f,",rand_offset);
+    return {values.x+(randomness ? rand_offset : 0), values.y-char_scale.y/2.f};
 }

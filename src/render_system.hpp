@@ -46,6 +46,7 @@ class RenderSystem
 		textures_path("following_enemy.png"),
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
+        textures_path("boss.png"),
 		textures_path("sword.png"),
 		textures_path("pistol.png"),
 		textures_path("rocket_launcher.png"),
@@ -129,7 +130,8 @@ class RenderSystem
 		shader_path("spitter_bullet"),
 		shader_path("following_enemy"),
         shader_path("screen_layer"),
-		shader_path("lava_pillar")};
+		shader_path("lava_pillar"),
+        shader_path("boss")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
