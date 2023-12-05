@@ -27,7 +27,7 @@ const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
 const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 const vec2 HELPER_BB = vec2(1058, 532) / 3.f;
-const vec2 LAVA_PILLAR_BB = vec2(90, 240);
+const vec2 LAVA_PILLAR_BB = vec2(120, 320);
 
 const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16 * CHARACTER_SCALING, 24 * CHARACTER_SCALING}},
