@@ -53,16 +53,11 @@ int ddl = 0;
 float ddf = 0.0f;
 
 // These booleans should control the dialogue when first reaching a new level
-bool zerow = false;
-bool onew = false;
-bool twow = false;
-bool threew = false;
 bool inBossLevel = false;
-bool inDialogue = false;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f)
+	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f), next_ghoul_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -299,7 +294,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	if (ddl == 4)
 		ddf = 499.0;
-	else if (!inDialogue)
+	else
 		ddf += elapsed_ms_since_last_update / 1000.f;
 	
 	if (ddl < 4)
@@ -381,7 +376,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	else if (ddl == 1)
 	{
 		current_enemy_spawning_speed = 1.2f;
-		current_ghoul_spawning_speed = 1.0f;
+		current_ghoul_spawning_speed = 10.0f;
 		current_spitter_spawning_speed = 1.0f;
 	}
 	else if (ddl == 2)
@@ -590,14 +585,14 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	float EDGE_DISTANCE = 0.f;
 	int BLANK_STATE = 2;
 
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_ghoul_spawning_speed;
-	if (registry.ghouls.components.size() < MAX_GHOULS && next_enemy_spawn < 0.f)
+	next_ghoul_spawn -= elapsed_ms_since_last_update * current_ghoul_spawning_speed;
+	if (registry.ghouls.components.size() < MAX_GHOULS && next_ghoul_spawn < 0.f)
 	{
 		// Reset timer
-		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
-		Entity newEnemy = createGhoul(renderer, vec2(x_pos, y_pos));
+		Entity newGhoul = createGhoul(renderer, vec2(x_pos, y_pos));
 		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
 	}
 	
@@ -810,6 +805,9 @@ void WorldSystem::restart_game()
 	current_enemy_spawning_speed = 1.f;
 	current_spitter_spawning_speed = 1.f;
 	points = 0;
+	next_enemy_spawn = 0.f;
+	next_ghoul_spawn = 0.f;
+	next_spitter_spawn = 0.f;
 
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all, ... but that would be more cumbersome
@@ -839,12 +837,7 @@ void WorldSystem::restart_game()
 	motionKeyStatus.reset();
 	ddl = 0;
 	ddf = 0.0f;
-	zerow = false;
-	onew = false;
-	twow = false;
-	threew = false;
 	inBossLevel = false;
-	inDialogue = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
@@ -897,14 +890,92 @@ void WorldSystem::restart_game()
 }
 
 void WorldSystem::save_game() {
-	state = {
-		"ddl", ddl,
-		"hp", registry.players.get(player_hero).hp,
-		"weapon", save_weapon(registry.players.get(player_hero).weapon),
-	};
-	std::ofstream out("game_save.json");
-	out << state;
-	out.close();
+	if (!registry.deathTimers.has(player_hero)) 
+	{
+		state =
+		{
+			"ddl", ddl,
+			"score", points,
+			"hp", registry.players.get(player_hero).hp,
+			"player_x", registry.motions.get(player_hero).position.x,
+			"player_y", registry.motions.get(player_hero).position.y,
+			"weapon", save_weapon(registry.players.get(player_hero).weapon),
+			"fire_enemy", json::Array(),
+			"spitter", json::Array(),
+			"spitter_bullet", json::Array(),
+			"ghoul", json::Array(),
+		};
+
+		for (Entity fire_enemy : registry.fireEnemies.entities)
+		{
+			json::JSON sfes = json::Object();   // single_fire_enemy_save
+			sfes =
+			{
+				"hp", registry.enemies.get(fire_enemy).health,
+				"x_pos", registry.motions.get(fire_enemy).position.x,
+				"y_pos", registry.motions.get(fire_enemy).position.y,
+				"a", registry.testAIs.get(fire_enemy).a,
+				"b", registry.testAIs.get(fire_enemy).b,
+				"c", registry.testAIs.get(fire_enemy).c,
+				"from_right", registry.testAIs.get(fire_enemy).departFromRight,
+			};
+			state["fire_enemy"].append(sfes);
+		}
+
+		for (Entity spitter : registry.spitterEnemies.entities)
+		{
+			json::JSON sss = json::Object();   // single_spitter_save
+			sss =
+			{
+				"hp", registry.enemies.get(spitter).health,
+				"x_pos", registry.motions.get(spitter).position.x,
+				"y_pos", registry.motions.get(spitter).position.y,
+				"bullets", registry.spitterEnemies.get(spitter).bulletsRemaining,
+				"timer", registry.spitterEnemies.get(spitter).timeUntilNextShotMs,
+				"shootable", registry.spitterEnemies.get(spitter).canShoot,
+				"right_x", registry.spitterEnemies.get(spitter).right_x,
+				"left_x", registry.spitterEnemies.get(spitter).left_x,
+			};
+			state["spitter"].append(sss);
+		}
+
+		for (Entity spitter_bullet : registry.spitterBullets.entities)
+		{
+			json::JSON ssbs = json::Object();   // single_spitter_bullet_save
+			ssbs =
+			{
+				"x_pos", registry.motions.get(spitter_bullet).position.x,
+				"y_pos", registry.motions.get(spitter_bullet).position.y,
+				"x_v", registry.motions.get(spitter_bullet).velocity.x,
+				"y_v", registry.motions.get(spitter_bullet).velocity.y,
+				"scale_x", registry.motions.get(spitter_bullet).scale.x,
+				"scale_y", registry.motions.get(spitter_bullet).scale.y,
+				"angle", registry.motions.get(spitter_bullet).angle,
+				"mass", registry.spitterBullets.get(spitter_bullet).mass,
+			};
+			state["spitter_bullet"].append(ssbs);
+		}
+
+		for (Entity ghoul : registry.ghouls.entities)
+		{
+			json::JSON sgs = json::Object();   // single_ghoul_save
+			sgs =
+			{
+				"hp", registry.enemies.get(ghoul).health,
+				"x_pos", registry.motions.get(ghoul).position.x,
+				"y_pos", registry.motions.get(ghoul).position.y,
+				"x_v", registry.motions.get(ghoul).velocity.x,
+				"y_v", registry.motions.get(ghoul).velocity.y,
+				"dir", registry.motions.get(ghoul).dir,
+			};
+			state["ghoul"].append(sgs);
+		}
+
+		std::ofstream out("game_save.json");
+		out << state;
+		out.close();
+	}
+
 	create_title_screen();
 }
 
@@ -932,9 +1003,11 @@ void WorldSystem::load_game() {
 	state = json::JSON::Load(jsonString);
 
 	ddf = state["ddl"].ToInt() * 100;
-	Player& player = registry.players.get(player_hero);
+	points = state["score"].ToInt();
+	Player &player = registry.players.get(player_hero);
 	player.hp = state["hp"].ToInt();
 	int weapon = state["weapon"].ToInt();
+	registry.motions.get(player_hero).position = { state["player_x"].ToFloat(), state["player_y"].ToFloat() };
 	if (weapon == 0)
 		collect(createSword(renderer, { 0.f, 0.f }), player_hero);
 	else if (weapon == 1)
@@ -945,6 +1018,63 @@ void WorldSystem::load_game() {
 		collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
 	else if (weapon == 4)
 		collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
+
+	for (int i = 0; i < state["fire_enemy"].size(); i++) 
+	{
+		json::JSON sfe = state["fire_enemy"][i];
+		if (!sfe["hp"].ToInt() <= 0) 
+		{
+			Entity nfe = createFireEnemy(renderer, { sfe["x_pos"].ToFloat(), sfe["y_pos"].ToFloat() });
+			registry.enemies.get(nfe).health = sfe["hp"].ToInt();
+			TestAI &nfe_ai = registry.testAIs.get(nfe);
+			nfe_ai.a = sfe["a"].ToFloat();
+			nfe_ai.b = sfe["b"].ToFloat();
+			nfe_ai.c = sfe["c"].ToFloat();
+			nfe_ai.departFromRight = sfe["from_right"].ToBool();
+		}
+	}
+
+	for (int i = 0; i < state["spitter"].size(); i++) 
+	{
+		json::JSON ss = state["spitter"][i];
+		if (!ss["hp"].ToInt() <= 0) 
+		{
+			Entity ns = createSpitterEnemy(renderer, { ss["x_pos"].ToFloat(), ss["y_pos"].ToFloat() });
+			registry.enemies.get(ns).health = ss["hp"].ToInt();
+			SpitterEnemy &ns_info = registry.spitterEnemies.get(ns);
+			ns_info.bulletsRemaining = ss["bullets"].ToInt();
+			ns_info.canShoot = ss["shootable"].ToBool();
+			ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
+			ns_info.left_x = ss["left_x"].ToFloat();
+			ns_info.right_x = ss["right_x"].ToFloat();
+		}
+	}
+
+	for (int i = 0; i < state["spitter_bullet"].size(); i++)
+	{
+		json::JSON ssb = state["spitter_bullet"][i];
+		Entity nsb = createSpitterEnemyBullet(renderer, { ssb["x_pos"].ToFloat(), ssb["y_pos"].ToFloat() }, ssb["angle"].ToFloat());
+		registry.spitterBullets.get(nsb).mass = ssb["mass"].ToFloat();
+		Motion& nsb_mo = registry.motions.get(nsb);
+		nsb_mo.scale = { ssb["scale_x"].ToFloat(), ssb["scale_y"].ToFloat() };
+		nsb_mo.velocity = { ssb["x_v"].ToFloat(), ssb["y_v"].ToFloat() };
+	}
+
+	for (int i = 0; i < state["ghoul"].size(); i++)
+	{
+		json::JSON sg = state["ghoul"][i];
+		if (!sg["hp"].ToInt() <= 0) 
+		{
+			Entity ng = createGhoul(renderer, { sg["x_pos"].ToFloat(), sg["y_pos"].ToFloat() });
+			registry.enemies.get(ng).health = sg["hp"].ToInt();
+			Motion& ng_mo = registry.motions.get(ng);
+			ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
+			ng_mo.dir = { sg["dir"].ToInt() };
+		}
+	}
+	
+	registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
+	registry.players.get(player_hero).invulnerable_timer = 3000.f;
 }
 
 void WorldSystem::create_pause_screen() {

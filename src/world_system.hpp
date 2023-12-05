@@ -28,7 +28,7 @@ const float ANIMATION_SPEED_FACTOR = 10.0f;
 // Game configuration
 const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
-const size_t MAX_GHOULS = 1;
+const size_t MAX_GHOULS = 5;
 const size_t MAX_SPITTERS = 3;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
@@ -162,6 +162,7 @@ private:
 	float current_ghoul_spawning_speed;
 	float next_enemy_spawn;
 	float next_spitter_spawn;
+	float next_ghoul_spawn;
 	Entity player_hero;
 
 	// C++ random number generator
