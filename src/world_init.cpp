@@ -71,8 +71,6 @@ Entity createBoulder(RenderSystem* renderer, vec2 position, vec2 velocity, float
 Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
-    //const float ACTUAL_SCALE_FACTOR = 0.5f;
-    //const float OFFSET_FACTOR = 4.0f;
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -84,7 +82,7 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.0, 0.0);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FIRE_ENEMY);
-    motion.position = getRandomWalkablePos(motion.scale);
+    motion.position = position;
 	motion.dir = -1;
 
 	registry.colors.insert(entity, {1, .8f, .8f});
@@ -124,13 +122,14 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     motion.angle = 0.f;
     // Setting initial values, scale is negative to make it face the opposite way
     motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS);
-    motion.position = getRandomWalkablePos(motion.scale, 1, false);
+    motion.position = position;
     motion.dir = -1;
 
     registry.colors.insert(entity, {1, .8f, .8f});
     Enemies& enemy = registry.enemies.emplace(entity);
     enemy.death_animation = 11;
     enemy.hit_animation = 1;
+    enemy.hittable = false;
 
     AnimationInfo& aniInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS));
     aniInfo.oneTimeState = 9;
@@ -153,11 +152,11 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     auto &motion1 = registry.motions.emplace(hb1);
     motion1.scale = vec2(480, 40);
     motion1.position = motion.position;
-    motion1.positionOffset = vec2(0,55);
     auto &motion2 = registry.motions.emplace(hb2);
     motion2.scale = vec2(560, 40);
     motion2.position = motion.position;
-    motion2.positionOffset = vec2(0,15);
+    registry.collisionMeshPtrs.emplace(hb1, &mesh);
+    registry.collisionMeshPtrs.emplace(hb2, &mesh);
     registry.weaponHitBoxes.insert(hb1, {
         false,
         true,
@@ -211,7 +210,7 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	// Setting initial values, scale is negative to make it face the opposite way
 	motion.velocity = vec2(0.f, -0.1f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
-    motion.position = getRandomWalkablePos(motion.scale);
+    motion.position = position;
 
 	registry.enemies.emplace(entity);
 	registry.enemies.get(entity).hittable = false;
@@ -287,7 +286,7 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY);
-    motion.position = getRandomWalkablePos(motion.scale);
+    motion.position = pos;
 
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot

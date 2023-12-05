@@ -690,10 +690,8 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	if (registry.ghouls.components.size() < MAX_GHOULS && next_ghoul_spawn < 0.f)
 	{
 		// Reset timer
-		next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
-		Entity newGhoul = createGhoul(renderer, vec2(x_pos, y_pos));
+        next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		Entity newGhoul = createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
 		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
 	}
 	
@@ -811,9 +809,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
 	{
 		next_spitter_spawn = (SPITTER_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_SPAWN_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
-		createSpitterEnemy(renderer, { x_pos, y_pos });
+		createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
 	}
 
 	auto &spitterEnemy_container = registry.spitterEnemies;
@@ -902,7 +898,6 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 void WorldSystem::boss_action_decision(float elapsed_ms){
     if (boss) {
         Boss& boss_state = registry.boss.get(boss);
-        boss_state.state = BOSS_STATE::SWIPE;
         switch (boss_state.state) {
             case BOSS_STATE::TELEPORT:
                 boss_action_teleport(elapsed_ms);
@@ -937,35 +932,70 @@ void WorldSystem::boss_action_teleport(float elapsed_ms){
         boss_state.phase++;
     } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
         boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
     }
 }
 void WorldSystem::boss_action_swipe(float elapsed_ms){
     const int SWIPE = 1;
+    const int STAND_UP = 10;
     Boss& boss_state = registry.boss.get(boss);
     AnimationInfo& info = registry.animated.get(boss);
     if (boss_state.phase == 0) {
         info.oneTimeState = SWIPE;
-        for (auto hurt_box : boss_state.hurt_boxes) {
-            registry.motions.get(hurt_box).position = registry.motions.get(boss).position;
-        }
+        registry.motions.get(boss_state.hurt_boxes[0]).position = registry.motions.get(boss).position + vec2(0,55);
+        registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
         boss_state.phase++;
-    } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
-        boss_state.phase = 0;
-    }
-    float boss_x = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS).x;
-    Motion& motion = registry.motions.get(boss);
-    int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
-    if (frame == 1) {
-        registry.weaponHitBoxes.get(boss_state.hurt_boxes[0]).isActive = true;
-    } else if (frame == 3) {
-        registry.weaponHitBoxes.get(boss_state.hurt_boxes[1]).isActive = true;
-    } else {
-        for (auto hurt_box : boss_state.hurt_boxes) {
-            registry.weaponHitBoxes.get(hurt_box).isActive = false;
+    } else if (boss_state.phase == 1 && info.oneTimeState != -1) {
+        Motion& motion = registry.motions.get(boss);
+        int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
+        if (frame == 1) {
+            registry.weaponHitBoxes.get(boss_state.hurt_boxes[0]).isActive = true;
+        } else if (frame == 3) {
+            registry.weaponHitBoxes.get(boss_state.hurt_boxes[1]).isActive = true;
+        } else {
+            for (auto hurt_box : boss_state.hurt_boxes) {
+                registry.weaponHitBoxes.get(hurt_box).isActive = false;
+            }
         }
+    } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
+        info.oneTimeState = STAND_UP;
+        boss_state.phase++;
+    } else if (boss_state.phase == 2 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
     }
 }
 void WorldSystem::boss_action_summon(float elapsed_ms){
+    const int SUMMON = 6;
+    const int STAND_UP = 10;
+    AnimationInfo& info = registry.animated.get(boss);
+    Boss& boss_state = registry.boss.get(boss);
+    if (boss_state.phase == 0) {
+        info.oneTimeState = SUMMON;
+        boss_state.phase++;
+    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
+        info.oneTimeState = STAND_UP;
+        switch (rand() % 2) {
+            case 0:
+                for(int i = 0; i < 3 + rand() % 4; i++) {
+                    createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
+                }
+                for(int i = 0; i < 1 + rand() % 3; i++) {
+                    createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
+                }
+                break;
+            case 1:
+                for(int i = 0; i < 10 + rand() % 6; i++) {
+                    Motion& motion = registry.motions.get(boss);
+                    createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+                }
+                break;
+        }
+        boss_state.phase++;
+    } else if(boss_state.phase == 2 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+    }
 
 }
 
@@ -997,8 +1027,8 @@ void WorldSystem::restart_game()
 	
 	create_parallax_background();
 	initiate_weapons();
-
-    boss = createBossEnemy(renderer, { 100, 200 });
+    //TODO: enable this to start with boss
+    //boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
@@ -1562,7 +1592,7 @@ void WorldSystem::clear_enemies()
 	for (uint i = 0; i < registry.enemies.size(); i++)
 	{
 		Entity enemy = registry.enemies.entities[i];
-		if (!registry.followingEnemies.has(enemy)) {
+		if (!registry.followingEnemies.has(enemy) || !registry.boss.has(enemy)) {
 			justKillThem.push_back(registry.enemies.entities[i]);
 		}
 	}
@@ -1638,15 +1668,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_3 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_ghoul_spawn = -1.0;
-				spawn_move_ghouls(0);
+                createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
 			} else {
 				createGrenadeLauncher(renderer, registry.motions.get(player_hero).position);
 			}
 		} else if (key == GLFW_KEY_4 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_spitter_spawn = -1.0;
-            	spawn_spitter_enemy(0);
+                createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
 			} else {
 				createRocketLauncher(renderer, registry.motions.get(player_hero).position);
 			}
