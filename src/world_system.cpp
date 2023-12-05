@@ -43,17 +43,15 @@ json::JSON state;
 * When boss is defeated, ddl = 5, ddf increases from 500 to MAX_FLOAT
 * ddl still increases and change the hp of enemy (when implemented)
 */
-int ddl = 0; 
+int ddl;
 
 /*
 * ddf = Dynamic Difficulty Factor
 * 1000 ms increases 1 ddf (at ddl = 0-3, 5-INF)
 * Every enemy death increases 5(?) ddf
 */
-float ddf = 0.0f;
-
-// These booleans should control the dialogue when first reaching a new level
-bool inBossLevel = false;
+float ddf;
+float recorded_max_ddf;
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -163,23 +161,21 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 
 void WorldSystem::create_title_screen() 
 {
-	if (ddl != 4) {
-		glfwSetWindowTitle(window, "Titan's Trial");
-		ScreenState& screen = registry.screenStates.components[0];
-		screen.screen_darken_factor = 0;
-		isTitleScreen = true;
+	glfwSetWindowTitle(window, "Titan's Trial");
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.screen_darken_factor = 0;
+	isTitleScreen = true;
 
-		pause = false;
+	pause = false;
 
-		while (registry.motions.entities.size() > 0)
-			registry.remove_all_components_of(registry.motions.entities.back());
+	while (registry.motions.entities.size() > 0)
+		registry.remove_all_components_of(registry.motions.entities.back());
 
-		//these magic number are just the vertical position of where the buttons are
-		createTitleText(renderer, { window_width_px / 2, 150 });
-		createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
-		createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
-		createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
-	}
+	//these magic number are just the vertical position of where the buttons are
+	createTitleText(renderer, { window_width_px / 2, 150 });
+	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
+	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
+	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
 }
 
 void WorldSystem::create_almanac_screen() {
@@ -273,35 +269,117 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	changeScore(points);
 
 	ddf = max(ddf, 0.f);
-	if (ddf < 100)
-		ddl = 0;
-	else if (ddf >= 100 && ddf < 200)
-		ddl = 1;
-	else if (ddf >= 200 && ddf < 300)
-		ddl = 2;
-	else if (ddf >= 300 && ddf < 400)
-		ddl = 3;
-	else if (ddf >= 400 && !inBossLevel)
+	if (ddf < 100 && ddl != 0)
 	{
-		ddl = 4;   // Change to boss level
-		inBossLevel = true;
+		ddl = 0;
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv0\n");
+		}
+	}	
+	else if (ddf >= 100 && ddf < 200 && ddl != 1)
+	{
+		ddl = 1;
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv1\n");
+		}
+	}
+	else if (ddf >= 200 && ddf < 300 && ddl != 2)
+	{
+		ddl = 2;
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv2\n");
+		}
+	}
+	else if (ddf >= 300 && ddf < 400 && ddl != 3)
+	{
+		ddl = 3;
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv3\n");
+		}
+	}
+	else if (ddf >= 400 && ddf < 500 && ddl != 4)
+	{
+		ddl = 4;
 		registry.remove_all_components_of(indicator);
 		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
 		db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
 		db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
-		current_enemy_spawning_speed = 0.f;
-		current_spitter_spawning_speed = 0.f;
-		current_ghoul_spawning_speed = 0.f;
 		clear_enemies();
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv4\n");
+		}
+	}
+	else if (ddf >= 500 && ddf < 600 && ddl != 5)
+	{
+		ddl = 5;
+		for (Entity decorator : db_decorator) {
+			registry.remove_all_components_of(decorator);
+		}
+		db_decorator.clear();
+		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
+		registry.motions.get(difficulty_bar).position[1] = 730.f;
+		db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+		if (ddf > recorded_max_ddf) {
+			// STUB
+			printf("\nLv5\n");
+		}
+	}
+	else if (ddf >= 600)
+	{
+		ddl = (int) ddf / 100;
+	}
+
+	recorded_max_ddf = max(recorded_max_ddf, ddf);
+	state["history_max_ddf"] = max((float) state["history_max_ddf"].ToFloat(), ddf);
+	points = (points > (unsigned int) INT_MAX) ? INT_MAX : points;
+	state["history_max_score"] = max((int) state["history_max_score"].ToInt(), (int) points);
+	
+	if (ddl < 4)
+		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
+
+	switch (ddl)
+	{
+		case 0:
+			current_enemy_spawning_speed = 0.8f;
+			current_spitter_spawning_speed = 0.0f;
+			current_ghoul_spawning_speed = 0.0f;
+			break;
+		case 1:
+			current_enemy_spawning_speed = 1.0f;
+			current_ghoul_spawning_speed = 0.5f;
+			current_spitter_spawning_speed = 0.0f;
+			break;
+		case 2:
+			current_enemy_spawning_speed = 0.8f;
+			current_ghoul_spawning_speed = 0.8f;
+			current_spitter_spawning_speed = 0.5f;
+			break;
+		case 3:
+			current_enemy_spawning_speed = 0.8f;
+			current_ghoul_spawning_speed = 0.8f;
+			current_spitter_spawning_speed = 1.0f;
+			break;
+		case 4:
+			current_enemy_spawning_speed = 0.0f;
+			current_ghoul_spawning_speed = 0.0f;
+			current_spitter_spawning_speed = 0.0f;
+			break;
+		default:
+			current_enemy_spawning_speed = 1.0f;
+			current_ghoul_spawning_speed = 1.0f;
+			current_spitter_spawning_speed = 1.0f;
+			break;
 	}
 
 	if (ddl == 4)
 		ddf = 499.0;
 	else
 		ddf += elapsed_ms_since_last_update / 1000.f;
-	
-	if (ddl < 4)
-		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
 
 	// Updating window title
 	
@@ -370,31 +448,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		playerAnimation.curState = 0;
 	}
 
-	if (ddl == 0)
-	{
-		current_enemy_spawning_speed = 1.0f;
-		current_spitter_spawning_speed = 0.0f;
-		current_ghoul_spawning_speed = 0.0f;
-	}
-	else if (ddl == 1)
-	{
-		current_enemy_spawning_speed = 1.0f;
-		current_ghoul_spawning_speed = 0.8f;
-		current_spitter_spawning_speed = 1.0f;
-	}
-	else if (ddl == 2)
-	{
-		current_enemy_spawning_speed = 1.0f;
-		current_ghoul_spawning_speed = 1.0f;
-		current_spitter_spawning_speed = 1.5f;
-	}
-	else if (ddl == 3)
-	{
-		current_enemy_spawning_speed = 1.2f;
-		current_spitter_spawning_speed = 1.5f;
-		current_ghoul_spawning_speed = 1.0f;
-	}
-
 	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
 		Entity curHeart = player_hearts_GUI[i];
 		registry.renderRequests.get(curHeart).visibility = true;
@@ -410,18 +463,18 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 	update_graphics_all_enemies();
 
-	if (ddl == 2 && following_enemies.empty())
+	if ((ddl == 2 || ddl == 3) && following_enemies.empty())
 	{
 		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
 		std::vector<std::vector<char>> vec = grid_vec;
 		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
 		following_enemies.push_back(newEnemy);
 	}
-	else if (ddl == 2 && !following_enemies.empty())
+	else if ((ddl == 2 || ddl == 3) && !following_enemies.empty())
 	{
 		spawn_move_following_enemies(elapsed_ms_since_last_update);
 	}
-	else if (ddl != 2 && !following_enemies.empty())
+	else if ((ddl != 2 && ddl != 3) && !following_enemies.empty())
 	{
 		registry.remove_all_components_of(following_enemies[0]);
 		following_enemies.clear();
@@ -806,8 +859,8 @@ void WorldSystem::restart_game()
 
 	// Reset the game speed
 	current_speed = 1.f;
-	current_enemy_spawning_speed = 1.f;
-	current_spitter_spawning_speed = 1.f;
+	current_enemy_spawning_speed = 0.f;
+	current_spitter_spawning_speed = 0.f;
 	points = 0;
 	next_enemy_spawn = 0.f;
 	next_ghoul_spawn = 0.f;
@@ -839,9 +892,9 @@ void WorldSystem::restart_game()
 
 	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
-	ddl = 0;
-	ddf = 0.0f;
-	inBossLevel = false;
+	ddl = -1;
+	ddf = 0.f;
+	recorded_max_ddf = -1.f;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
@@ -894,12 +947,16 @@ void WorldSystem::restart_game()
 }
 
 void WorldSystem::save_game() {
-	if (!registry.deathTimers.has(player_hero)) 
+	if (!isTitleScreen && !registry.deathTimers.has(player_hero))
 	{
 		state =
 		{
 			"ddl", ddl,
+			"ddf", ddf,
+			"recorded_max_ddf", recorded_max_ddf,
+			"history_max_ddf", state["history_max_ddf"],
 			"score", points,
+			"history_max_score", state["history_max_score"],
 			"hp", registry.players.get(player_hero).hp,
 			"player_x", registry.motions.get(player_hero).position.x,
 			"player_y", registry.motions.get(player_hero).position.y,
@@ -1004,81 +1061,119 @@ void WorldSystem::load_game() {
 	std::stringstream buffer;
 	buffer << in.rdbuf();
 	std::string jsonString = buffer.str();
-	state = json::JSON::Load(jsonString);
-
-	ddf = state["ddl"].ToInt() * 100;
-	points = state["score"].ToInt();
-	Player &player = registry.players.get(player_hero);
-	player.hp = state["hp"].ToInt();
-	int weapon = state["weapon"].ToInt();
-	registry.motions.get(player_hero).position = { state["player_x"].ToFloat(), state["player_y"].ToFloat() };
-	if (weapon == 0)
-		collect(createSword(renderer, { 0.f, 0.f }), player_hero);
-	else if (weapon == 1)
-		collect(createGun(renderer, { 0.f, 0.f }), player_hero);
-	else if (weapon == 2)
-		collect(createRocketLauncher(renderer, { 0.f, 0.f }), player_hero);
-	else if (weapon == 3)
-		collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
-	else if (weapon == 4)
-		collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
-
-	for (int i = 0; i < state["fire_enemy"].size(); i++) 
+	if (jsonString != "")
 	{
-		json::JSON sfe = state["fire_enemy"][i];
-		if (!sfe["hp"].ToInt() <= 0) 
+		state = json::JSON::Load(jsonString);
+
+		ddl = state["ddl"].ToInt();
+		switch (ddl)
 		{
-			Entity nfe = createFireEnemy(renderer, { sfe["x_pos"].ToFloat(), sfe["y_pos"].ToFloat() });
-			registry.enemies.get(nfe).health = sfe["hp"].ToInt();
-			TestAI &nfe_ai = registry.testAIs.get(nfe);
-			nfe_ai.a = sfe["a"].ToFloat();
-			nfe_ai.b = sfe["b"].ToFloat();
-			nfe_ai.c = sfe["c"].ToFloat();
-			nfe_ai.departFromRight = sfe["from_right"].ToBool();
+			case 4:
+				registry.remove_all_components_of(indicator);
+				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
+				db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
+				db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
+				clear_enemies();
+				break;
+			case 5:
+				registry.remove_all_components_of(indicator);
+				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
+				registry.motions.get(difficulty_bar).position[1] = 730.f;
+				db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+				break;
 		}
-	}
+		ddf = state["ddf"].ToFloat();
+		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
+		points = state["score"].ToInt();
+		Player& player = registry.players.get(player_hero);
+		player.hp = state["hp"].ToInt();
+		int weapon = state["weapon"].ToInt();
+		registry.motions.get(player_hero).position = { state["player_x"].ToFloat(), state["player_y"].ToFloat() };
+		if (weapon == 0)
+			collect(createSword(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 1)
+			collect(createGun(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 2)
+			collect(createRocketLauncher(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 3)
+			collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 4)
+			collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
 
-	for (int i = 0; i < state["spitter"].size(); i++) 
-	{
-		json::JSON ss = state["spitter"][i];
-		if (!ss["hp"].ToInt() <= 0) 
+		for (int i = 0; i < state["fire_enemy"].size(); i++)
 		{
-			Entity ns = createSpitterEnemy(renderer, { ss["x_pos"].ToFloat(), ss["y_pos"].ToFloat() });
-			registry.enemies.get(ns).health = ss["hp"].ToInt();
-			SpitterEnemy &ns_info = registry.spitterEnemies.get(ns);
-			ns_info.bulletsRemaining = ss["bullets"].ToInt();
-			ns_info.canShoot = ss["shootable"].ToBool();
-			ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
-			ns_info.left_x = ss["left_x"].ToFloat();
-			ns_info.right_x = ss["right_x"].ToFloat();
+			json::JSON sfe = state["fire_enemy"][i];
+			if (!sfe["hp"].ToInt() <= 0)
+			{
+				Entity nfe = createFireEnemy(renderer, { sfe["x_pos"].ToFloat(), sfe["y_pos"].ToFloat() });
+				Enemies &nfe_basic = registry.enemies.get(nfe);
+				nfe_basic.health = sfe["hp"].ToInt();
+				nfe_basic.hittable = true;
+				nfe_basic.hitting = true;
+				TestAI &nfe_ai = registry.testAIs.get(nfe);
+				nfe_ai.a = sfe["a"].ToFloat();
+				nfe_ai.b = sfe["b"].ToFloat();
+				nfe_ai.c = sfe["c"].ToFloat();
+				nfe_ai.departFromRight = sfe["from_right"].ToBool();
+			}
 		}
-	}
 
-	for (int i = 0; i < state["spitter_bullet"].size(); i++)
-	{
-		json::JSON ssb = state["spitter_bullet"][i];
-		Entity nsb = createSpitterEnemyBullet(renderer, { ssb["x_pos"].ToFloat(), ssb["y_pos"].ToFloat() }, ssb["angle"].ToFloat());
-		registry.spitterBullets.get(nsb).mass = ssb["mass"].ToFloat();
-		Motion& nsb_mo = registry.motions.get(nsb);
-		nsb_mo.scale = { ssb["scale_x"].ToFloat(), ssb["scale_y"].ToFloat() };
-		nsb_mo.velocity = { ssb["x_v"].ToFloat(), ssb["y_v"].ToFloat() };
-	}
-
-	for (int i = 0; i < state["ghoul"].size(); i++)
-	{
-		json::JSON sg = state["ghoul"][i];
-		if (!sg["hp"].ToInt() <= 0) 
+		for (int i = 0; i < state["spitter"].size(); i++)
 		{
-			Entity ng = createGhoul(renderer, { sg["x_pos"].ToFloat(), sg["y_pos"].ToFloat() });
-			registry.enemies.get(ng).health = sg["hp"].ToInt();
-			Motion& ng_mo = registry.motions.get(ng);
-			ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
-			ng_mo.dir = { sg["dir"].ToInt() };
+			json::JSON ss = state["spitter"][i];
+			if (!ss["hp"].ToInt() <= 0)
+			{
+				Entity ns = createSpitterEnemy(renderer, { ss["x_pos"].ToFloat(), ss["y_pos"].ToFloat() });
+				Enemies &ns_basic = registry.enemies.get(ns);
+				ns_basic.health = ss["hp"].ToInt();
+				ns_basic.hittable = true;
+				ns_basic.hitting = true;
+				SpitterEnemy& ns_info = registry.spitterEnemies.get(ns);
+				ns_info.bulletsRemaining = ss["bullets"].ToInt();
+				ns_info.canShoot = ss["shootable"].ToBool();
+				ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
+				ns_info.left_x = ss["left_x"].ToFloat();
+				ns_info.right_x = ss["right_x"].ToFloat();
+			}
 		}
+
+		for (int i = 0; i < state["spitter_bullet"].size(); i++)
+		{
+			json::JSON ssb = state["spitter_bullet"][i];
+			Entity nsb = createSpitterEnemyBullet(renderer, { ssb["x_pos"].ToFloat(), ssb["y_pos"].ToFloat() }, ssb["angle"].ToFloat());
+			registry.spitterBullets.get(nsb).mass = ssb["mass"].ToFloat();
+			Motion& nsb_mo = registry.motions.get(nsb);
+			nsb_mo.scale = { ssb["scale_x"].ToFloat(), ssb["scale_y"].ToFloat() };
+			nsb_mo.velocity = { ssb["x_v"].ToFloat(), ssb["y_v"].ToFloat() };
+		}
+
+		for (int i = 0; i < state["ghoul"].size(); i++)
+		{
+			json::JSON sg = state["ghoul"][i];
+			if (!sg["hp"].ToInt() <= 0)
+			{
+				Entity ng = createGhoul(renderer, { sg["x_pos"].ToFloat(), sg["y_pos"].ToFloat() });
+				Enemies& ng_basic = registry.enemies.get(ng);
+				ng_basic.health = sg["hp"].ToInt();
+				ng_basic.hittable = true;
+				ng_basic.hitting = true;
+				Motion& ng_mo = registry.motions.get(ng);
+				ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
+				ng_mo.dir = { sg["dir"].ToInt() };
+			}
+		}
+
+		registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
+		registry.players.get(player_hero).invulnerable_timer = 3000.f;
 	}
-	
-	registry.players.get(player_hero).invuln_type = INVULN_TYPE::HEAL;
-	registry.players.get(player_hero).invulnerable_timer = 3000.f;
+	else
+	{
+		state =
+		{
+			"history_max_ddf", 0.f,
+			"history_max_score", 0,
+		};
+	}
 }
 
 void WorldSystem::create_pause_screen() {
@@ -1137,14 +1232,14 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if (((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive) || registry.spitterBullets.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
 				registry.players.get(player_hero).invulnerable_timer = max(3000.f, registry.players.get(player_hero).invulnerable_timer);
 				registry.players.get(player_hero).invuln_type = INVULN_TYPE::HIT;
 				play_sound(SOUND_EFFECT::HERO_DEAD);
-				ddf -= (player.hp_max - player.hp) * DDF_PUNISHMENT;
+				if (ddl < 4) ddf -= (player.hp_max - player.hp) * DDF_PUNISHMENT;
 
 				if (registry.spitterBullets.has(entity_other))
 					registry.remove_all_components_of(entity_other);
@@ -1495,16 +1590,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		ddf += 100;
 	}
 
-	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && inBossLevel) {
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && ddl == 4) {
 		ddf = 500;
-		ddl = 5;
-		for (Entity decorator : db_decorator) {
-			registry.remove_all_components_of(decorator);
-		}
-		db_decorator.clear();
-		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-		registry.motions.get(difficulty_bar).position[1] = 730.f;
-		db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
 	}
 	
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
