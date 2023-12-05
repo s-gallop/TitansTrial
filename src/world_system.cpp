@@ -55,7 +55,7 @@ float recorded_max_ddf;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f), next_ghoul_spawn(0.f)
+	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f), next_ghoul_spawn(0.f), next_boulder_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -643,9 +643,9 @@ void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
 }
 
 void WorldSystem::spawn_boulder(float elapsed_ms_since_last_update) {
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.boulders.components.size() < MAX_BOULDERS && next_enemy_spawn < 0.f) {
-		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+	next_boulder_spawn -= elapsed_ms_since_last_update * current_boulder_spawning_speed;
+	if (registry.boulders.components.size() < MAX_BOULDERS && next_boulder_spawn < 0.f) {
+		next_boulder_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		srand(time(0));
 		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
 		float x_speed = 50 + 100 * uniform_dist(rng);
@@ -1308,18 +1308,17 @@ void WorldSystem::handle_collisions()
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
 					Enemies& enemy = registry.enemies.get(entity_other);
 					enemy.health -= registry.weaponHitBoxes.get(entity).damage;
-					if (enemy.health <= 0) {
-						points += 10;
-						ddf += 5.f;
-					}
 					enemy.hittable = false;
 					enemy.hitting = false;
 					if (!registry.fireEnemies.has(entity_other))
 						registry.motions.get(entity_other).dir = registry.motions.get(entity).position.x < registry.motions.get(entity_other).position.x ? -1 : 1;
 					if (enemy.health <= 0) {
 						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
-						++points;
-						ddf += 10.0f;
+						points += 10;
+						if (ddl != 4)
+						{
+							ddf += 5.f;
+						}
 					} else {
 					 	registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
 					}
@@ -1539,14 +1538,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_2 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_enemy_spawn = -1.0;
+				next_boulder_spawn = -1.0;
 				spawn_boulder(0);
 			} else {
 				createGun(renderer, registry.motions.get(player_hero).position);
 			}
 		} else if (key == GLFW_KEY_3 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_enemy_spawn = -1.0;
+				next_ghoul_spawn = -1.0;
 				spawn_move_ghouls(0);
 			} else {
 				createGrenadeLauncher(renderer, registry.motions.get(player_hero).position);

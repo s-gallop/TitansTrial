@@ -161,11 +161,13 @@ private:
 	RenderSystem *renderer;
 	float current_speed;
 	float current_enemy_spawning_speed;
-	float current_spitter_spawning_speed;
 	float current_ghoul_spawning_speed;
+	float current_spitter_spawning_speed;
+	float current_boulder_spawning_speed;
 	float next_enemy_spawn;
-	float next_spitter_spawn;
 	float next_ghoul_spawn;
+	float next_spitter_spawn;
+	float next_boulder_spawn;
 	Entity player_hero;
 
 	// C++ random number generator
