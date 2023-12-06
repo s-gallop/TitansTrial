@@ -477,7 +477,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
-    boss_action_decision(elapsed_ms_since_last_update);
+    if (boss && registry.boss.size()) {
+        boss_action_decision(elapsed_ms_since_last_update);
+    }
 	update_graphics_all_enemies();
 
 	if ((ddl == 2 || ddl == 3) && following_enemies.empty())
@@ -896,31 +898,39 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 }
 
 void WorldSystem::boss_action_decision(float elapsed_ms){
-    if (boss) {
-        Boss& boss_state = registry.boss.get(boss);
-        switch (boss_state.state) {
-            case BOSS_STATE::TELEPORT:
-                boss_action_teleport(elapsed_ms);
-                break;
-            case BOSS_STATE::SWIPE:
-                boss_action_swipe(elapsed_ms);
-                break;
-            case BOSS_STATE::SUMMON:
-                boss_action_summon(elapsed_ms);
-                break;
-            case BOSS_STATE::SIZE:
-                boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
-                break;
-        }
+    Boss& boss_state = registry.boss.get(boss);
+    AnimationInfo& info = registry.animated.get(boss);
+    // 11 and 12 are hurt and death animation
+    if (info.oneTimeState > 10) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+        return;
+    }
+    switch (boss_state.state) {
+        case BOSS_STATE::TELEPORT:
+            boss_action_teleport();
+            break;
+        case BOSS_STATE::SWIPE:
+            boss_action_swipe();
+            break;
+        case BOSS_STATE::SUMMON:
+            boss_action_summon();
+            break;
+        case BOSS_STATE::SIZE:
+            boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
+            break;
     }
 }
-void WorldSystem::boss_action_teleport(float elapsed_ms){
+
+void WorldSystem::boss_action_teleport(){
     const int PHASE_OUT = 8;
     const int PHASE_IN = 9;
     const std::vector<int> boss_platforms{0,1,2,7};
     AnimationInfo& info = registry.animated.get(boss);
     Boss& boss_state = registry.boss.get(boss);
+    Enemies& enemy_info = registry.enemies.get(boss);
     if (boss_state.phase == 0) {
+        enemy_info.hittable = false;
         info.oneTimeState = PHASE_OUT;
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
@@ -928,6 +938,7 @@ void WorldSystem::boss_action_teleport(float elapsed_ms){
         motion.position = getRandomWalkablePos(motion.scale, boss_platforms[rand() % boss_platforms.size()], false);
         boss_state.phase++;
     } else if(boss_state.phase == 2) {
+        enemy_info.hittable = true;
         info.oneTimeState = PHASE_IN;
         boss_state.phase++;
     } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
@@ -935,7 +946,8 @@ void WorldSystem::boss_action_teleport(float elapsed_ms){
         boss_state.state = BOSS_STATE::SIZE;
     }
 }
-void WorldSystem::boss_action_swipe(float elapsed_ms){
+
+void WorldSystem::boss_action_swipe(){
     const int SWIPE = 1;
     const int STAND_UP = 10;
     Boss& boss_state = registry.boss.get(boss);
@@ -965,7 +977,8 @@ void WorldSystem::boss_action_swipe(float elapsed_ms){
         boss_state.state = BOSS_STATE::SIZE;
     }
 }
-void WorldSystem::boss_action_summon(float elapsed_ms){
+
+void WorldSystem::boss_action_summon(){
     const int SUMMON = 6;
     const int STAND_UP = 10;
     AnimationInfo& info = registry.animated.get(boss);
@@ -1028,7 +1041,7 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
     //TODO: enable this to start with boss
-    //boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });

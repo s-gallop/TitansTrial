@@ -127,9 +127,10 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
 
     registry.colors.insert(entity, {1, .8f, .8f});
     Enemies& enemy = registry.enemies.emplace(entity);
-    enemy.death_animation = 11;
-    enemy.hit_animation = 1;
-    enemy.hittable = false;
+    enemy.death_animation = 12;
+    enemy.hit_animation = 11;
+    enemy.hitting = false;
+    enemy.health = BOSS_HEALTH;
 
     AnimationInfo& aniInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS));
     aniInfo.oneTimeState = 9;
@@ -159,14 +160,14 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     registry.collisionMeshPtrs.emplace(hb2, &mesh);
     registry.weaponHitBoxes.insert(hb1, {
         false,
-        true,
+        false,
         1,
         false,
         true
     });
     registry.weaponHitBoxes.insert(hb2, {
             false,
-            true,
+            false,
             1,
             false,
             true

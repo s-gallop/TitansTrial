@@ -167,7 +167,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
         }},
         {TEXTURE_ASSET_ID::BOSS, {
                 13,
-                {9,9,2,8,8,16,14,1,9,9,13,2,36},
+                {9,9,2,8,8,16,14,1,9,9,13,4,36},
                 0,
                 36
         }},

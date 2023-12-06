@@ -33,6 +33,7 @@ const size_t MAX_GHOULS = 5;
 const size_t MAX_SPITTERS = 3;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
+const int BOSS_HEALTH = 10;
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
@@ -105,9 +106,9 @@ public:
 	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
 
     void boss_action_decision(float elapsed_ms);
-    void boss_action_teleport(float elapsed_ms);
-    void boss_action_swipe(float elapsed_ms);
-    void boss_action_summon(float elapsed_ms);
+    void boss_action_teleport();
+    void boss_action_swipe();
+    void boss_action_summon();
 
 	// Check for collisions
 	void handle_collisions();
