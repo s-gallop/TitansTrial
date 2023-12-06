@@ -27,6 +27,13 @@ enum class INVULN_TYPE
 	HEAL = HIT + 1
 };
 
+enum class BOSS_STATE {
+    TELEPORT = 0,
+    SWIPE = TELEPORT + 1,
+    SUMMON = SWIPE + 1,
+    SIZE = SUMMON + 1,
+};
+
 struct Blank
 {
 
@@ -49,6 +56,20 @@ struct Player
 	INVULN_TYPE invuln_type = INVULN_TYPE::NONE;
 };
 
+struct Boss
+{
+    BOSS_STATE state = BOSS_STATE::SIZE;
+    int phase = 0;
+    int hp = 10;
+    std::vector<Entity> hurt_boxes;
+};
+
+struct HealthBar
+{
+    Entity owner;
+    Entity bar;
+};
+
 struct Block
 {
 };
@@ -65,6 +86,7 @@ struct Enemies
 	bool hitting = true;
 
 	int health = 2;
+    int total_health = health;
 	int hit_animation = -2;
 	
 	int death_animation = -2;
@@ -75,7 +97,7 @@ struct FireEnemy {
 };
 
 struct LavaPillar {
-	
+
 };
 
 struct Boulder {
@@ -174,6 +196,8 @@ struct WeaponHitBox
 	bool soundPlayed = false;
 	bool isActive = true;
 	int damage = 1;
+    bool hurtsEnemy = true;
+    bool hurtsHero = false;
 };
 
 // All data relevant to the shape and motion of entities
@@ -335,7 +359,8 @@ enum class TEXTURE_ASSET_ID
 	FOLLOWING_ENEMY = GHOUL_ENEMY + 1,
 	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
-	SWORD = SPITTER_ENEMY_BULLET + 1,
+    BOSS = SPITTER_ENEMY_BULLET + 1,
+	SWORD = BOSS + 1,
 	GUN = SWORD + 1,
 	ROCKET_LAUNCHER = GUN + 1,
 	ROCKET = ROCKET_LAUNCHER + 1,
@@ -398,7 +423,9 @@ enum class TEXTURE_ASSET_ID
 	DIFFICULTY_BAR_BROKEN = DB_BOSS_SKULL + 1,
 	DB_SATAN = DIFFICULTY_BAR_BROKEN + 1,
 	LAVA_PILLAR = DB_SATAN + 1,
-	TEXTURE_COUNT = LAVA_PILLAR + 1
+    HEALTH_BAR = LAVA_PILLAR + 1,
+    HEALTH_BAR_HEALTH = HEALTH_BAR + 1,
+	TEXTURE_COUNT = HEALTH_BAR_HEALTH + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -419,7 +446,9 @@ enum class EFFECT_ASSET_ID
 	FOLLOWING_ENEMY = SPITTER_ENEMY_BULLET + 1,
     SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	LAVA_PILLAR = SCREEN_LAYER + 1,
-	EFFECT_COUNT = LAVA_PILLAR + 1
+    BOSS = LAVA_PILLAR + 1,
+    HEALTH_BAR = BOSS + 1,
+	EFFECT_COUNT = HEALTH_BAR + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

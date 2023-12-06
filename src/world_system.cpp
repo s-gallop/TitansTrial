@@ -284,7 +284,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			// STUB
 			printf("\nLv0\n");
 		}
-	}	
+	}
 	else if (ddf >= 100 && ddf < 200 && ddl != 1)
 	{
 		ddl = 1;
@@ -346,7 +346,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	state["history_max_ddf"] = max((float) state["history_max_ddf"].ToFloat(), ddf);
 	points = (points > (unsigned int) INT_MAX) ? INT_MAX : points;
 	state["history_max_score"] = max((int) state["history_max_score"].ToInt(), (int) points);
-	
+
 	if (ddl < 4)
 		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
 
@@ -396,7 +396,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		ddf += elapsed_ms_since_last_update / 1000.f;
 
 	// Updating window title
-	
+
 	std::stringstream title_ss;
 	title_ss << "Points: " << points;
 	title_ss << "; Dynamic Difficulty Level: " << ddl;
@@ -477,6 +477,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	spawn_move_ghouls(elapsed_ms_since_last_update);
 	spawn_spitter_enemy(elapsed_ms_since_last_update);
 	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+    if (boss && registry.boss.size()) {
+        boss_action_decision(elapsed_ms_since_last_update);
+    }
 	update_graphics_all_enemies();
 
 	if ((ddl == 2 || ddl == 3) && following_enemies.empty())
@@ -522,7 +525,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-	
+
 	return true;
 }
 
@@ -583,13 +586,14 @@ void WorldSystem::update_graphics_all_enemies()
 	for (Entity entity: registry.enemies.entities)
 	{ 
 		Enemies& enemy = registry.enemies.get(entity);
-		
+
 		if (!registry.animated.has(entity))
 			continue;
 		AnimationInfo& animation = registry.animated.get(entity);
 
 		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
 			registry.remove_all_components_of(entity);
+            update_health_bar();
 		} else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
 			enemy.hittable = true;
 			enemy.hitting = true;
@@ -689,10 +693,8 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 	if (registry.ghouls.components.size() < MAX_GHOULS && next_ghoul_spawn < 0.f)
 	{
 		// Reset timer
-		next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
-		Entity newGhoul = createGhoul(renderer, vec2(x_pos, y_pos));
+        next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+		Entity newGhoul = createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
 		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
 	}
 	
@@ -707,7 +709,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		if (enemy_motion.velocity.y != 0.f) {
 			animation.oneTimeState = BLANK_STATE;
 			animation.oneTimer = 0;
-		} 
+		}
 		else if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
 			registry.enemies.get(enemy).hittable = true;
 			registry.enemies.get(enemy).hitting = true;
@@ -810,9 +812,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
 	{
 		next_spitter_spawn = (SPITTER_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_SPAWN_DELAY_MS / 2);
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float y_pos = uniform_dist(rng) * (window_height_px - 350) + 50;
-		createSpitterEnemy(renderer, { x_pos, y_pos });
+		createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
 	}
 
 	auto &spitterEnemy_container = registry.spitterEnemies;
@@ -898,6 +898,126 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 	}
 }
 
+void WorldSystem::boss_action_decision(float elapsed_ms){
+    Boss& boss_state = registry.boss.get(boss);
+    AnimationInfo& info = registry.animated.get(boss);
+    // 11 and 12 are hurt and death animation
+    if (info.oneTimeState > 10) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+        for (auto hurt_box : boss_state.hurt_boxes) {
+            registry.weaponHitBoxes.get(hurt_box).isActive = false;
+        }
+        return;
+    }
+    switch (boss_state.state) {
+        case BOSS_STATE::TELEPORT:
+            boss_action_teleport();
+            break;
+        case BOSS_STATE::SWIPE:
+            boss_action_swipe();
+            break;
+        case BOSS_STATE::SUMMON:
+            boss_action_summon();
+            break;
+        case BOSS_STATE::SIZE:
+            boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
+            break;
+    }
+}
+
+void WorldSystem::boss_action_teleport(){
+    const int PHASE_OUT = 8;
+    const int PHASE_IN = 9;
+    const std::vector<int> boss_platforms{0,1,2,7};
+    AnimationInfo& info = registry.animated.get(boss);
+    Boss& boss_state = registry.boss.get(boss);
+    Enemies& enemy_info = registry.enemies.get(boss);
+    if (boss_state.phase == 0) {
+        enemy_info.hitting = false;
+        enemy_info.hittable = false;
+        info.oneTimeState = PHASE_OUT;
+        boss_state.phase++;
+    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
+        Motion& motion = registry.motions.get(boss);
+        motion.position = getRandomWalkablePos(motion.scale, boss_platforms[rand() % boss_platforms.size()], false);
+        boss_state.phase++;
+    } else if(boss_state.phase == 2) {
+        enemy_info.hittable = true;
+        info.oneTimeState = PHASE_IN;
+        boss_state.phase++;
+    } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
+        enemy_info.hitting = true;
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+    }
+}
+
+void WorldSystem::boss_action_swipe(){
+    const int SWIPE = 1;
+    const int STAND_UP = 10;
+    Boss& boss_state = registry.boss.get(boss);
+    AnimationInfo& info = registry.animated.get(boss);
+    if (boss_state.phase == 0) {
+        info.oneTimeState = SWIPE;
+        registry.motions.get(boss_state.hurt_boxes[0]).position = registry.motions.get(boss).position + vec2(0,55);
+        registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
+        boss_state.phase++;
+    } else if (boss_state.phase == 1 && info.oneTimeState != -1) {
+        Motion& motion = registry.motions.get(boss);
+        int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
+        if (frame == 1) {
+            registry.weaponHitBoxes.get(boss_state.hurt_boxes[0]).isActive = true;
+        } else if (frame == 3) {
+            registry.weaponHitBoxes.get(boss_state.hurt_boxes[1]).isActive = true;
+        } else {
+            for (auto hurt_box : boss_state.hurt_boxes) {
+                registry.weaponHitBoxes.get(hurt_box).isActive = false;
+            }
+        }
+    } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
+        info.oneTimeState = STAND_UP;
+        boss_state.phase++;
+    } else if (boss_state.phase == 2 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+    }
+}
+
+void WorldSystem::boss_action_summon(){
+    const int SUMMON = 6;
+    const int STAND_UP = 10;
+    AnimationInfo& info = registry.animated.get(boss);
+    Boss& boss_state = registry.boss.get(boss);
+    if (boss_state.phase == 0) {
+        info.oneTimeState = SUMMON;
+        boss_state.phase++;
+    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
+        info.oneTimeState = STAND_UP;
+        switch (rand() % 2) {
+            case 0:
+                for(int i = 0; i < 3 + rand() % 4; i++) {
+                    createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
+                }
+                for(int i = 0; i < 1 + rand() % 3; i++) {
+                    createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
+                }
+                break;
+            case 1:
+                for(int i = 0; i < 10 + rand() % 6; i++) {
+                    Motion& motion = registry.motions.get(boss);
+                    createSpitterEnemyBullet(renderer, motion.position, motion.angle);
+                }
+                break;
+        }
+        boss_state.phase++;
+    } else if(boss_state.phase == 2 && info.oneTimeState == -1) {
+        boss_state.phase = 0;
+        boss_state.state = BOSS_STATE::SIZE;
+    }
+
+}
+
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
@@ -926,6 +1046,9 @@ void WorldSystem::restart_game()
 	
 	create_parallax_background();
 	initiate_weapons();
+    //TODO: enable this to start with boss
+    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -933,12 +1056,6 @@ void WorldSystem::restart_game()
 
 	Player& player = registry.players.get(player_hero);
 	createSword(renderer, registry.motions.get(player_hero).position);
-
-	int background_pixels_width = 768;
-	int background_pixels_height = 432;
-
-	float base_height = 16.0 * window_height_px / background_pixels_height;
-	float base_width = 16.0 * window_width_px / background_pixels_width;
 
 	// global variables at this .cpp to reset, don't forget it!
 	motionKeyStatus.reset();
@@ -952,43 +1069,14 @@ void WorldSystem::restart_game()
 
 	create_inGame_GUIs();
 
-	// bottom line
-	createBlock(renderer, {window_width_px / 2, window_height_px + 100}, {window_width_px, base_height / 2}, grid_vec);
-	// left line
-	createBlock(renderer, {-base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
-	// right line
-	createBlock(renderer, {window_width_px + base_width, 0}, {base_width * 6, window_height_px * 2}, grid_vec);
-	// top line
-	// createBlock(renderer, {window_width_px / 2, -100.f}, {window_width_px, base_height / 2}, grid_vec);
-
-	// left middle platform
-	createBlock(renderer, {base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
-
-	// top middle platform
-	createBlock(renderer, {window_width_px / 2, base_height * 6}, {base_width * 26, base_height * 2}, grid_vec);
-
-	// right middle platform
-	createBlock(renderer, {window_width_px - base_width * 7.5, base_height * 12}, {base_width * 11, base_height * 2}, grid_vec);
-
-	// bottom middle left platform
-	createBlock(renderer, {base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
-
-	// bottom middle right platform
-	createBlock(renderer, {window_width_px - base_width * 13, base_height * 18}, {base_width * 10, base_height * 2}, grid_vec);
-
-	// bottom left padding platform
-	createBlock(renderer, {base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
-
-	// bottom right padding platform
-	createBlock(renderer, {window_width_px - base_width * 6.5, window_height_px - base_height * 3}, {base_width * 9, base_height * 4}, grid_vec);
-
-	// bottom center padding platform
-	createBlock(renderer, {window_width_px / 2, window_height_px - base_height * 2}, {base_width * 14, base_height * 2}, grid_vec);
+    for(auto value : platforms) {
+        createBlock(renderer, value.x, value.y, grid_vec);
+    }
 	
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();
 
-	
+
 
 	//testing screen dimensions
 	/*for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {
@@ -1311,7 +1399,11 @@ void WorldSystem::handle_collisions()
 			Player& player = registry.players.get(entity);
 
 			// Checking Player - Enemies collisions
-			if (((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) || (registry.explosions.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive) || registry.spitterBullets.has(entity_other)) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
+			if ((
+                    (registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hitting) ||
+                    (registry.weaponHitBoxes.has(entity_other) && registry.weaponHitBoxes.get(entity_other).isActive && registry.weaponHitBoxes.get(entity_other).hurtsHero) ||
+                    registry.spitterBullets.has(entity_other)
+                ) && registry.players.get(player_hero).invulnerable_timer <= 0.0f && !registry.gravities.get(player_hero).dashing)
 			{
 				// remove 1 hp
 				player.hp -= 1;
@@ -1353,7 +1445,7 @@ void WorldSystem::handle_collisions()
 		}
 		else if (registry.weaponHitBoxes.has(entity))
 		{
-			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive)
+			if ((registry.enemies.has(entity_other) && registry.enemies.get(entity_other).hittable) && registry.weaponHitBoxes.get(entity).isActive && registry.weaponHitBoxes.get(entity).hurtsEnemy)
 			{
 				if (registry.enemies.has(entity_other) && !registry.boulders.has(entity_other)) {
 					//printf("Health: %d, Damage: %d\n", registry.enemies.get(entity_other).health, registry.weaponHitBoxes.get(entity).damage);
@@ -1521,11 +1613,21 @@ void WorldSystem::clear_enemies()
 	for (uint i = 0; i < registry.enemies.size(); i++)
 	{
 		Entity enemy = registry.enemies.entities[i];
-		if (!registry.followingEnemies.has(enemy)) {
+		if (!(registry.followingEnemies.has(enemy) || registry.boss.has(enemy))) {
 			justKillThem.push_back(registry.enemies.entities[i]);
 		}
 	}
 	for (Entity e : justKillThem) registry.remove_all_components_of(e);
+}
+
+void WorldSystem::update_health_bar()
+{
+    for(Entity e : registry.healthBar.entities) {
+        if (!registry.enemies.has(registry.healthBar.get(e).owner)) {
+            registry.remove_all_components_of(registry.healthBar.get(e).bar);
+            registry.remove_all_components_of(e);
+        }
+    }
 }
 
 // On key callback
@@ -1597,15 +1699,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_3 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_ghoul_spawn = -1.0;
-				spawn_move_ghouls(0);
+                createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
 			} else {
 				createGrenadeLauncher(renderer, registry.motions.get(player_hero).position);
 			}
 		} else if (key == GLFW_KEY_4 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_spitter_spawn = -1.0;
-            	spawn_spitter_enemy(0);
+                createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
 			} else {
 				createRocketLauncher(renderer, registry.motions.get(player_hero).position);
 			}
@@ -1636,7 +1736,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 		if (key == GLFW_KEY_K && action == GLFW_PRESS && debug)
 		{
-			clear_enemies();
+            if (mod == GLFW_MOD_SHIFT) {
+                registry.remove_all_components_of(boss);
+            } else {
+                clear_enemies();
+            }
+            update_health_bar();
 		}
 
 		if (key == GLFW_KEY_X && action == GLFW_PRESS)
