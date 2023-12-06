@@ -3,6 +3,7 @@
 #include "world_init.hpp"
 #include "sound_utils.hpp"
 #include "physics_system.hpp"
+#include "world_system.hpp"
 
 float next_collectable_spawn = 600.f;
 vec2 mouse_click_pos = {-1.f, -1.f};
@@ -223,7 +224,7 @@ void explode(RenderSystem* renderer, vec2 position, Entity explodable) {
 
 void update_explosions(float elapsed_ms) {
 	for (Entity explosion: registry.explosions.entities) {
-		int frame = (int)floor(registry.animated.get(explosion).oneTimer * 10.f);
+		int frame = (int)floor(registry.animated.get(explosion).oneTimer * ANIMATION_SPEED_FACTOR);
 		if (frame == 6)
 			registry.remove_all_components_of(explosion);
 		else if (frame == 2)
@@ -402,7 +403,6 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 		if (swingState == 0) {
 			float weaponAngle = registry.motions.get(weapon).angle;
 			swingState = (weaponAngle < 0 || weaponAngle > M_PI) ? 3 : 1;
-			printf("");
 		}
 	} else if (registry.guns.has(weapon)) {
 		Gun& gun = registry.guns.get(weapon);
@@ -470,6 +470,7 @@ void check_dash_boots(Entity hero, uint direction) {
 			play_sound(SOUND_EFFECT::DASH);
             AnimationInfo& info = registry.animated.get(hero);
             info.oneTimeState = 5;
+			info.oneTimer = 0;
 		} else {
 			dash_direction = direction;
 			dash_window = DASH_WINDOW;

@@ -29,10 +29,11 @@ const float ANIMATION_SPEED_FACTOR = 10.0f;
 const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_BOULDERS = 2;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
-const size_t MAX_GHOULS = 1;
+const size_t MAX_GHOULS = 5;
 const size_t MAX_SPITTERS = 3;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
+const int BOSS_HEALTH = 10;
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
@@ -43,7 +44,7 @@ const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.f;
 const float JUMP_INITIAL_SPEED = 350.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
-const float DDF_PUNISHMENT = 30.f;
+const float DDF_PUNISHMENT = 10.f;
 const float HEART_START_POS = 70.f;
 const float HEART_GAP = 35.f;
 const float HEART_Y_CORD = 20.f;
@@ -61,6 +62,7 @@ const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 730.f };
+const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
 
 class WorldSystem
 {
@@ -103,6 +105,11 @@ public:
 	// spawn splitter enemies
 	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
 
+    void boss_action_decision(float elapsed_ms);
+    void boss_action_teleport();
+    void boss_action_swipe();
+    void boss_action_summon();
+
 	// Check for collisions
 	void handle_collisions();
 
@@ -111,6 +118,7 @@ public:
 
     static void change_pause();
 
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -118,6 +126,8 @@ private:
     void on_mouse_click(int button, int action, int mods);
 
 	void clear_enemies();
+
+    static void update_health_bar();
 
 	void motion_helper(Motion& playerMotion);
 
@@ -161,11 +171,15 @@ private:
 	RenderSystem *renderer;
 	float current_speed;
 	float current_enemy_spawning_speed;
-	float current_spitter_spawning_speed;
 	float current_ghoul_spawning_speed;
+	float current_spitter_spawning_speed;
+	float current_boulder_spawning_speed;
 	float next_enemy_spawn;
+	float next_ghoul_spawn;
 	float next_spitter_spawn;
+	float next_boulder_spawn;
 	Entity player_hero;
+    Entity boss;
 
 	// C++ random number generator
 	std::default_random_engine rng;
