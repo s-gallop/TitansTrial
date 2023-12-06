@@ -806,7 +806,9 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
     const uint SHOOT_STATE = 2;
     const uint SPITTER_FIRE_FRAME = 4;
 	const uint WALKING_TIME = 5;
-	const float WALKING_SPEED = 1.f;
+	const float WALKING_SPEED = 100.f;
+	float EDGE_DISTANCE = 10.f;
+	const float STOP_WALK_TIME = 300.f;
 
 	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
 	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
@@ -824,36 +826,35 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		Motion &motion = registry.motions.get(entity);
 		AnimationInfo &animation = registry.animated.get(entity);
 
-		//if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs >= 2000.f)
-		//{
-		//	
-		//	if (spitterEnemy.left_x == -1.f && spitterEnemy.right_x == -1.f && motion.velocity.y == 0.f) {
-		//		vec2 edges = find_edges(motion.position, motion.scale.x);
-		//		spitterEnemy.left_x = edges.x;
-		//		spitterEnemy.right_x = edges.y;
-		//	}
+		if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs > STOP_WALK_TIME && motion.velocity.y == 0.f && animation.oneTimeState != 2) {
+			if (spitterEnemy.left_x != -1.f && motion.velocity.x == 0.f) {
+				float direction;
+				if (motion.position.x <= spitterEnemy.left_x || motion.position.x >= spitterEnemy.right_x) {
+					direction = max(motion.position.x - spitterEnemy.left_x, spitterEnemy.right_x - motion.position.x);
+				}
+				else {
+					direction = uniform_dist(rng) - 0.5f;
+				}
+				
+				direction = direction / abs(direction);
+				motion.velocity.x = direction * WALKING_SPEED * current_speed;
+				motion.dir = (int)direction;
+			}
+			// Reverse direction
+			else if (motion.position.x - spitterEnemy.left_x <= EDGE_DISTANCE && motion.velocity.x != 0.f) {
+				motion.velocity.x = WALKING_SPEED * current_speed;
+				motion.dir = 1;
+			}
+			else if (spitterEnemy.right_x - motion.position.x <= EDGE_DISTANCE && motion.velocity.x != 0.f) {
+				motion.velocity.x = -1.f * WALKING_SPEED * current_speed;
+				motion.dir = -1;
+			}
+		}
+		else if (spitterEnemy.canShoot || spitterEnemy.timeUntilNextShotMs <= STOP_WALK_TIME) {
+			motion.velocity.x = 0;
+		}
 
-		//	if (motion.velocity.x == 0.f && motion.velocity.y == 0.f && animation.oneTimeState == -1) {
-		//		float direction = max(motion.position.x - spitterEnemy.left_x, spitterEnemy.right_x - motion.position.x);
-		//		direction = direction / abs(direction);
-		//		motion.velocity.x = direction * WALKING_SPEED * current_speed;
-		//		motion.dir = (int)direction;
-		//	}
-		//	// Reverse direction
-		//	else if (motion.position.x - spitterEnemy.left_x <= 0 && motion.velocity.y == 0.f && motion.velocity.x != 0.f) {
-		//		motion.velocity.x = WALKING_SPEED * current_speed;
-		//		motion.dir = 1;
-		//	}
-		//	else if (spitterEnemy.right_x - motion.position.x <= 0 && motion.velocity.y == 0.f && motion.velocity.x != 0.f) {
-		//		motion.velocity.x = -1.f * WALKING_SPEED * current_speed;
-		//		motion.dir = -1;
-		//	}
-		//}
-
-		//if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs < 2000.f) {
-		//	motion.velocity.x = 0.f;
-		//	animation.curState = 0;
-		//}
+		animation.curState = (motion.velocity.x != 0)? 1: 0;
 
         if (animation.oneTimeState == SHOOT_STATE && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
             Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
@@ -1517,6 +1518,11 @@ void WorldSystem::handle_collisions()
 						registry.colors.insert(entity_other, {1, .8f, .8f});
 						registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
+					}
+					else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
+						//registry.colors.insert(entity_other, { 1, .8f, .8f });
+						registry.spitterEnemies.get(entity_other).left_x = max(block_motion.position.x - scale1.x, 70.f);
+						registry.spitterEnemies.get(entity_other).right_x = min(block_motion.position.x + scale1.x, 1125.f);
 					}
 				} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2.f - solid_motion.scale.x / 2.f) {
 					if (registry.players.has(entity_other) && motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
