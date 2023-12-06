@@ -1605,7 +1605,7 @@ void WorldSystem::clear_enemies()
 	for (uint i = 0; i < registry.enemies.size(); i++)
 	{
 		Entity enemy = registry.enemies.entities[i];
-		if (!registry.followingEnemies.has(enemy) || !registry.boss.has(enemy)) {
+		if (!(registry.followingEnemies.has(enemy) || registry.boss.has(enemy))) {
 			justKillThem.push_back(registry.enemies.entities[i]);
 		}
 	}
@@ -1718,7 +1718,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 		if (key == GLFW_KEY_K && action == GLFW_PRESS && debug)
 		{
-			clear_enemies();
+            if (mod == GLFW_MOD_SHIFT) {
+                registry.remove_all_components_of(boss);
+            } else {
+                clear_enemies();
+            }
 		}
 
 		if (key == GLFW_KEY_X && action == GLFW_PRESS)
