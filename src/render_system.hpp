@@ -113,7 +113,15 @@ class RenderSystem
 		textures_path("difficulty/satan_shader.png"),
 		textures_path("lava_pillar.png"),
         textures_path("health_bar.png"),
-        textures_path("health_in_bar.png")};
+        textures_path("health_in_bar.png"),
+		textures_path("dialogues/dialogue_1_thanatos.png"),
+		textures_path("dialogues/dialogue_2_thanatos.png"),
+		textures_path("dialogues/dialogue_3_hades.png"),
+		textures_path("dialogues/dialogue_4_thanatos.png"),
+		textures_path("dialogues/dialogue_5_thanatos.png"),
+		textures_path("dialogues/dialogue_6_thanatos.png"),
+		textures_path("dialogues/dialogue_7_hades.png"),
+		textures_path("dialogues/dialogue_8_hades.png")};
 
 
 	std::array<GLuint, effect_count> effects;
@@ -134,7 +142,8 @@ class RenderSystem
         shader_path("screen_layer"),
 		shader_path("lava_pillar"),
         shader_path("boss"),
-        shader_path("health_bar")};
+        shader_path("health_bar"),
+		shader_path("dialogue_layer")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
@@ -168,7 +177,7 @@ public:
 	~RenderSystem();
 
 	// Draw all entities
-	void draw(bool pause, bool debug);
+	void draw(bool pause, bool debug, int dialogue);
 
 	mat3 createProjectionMatrix();
 
@@ -177,6 +186,7 @@ private:
 	void drawTexturedMesh(Entity entity, const mat3 &projection, bool pause, bool is_debug = false);
 	void drawToScreen();
     void drawScreenLayer(const mat3 &projection, bool pause);
+	void drawDialogueLayer(const mat3 &projection, int dialogue);
 
 	// Window handle
 	GLFWwindow *window;

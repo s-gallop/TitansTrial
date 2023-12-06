@@ -44,12 +44,12 @@ int main()
             float elapsed_ms =
                     min((float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000, 50.0f);
             world_system.step(elapsed_ms);
-            physics_system.step(elapsed_ms);
+			physics_system.step(elapsed_ms, world_system.dialogue_screen_active);
             world_system.handle_collisions();
         }
         t = now;
 
-		render_system.draw(world_system.pause, world_system.debug);
+		render_system.draw(world_system.pause, world_system.debug, world_system.dialogue_screen_active);
 	}
 
 	return EXIT_SUCCESS;

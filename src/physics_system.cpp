@@ -143,7 +143,7 @@ bool PhysicsSystem::collides(const Entity &entity1, const Entity &entity2)
     return false;
 }
 
-void PhysicsSystem::step(float elapsed_ms)
+void PhysicsSystem::step(float elapsed_ms, int dialogue)
 {
     // Move fish based on how much time has passed, this is to (partially) avoid
     // having entities move at different speed based on the machine.
@@ -153,13 +153,22 @@ void PhysicsSystem::step(float elapsed_ms)
         Motion &motion = motion_container.components[i];
         Entity entity = motion_container.entities[i];
         float step_seconds = elapsed_ms / 1000.f;
-        if (registry.gravities.has(entity))
-        {
-            Gravity& gravity = registry.gravities.get(entity);
-            if (!gravity.lodged.test(0) && !gravity.lodged.test(1) && !gravity.dashing)
-                motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR * elapsed_ms;
+        if (registry.dialogues.has(entity)) {
+            // move dialogue only if it's not centered
+            if (motion.position.x > window_width_px / 2) {
+                motion.position += motion.velocity * step_seconds;
+            }
+        } else {
+            // move only if no dialogues are shown
+            if (dialogue == 0) {
+                if (registry.gravities.has(entity)) {
+                    Gravity& gravity = registry.gravities.get(entity);
+                    if (!gravity.lodged.test(0) && !gravity.lodged.test(1) && !gravity.dashing)
+                        motion.velocity[1] += GRAVITY_ACCELERATION_FACTOR * elapsed_ms;
+                }
+                motion.position += motion.velocity * step_seconds;
+            }
         }
-        motion.position += motion.velocity * step_seconds;
     }
 
     // Check for collisions between all entities with meshes

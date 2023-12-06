@@ -259,5 +259,6 @@ Entity createDBSkull(RenderSystem* renderer, vec2 pos);
 Entity createDBSatan(RenderSystem* renderer, vec2 pos);
 Entity createLavaPillar(RenderSystem* renderer, vec2 pos);
 Entity createHealthBar(RenderSystem* renderer, Entity owner);
+Entity createDialogue(RenderSystem* renderer, TEXTURE_ASSET_ID texture_id);
 
 vec2 getRandomWalkablePos(vec2 char_scale, int platform = -1, bool randomness = true);

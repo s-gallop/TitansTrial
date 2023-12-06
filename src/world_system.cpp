@@ -19,6 +19,7 @@ bool WorldSystem::pause = false;
 bool WorldSystem::debug = false;
 bool WorldSystem::mouse_clicked = false;
 bool WorldSystem::isTitleScreen = true;
+int WorldSystem::dialogue_screen_active = 0; // 0 means no dialogue screen is active
 std::bitset<2> motionKeyStatus("00");
 bool pickupKeyStatus = false;
 vec3 player_color;
@@ -169,6 +170,7 @@ void WorldSystem::create_title_screen()
 	isTitleScreen = true;
 
 	pause = false;
+	dialogue_screen_active = 0;
 
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
@@ -183,6 +185,7 @@ void WorldSystem::create_title_screen()
 void WorldSystem::create_almanac_screen() {
 	isTitleScreen = true;
 	pause = false;
+	dialogue_screen_active = 0;
 
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
@@ -214,322 +217,322 @@ void WorldSystem::create_almanac_screen() {
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-	lavaPillarTimer += elapsed_ms_since_last_update;
-	if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
-		lavaPillarTimer = 0;
-		createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
-		createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
-	}
-	for (AnimationInfo& animation: registry.animated.components) {
-		if (animation.oneTimeState != -1) {
-			animation.oneTimer += elapsed_ms_since_last_update / 1000.f;
+	if (dialogue_screen_active == 0) {
+		lavaPillarTimer += elapsed_ms_since_last_update;
+		if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
+			lavaPillarTimer = 0;
+			createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
+			createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
 		}
-	}
-	
-	// internal data update section
-	float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
-	if (expectedTimer <= 0.0f)
-	{
-		expectedTimer = 0.0f;
-		registry.colors.get(player_hero) = player_color;
-		registry.players.get(player_hero).invuln_type = INVULN_TYPE::NONE;
-	}
-	registry.players.get(player_hero).invulnerable_timer = expectedTimer;
-
-	if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HIT) 
-	{
-		for (Entity e : player_hearts_GUI) {
-			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_STEEL;
-		}
-	}
-	else if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HEAL)
-	{
-		for (Entity e : player_hearts_GUI) {
-			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_HEAL;
-		}
-	}
-	else
-	{
-		for (Entity e : player_hearts_GUI) {
-			registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART;
-		}
-	}
-
-	switch (registry.players.get(player_hero).equipment_type)
-	{
-		case COLLECTABLE_TYPE::PICKAXE:
-			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::PICKAXE;
-			registry.renderRequests.get(powerup_GUI).visibility = true;
-			break;
-		case COLLECTABLE_TYPE::WINGED_BOOTS:
-			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::WINGED_BOOTS;
-			registry.renderRequests.get(powerup_GUI).visibility = true;
-			break;
-		case COLLECTABLE_TYPE::DASH_BOOTS:
-			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::DASH_BOOTS;
-			registry.renderRequests.get(powerup_GUI).visibility = true;
-			break;
-		default:
-			registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
-			registry.renderRequests.get(powerup_GUI).visibility = false;
-	}
-
-	changeScore(points);
-
-	ddf = max(ddf, 0.f);
-	if (ddf < 100 && ddl != 0)
-	{
-		ddl = 0;
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv0\n");
-		}
-	}
-	else if (ddf >= 100 && ddf < 200 && ddl != 1)
-	{
-		ddl = 1;
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv1\n");
-		}
-	}
-	else if (ddf >= 200 && ddf < 300 && ddl != 2)
-	{
-		ddl = 2;
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv2\n");
-		}
-	}
-	else if (ddf >= 300 && ddf < 400 && ddl != 3)
-	{
-		ddl = 3;
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv3\n");
-		}
-	}
-	else if (ddf >= 400 && ddf < 500 && ddl != 4)
-	{
-		ddl = 4;
-		registry.remove_all_components_of(indicator);
-		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
-		db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
-		db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
-		clear_enemies();
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv4\n");
-		}
-	}
-	else if (ddf >= 500 && ddf < 600 && ddl != 5)
-	{
-		ddl = 5;
-		for (Entity decorator : db_decorator) {
-			registry.remove_all_components_of(decorator);
-		}
-		db_decorator.clear();
-		registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-		registry.motions.get(difficulty_bar).position[1] = 730.f;
-		db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
-		if (ddf > recorded_max_ddf) {
-			// STUB
-			printf("\nLv5\n");
-		}
-	}
-	else if (ddf >= 600)
-	{
-		ddl = (int) ddf / 100;
-	}
-
-	recorded_max_ddf = max(recorded_max_ddf, ddf);
-	state["history_max_ddf"] = max((float) state["history_max_ddf"].ToFloat(), ddf);
-	points = (points > (unsigned int) INT_MAX) ? INT_MAX : points;
-	state["history_max_score"] = max((int) state["history_max_score"].ToInt(), (int) points);
-
-	if (ddl < 4)
-		registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
-
-	switch (ddl)
-	{
-		case 0:
-			current_enemy_spawning_speed = 1.0f;
-			current_spitter_spawning_speed = 0.0f;
-			current_ghoul_spawning_speed = 0.0f;
-			current_boulder_spawning_speed = 0.0f;
-			break;
-		case 1:
-			current_enemy_spawning_speed = 0.5f;
-			current_ghoul_spawning_speed = 0.5f;
-			current_spitter_spawning_speed = 0.0f;
-			current_boulder_spawning_speed = 0.5f;
-			break;
-		case 2:
-			current_enemy_spawning_speed = 0.0f;
-			current_ghoul_spawning_speed = 0.0f;
-			current_spitter_spawning_speed = 1.0f;
-			current_boulder_spawning_speed = 1.0f;
-			break;
-		case 3:
-			current_enemy_spawning_speed = 0.0f;
-			current_ghoul_spawning_speed = 1.0f;
-			current_spitter_spawning_speed = 1.0f;
-			current_boulder_spawning_speed = 0.0f;
-			break;
-		case 4:
-			current_enemy_spawning_speed = 0.0f;
-			current_ghoul_spawning_speed = 0.0f;
-			current_spitter_spawning_speed = 0.0f;
-			current_boulder_spawning_speed = 0.0f;
-			break;
-		default:
-			current_enemy_spawning_speed = 1.0f;
-			current_ghoul_spawning_speed = 1.0f;
-			current_spitter_spawning_speed = 1.0f;
-			current_boulder_spawning_speed = 1.0f;
-			break;
-	}
-
-	if (ddl == 4)
-		ddf = 499.0;
-	else
-		ddf += elapsed_ms_since_last_update / 1000.f;
-
-	// Updating window title
-
-	std::stringstream title_ss;
-	title_ss << "Points: " << points;
-	title_ss << "; Dynamic Difficulty Level: " << ddl;
-	title_ss << "; Dynamic Difficulty Factor: " << ddf;
-	glfwSetWindowTitle(window, title_ss.str().c_str());
-
-	// Remove debug info from the last step
-	while (registry.debugComponents.entities.size() > 0)
-		registry.remove_all_components_of(registry.debugComponents.entities.back());
-
-	// Removing out of screen entities
-	auto &motion_container = registry.motions;
-
-	// Remove entities that leave the screen on the left side
-	// Iterate backwards to be able to remove without unterfering with the next object to visit
-	// (the containers exchange the last element with the current)
-	for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
-	{
-		Motion &motion = motion_container.components[i];
-
-		if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
-		{
-			Entity e = motion_container.entities[i];
-			if (registry.parallaxBackgrounds.has(e)) {
-				ParallaxBackground &bg = registry.parallaxBackgrounds.get(e);
-				motion.position = bg.resetPosition;
+		for (AnimationInfo& animation: registry.animated.components) {
+			if (animation.oneTimeState != -1) {
+				animation.oneTimer += elapsed_ms_since_last_update / 1000.f;
 			}
 		}
 		
-		if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
-			registry.remove_all_components_of(motion_container.entities[i]);
-		else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
-			registry.remove_all_components_of(motion_container.entities[i]);
-		else if ((registry.boulders.has(motion_container.entities[i]) || registry.lavaPillars.has(motion_container.entities[i])) && (motion.position.y > window_height_px + motion.scale.y))
-			registry.remove_all_components_of(motion_container.entities[i]);
-	}
-
-	if (registry.players.get(player_hero).hasWeapon)
-		update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
-
-	update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
-	update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
-	update_pickaxe(elapsed_ms_since_last_update * current_speed);
-
-	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
-	update_explosions(elapsed_ms_since_last_update * current_speed);
-	// Animation Stuff
-	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
-	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
-	if (playerVelocity.y > 0)
-	{
-		playerAnimation.curState = 4;
-	}
-	else if (playerVelocity.y < 0)
-	{
-		playerAnimation.curState = 3;
-	}
-	else if (playerVelocity.x != 0)
-	{
-		playerAnimation.curState = 2;
-	}
-	else
-	{
-		playerAnimation.curState = 0;
-	}
-
-	for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
-		Entity curHeart = player_hearts_GUI[i];
-		registry.renderRequests.get(curHeart).visibility = true;
-	}
-	for (int i = registry.players.get(player_hero).hp; i < player_hearts_GUI.size(); i++) {
-		Entity curHeart = player_hearts_GUI[i];
-		registry.renderRequests.get(curHeart).visibility = false;
-	}
-
-	spawn_move_normal_enemies(elapsed_ms_since_last_update);
-	spawn_boulder(elapsed_ms_since_last_update);
-	spawn_move_ghouls(elapsed_ms_since_last_update);
-	spawn_spitter_enemy(elapsed_ms_since_last_update);
-	update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
-    if (boss && registry.boss.size()) {
-        boss_action_decision(elapsed_ms_since_last_update);
-    }
-	update_graphics_all_enemies();
-
-	if ((ddl == 2 || ddl == 3) && following_enemies.empty())
-	{
-		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
-		std::vector<std::vector<char>> vec = grid_vec;
-		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
-		following_enemies.push_back(newEnemy);
-	}
-	else if ((ddl == 2 || ddl == 3) && !following_enemies.empty())
-	{
-		spawn_move_following_enemies(elapsed_ms_since_last_update);
-	}
-	else if ((ddl != 2 && ddl != 3) && !following_enemies.empty())
-	{
-		registry.remove_all_components_of(following_enemies[0]);
-		following_enemies.clear();
-	}
-
-	// Processing the hero state
-	assert(registry.screenStates.components.size() <= 1);
-	ScreenState &screen = registry.screenStates.components[0];
-
-	float min_timer_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities)
-	{
-		// progress timer
-		DeathTimer &timer = registry.deathTimers.get(entity);
-		timer.timer_ms -= elapsed_ms_since_last_update;
-		if (timer.timer_ms < min_timer_ms)
+		// internal data update section
+		float expectedTimer = registry.players.get(player_hero).invulnerable_timer - elapsed_ms_since_last_update;
+		if (expectedTimer <= 0.0f)
 		{
-			min_timer_ms = timer.timer_ms;
+			expectedTimer = 0.0f;
+			registry.colors.get(player_hero) = player_color;
+			registry.players.get(player_hero).invuln_type = INVULN_TYPE::NONE;
+		}
+		registry.players.get(player_hero).invulnerable_timer = expectedTimer;
+
+		if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HIT) 
+		{
+			for (Entity e : player_hearts_GUI) {
+				registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_STEEL;
+			}
+		}
+		else if (registry.players.get(player_hero).invuln_type == INVULN_TYPE::HEAL)
+		{
+			for (Entity e : player_hearts_GUI) {
+				registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART_HEAL;
+			}
+		}
+		else
+		{
+			for (Entity e : player_hearts_GUI) {
+				registry.renderRequests.get(e).used_texture = TEXTURE_ASSET_ID::PLAYER_HEART;
+			}
 		}
 
-		// restart the game once the death timer expired
-		if (timer.timer_ms < 0)
+		switch (registry.players.get(player_hero).equipment_type)
 		{
-			registry.deathTimers.remove(entity);
-			screen.screen_darken_factor = 0;
-			restart_game();
-			return true;
+			case COLLECTABLE_TYPE::PICKAXE:
+				registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::PICKAXE;
+				registry.renderRequests.get(powerup_GUI).visibility = true;
+				break;
+			case COLLECTABLE_TYPE::WINGED_BOOTS:
+				registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::WINGED_BOOTS;
+				registry.renderRequests.get(powerup_GUI).visibility = true;
+				break;
+			case COLLECTABLE_TYPE::DASH_BOOTS:
+				registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::DASH_BOOTS;
+				registry.renderRequests.get(powerup_GUI).visibility = true;
+				break;
+			default:
+				registry.renderRequests.get(powerup_GUI).used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+				registry.renderRequests.get(powerup_GUI).visibility = false;
 		}
+
+		changeScore(points);
+
+		ddf = max(ddf, 0.f);
+		if (ddf < 100 && ddl != 0)
+		{
+			ddl = 0;
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv0\n");
+			}
+		}
+		else if (ddf >= 100 && ddf < 200 && ddl != 1)
+		{
+			ddl = 1;
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv1\n");
+			}
+		}
+		else if (ddf >= 200 && ddf < 300 && ddl != 2)
+		{
+			ddl = 2;
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv2\n");
+			}
+		}
+		else if (ddf >= 300 && ddf < 400 && ddl != 3)
+		{
+			ddl = 3;
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv3\n");
+			}
+		}
+		else if (ddf >= 400 && ddf < 500 && ddl != 4)
+		{
+			ddl = 4;
+			registry.remove_all_components_of(indicator);
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
+			db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
+			db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
+			clear_enemies();
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv4\n");
+			}
+		}
+		else if (ddf >= 500 && ddf < 600 && ddl != 5)
+		{
+			ddl = 5;
+			for (Entity decorator : db_decorator) {
+				registry.remove_all_components_of(decorator);
+			}
+			db_decorator.clear();
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
+			registry.motions.get(difficulty_bar).position[1] = 730.f;
+			db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+			if (ddf > recorded_max_ddf) {
+				// STUB
+				printf("\nLv5\n");
+			}
+		}
+		else if (ddf >= 600)
+		{
+			ddl = (int) ddf / 100;
+		}
+
+		recorded_max_ddf = max(recorded_max_ddf, ddf);
+		state["history_max_ddf"] = max((float) state["history_max_ddf"].ToFloat(), ddf);
+		points = (points > (unsigned int) INT_MAX) ? INT_MAX : points;
+		state["history_max_score"] = max((int) state["history_max_score"].ToInt(), (int) points);
+
+		if (ddl < 4)
+			registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
+
+		switch (ddl)
+		{
+			case 0:
+				current_enemy_spawning_speed = 1.0f;
+				current_spitter_spawning_speed = 0.0f;
+				current_ghoul_spawning_speed = 0.0f;
+				current_boulder_spawning_speed = 0.0f;
+				break;
+			case 1:
+				current_enemy_spawning_speed = 0.5f;
+				current_ghoul_spawning_speed = 0.5f;
+				current_spitter_spawning_speed = 0.0f;
+				current_boulder_spawning_speed = 0.5f;
+				break;
+			case 2:
+				current_enemy_spawning_speed = 0.0f;
+				current_ghoul_spawning_speed = 0.0f;
+				current_spitter_spawning_speed = 1.0f;
+				current_boulder_spawning_speed = 1.0f;
+				break;
+			case 3:
+				current_enemy_spawning_speed = 0.0f;
+				current_ghoul_spawning_speed = 1.0f;
+				current_spitter_spawning_speed = 1.0f;
+				current_boulder_spawning_speed = 0.0f;
+				break;
+			case 4:
+				current_enemy_spawning_speed = 0.0f;
+				current_ghoul_spawning_speed = 0.0f;
+				current_spitter_spawning_speed = 0.0f;
+				current_boulder_spawning_speed = 0.0f;
+				break;
+			default:
+				current_enemy_spawning_speed = 1.0f;
+				current_ghoul_spawning_speed = 1.0f;
+				current_spitter_spawning_speed = 1.0f;
+				current_boulder_spawning_speed = 1.0f;
+				break;
+		}
+
+		if (ddl == 4)
+			ddf = 499.0;
+		else
+			ddf += elapsed_ms_since_last_update / 1000.f;
+
+		// Updating window title
+
+		std::stringstream title_ss;
+		title_ss << "Points: " << points;
+		title_ss << "; Dynamic Difficulty Level: " << ddl;
+		title_ss << "; Dynamic Difficulty Factor: " << ddf;
+		glfwSetWindowTitle(window, title_ss.str().c_str());
+
+		// Remove debug info from the last step
+		while (registry.debugComponents.entities.size() > 0)
+			registry.remove_all_components_of(registry.debugComponents.entities.back());
+
+		// Removing out of screen entities
+		auto &motion_container = registry.motions;
+
+		// Remove entities that leave the screen on the left side
+		// Iterate backwards to be able to remove without unterfering with the next object to visit
+		// (the containers exchange the last element with the current)
+		for (int i = (int)motion_container.components.size() - 1; i >= 0; --i)
+		{
+			Motion &motion = motion_container.components[i];
+
+			if (motion.position.x + abs(motion.scale.x) < 0.f || motion.position.x - abs(motion.scale.x) > window_width_px || motion.position.y - abs(motion.scale.y) > window_height_px || motion.position.y + abs(motion.scale.y) < 0.f)
+			{
+				Entity e = motion_container.entities[i];
+				if (registry.parallaxBackgrounds.has(e)) {
+					ParallaxBackground &bg = registry.parallaxBackgrounds.get(e);
+					motion.position = bg.resetPosition;
+				}
+			}
+			
+			if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
+				registry.remove_all_components_of(motion_container.entities[i]);
+			else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
+				registry.remove_all_components_of(motion_container.entities[i]);
+			else if ((registry.boulders.has(motion_container.entities[i]) || registry.lavaPillars.has(motion_container.entities[i])) && (motion.position.y > window_height_px + motion.scale.y))
+				registry.remove_all_components_of(motion_container.entities[i]);
+		}
+
+		if (registry.players.get(player_hero).hasWeapon)
+			update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
+
+		update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
+		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
+		update_pickaxe(elapsed_ms_since_last_update * current_speed);
+
+		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
+		update_explosions(elapsed_ms_since_last_update * current_speed);
+		// Animation Stuff
+		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
+		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
+		if (playerVelocity.y > 0)
+		{
+			playerAnimation.curState = 4;
+		}
+		else if (playerVelocity.y < 0)
+		{
+			playerAnimation.curState = 3;
+		}
+		else if (playerVelocity.x != 0)
+		{
+			playerAnimation.curState = 2;
+		}
+		else
+		{
+			playerAnimation.curState = 0;
+		}
+
+		for (int i = 0; i < registry.players.get(player_hero).hp; i++) {
+			Entity curHeart = player_hearts_GUI[i];
+			registry.renderRequests.get(curHeart).visibility = true;
+		}
+		for (int i = registry.players.get(player_hero).hp; i < player_hearts_GUI.size(); i++) {
+			Entity curHeart = player_hearts_GUI[i];
+			registry.renderRequests.get(curHeart).visibility = false;
+		}
+
+		spawn_move_normal_enemies(elapsed_ms_since_last_update);
+		spawn_boulder(elapsed_ms_since_last_update);
+		spawn_move_ghouls(elapsed_ms_since_last_update);
+		spawn_spitter_enemy(elapsed_ms_since_last_update);
+		update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+		if (boss && registry.boss.size()) {
+			boss_action_decision(elapsed_ms_since_last_update);
+		}
+		update_graphics_all_enemies();
+
+		if ((ddl == 2 || ddl == 3) && following_enemies.empty())
+		{
+			Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
+			std::vector<std::vector<char>> vec = grid_vec;
+			bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
+			following_enemies.push_back(newEnemy);
+		}
+		else if ((ddl == 2 || ddl == 3) && !following_enemies.empty())
+		{
+			spawn_move_following_enemies(elapsed_ms_since_last_update);
+		}
+		else if ((ddl != 2 && ddl != 3) && !following_enemies.empty())
+		{
+			registry.remove_all_components_of(following_enemies[0]);
+			following_enemies.clear();
+		}
+
+		// Processing the hero state
+		assert(registry.screenStates.components.size() <= 1);
+		ScreenState &screen = registry.screenStates.components[0];
+
+		float min_timer_ms = 3000.f;
+		for (Entity entity : registry.deathTimers.entities)
+		{
+			// progress timer
+			DeathTimer &timer = registry.deathTimers.get(entity);
+			timer.timer_ms -= elapsed_ms_since_last_update;
+			if (timer.timer_ms < min_timer_ms)
+			{
+				min_timer_ms = timer.timer_ms;
+			}
+
+			// restart the game once the death timer expired
+			if (timer.timer_ms < 0)
+			{
+				registry.deathTimers.remove(entity);
+				screen.screen_darken_factor = 0;
+				restart_game();
+				return true;
+			}
+		}
+
+		screen.screen_darken_factor = 1 - min_timer_ms / 3000;
+
+		return true;
 	}
-
-	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
-	return true;
 }
-
-
 
 void WorldSystem::changeScore(int score)
 {
@@ -577,6 +580,65 @@ TEXTURE_ASSET_ID WorldSystem::connectNumber(int digit)
 		return TEXTURE_ASSET_ID::EIGHT;
 	default:
 		return TEXTURE_ASSET_ID::NINE;
+	}
+}
+
+void WorldSystem::show_dialogue(int dialogue_number)
+{
+	// remove current dialogue screen
+	if (dialogue_screen_active != 0) 
+	{
+		Entity dialogue = registry.dialogues.entities.back();
+		registry.remove_all_components_of(dialogue);
+	}
+
+	dialogue_screen_active = dialogue_number;
+	if (dialogue_number != 0) {
+		play_sound(effect_to_play(dialogue_number));
+		play_dialogue_music();
+		createDialogue(renderer, connectDialogue(dialogue_number));
+	} else {
+		stop_dialogue_music();
+	}
+}
+
+SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
+	switch (dialogue_number) {
+		case 1:
+		case 2:
+		case 4:
+		case 5:
+		case 6:
+			return SOUND_EFFECT::TELEPORT;
+			break;
+		case 3:
+		case 7:
+		case 8:
+			return SOUND_EFFECT::LAUGH;
+			break;
+	}
+}
+
+TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
+{
+	switch (num)
+	{
+	case 1:
+		return TEXTURE_ASSET_ID::DIALOGUE_1;
+	case 2:
+		return TEXTURE_ASSET_ID::DIALOGUE_2;
+	case 3:
+		return TEXTURE_ASSET_ID::DIALOGUE_3;
+	case 4:
+		return TEXTURE_ASSET_ID::DIALOGUE_4;
+	case 5:
+		return TEXTURE_ASSET_ID::DIALOGUE_5;
+	case 6:
+		return TEXTURE_ASSET_ID::DIALOGUE_6;
+	case 7:
+		return TEXTURE_ASSET_ID::DIALOGUE_7;
+	default:
+		return TEXTURE_ASSET_ID::DIALOGUE_8;
 	}
 }
 
@@ -1289,7 +1351,7 @@ void WorldSystem::load_game() {
 				ng_basic.hitting = true;
 				Motion& ng_mo = registry.motions.get(ng);
 				ng_mo.velocity = { sg["x_v"].ToFloat(), sg["y_v"].ToFloat() };
-				ng_mo.dir = { sg["dir"].ToInt() };
+				ng_mo.dir = { static_cast<int>(sg["dir"].ToInt()) };
 			}
 		}
 
@@ -1605,7 +1667,7 @@ void WorldSystem::motion_helper(Motion &playerMotion)
 	float rightFactor = motionKeyStatus.test(0) && !lodged.test(0) && !lodged.test(1) ? 1 : 0;
 	float leftFactor = motionKeyStatus.test(1) && !lodged.test(0) && !lodged.test(1) ? -1 : 0;
 	playerMotion.velocity[0] = BASIC_SPEED * (rightFactor + leftFactor);
-	if (!pause) {
+	if (!pause && dialogue_screen_active == 0) {
 		if (playerMotion.velocity.x < 0)
 			playerMotion.dir = -1;
 		else if (playerMotion.velocity.x > 0)
@@ -1648,7 +1710,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		play_sound(SOUND_EFFECT::BUTTON_CLICK);
     }
 
-	if (!registry.deathTimers.has(player_hero))
+	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && dialogue_screen_active != 0) {
+		show_dialogue(0);
+	}
+
+	if (!registry.deathTimers.has(player_hero) && dialogue_screen_active == 0)
 	{
 		Motion &playerMotion = registry.motions.get(player_hero);
 
@@ -1755,13 +1821,18 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			// save_game();
 		}
 
-		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && !registry.gravities.get(player_hero).dashing) {
+		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && dialogue_screen_active == 0 && !registry.gravities.get(player_hero).dashing) {
 			pickupKeyStatus = true;
 		}
 
-		if (key == GLFW_KEY_S && action == GLFW_RELEASE && !pause && !registry.gravities.get(player_hero).dashing) {
+		if (key == GLFW_KEY_S && action == GLFW_RELEASE && !pause && dialogue_screen_active == 0 && !registry.gravities.get(player_hero).dashing) {
 			pickupKeyStatus = false;
 		}
+
+		if (key == GLFW_KEY_C && action == GLFW_PRESS && debug) {
+			show_dialogue(2);
+		}
+
 	}
 
 	// Resetting game
@@ -1770,6 +1841,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
         pause = false;
+		dialogue_screen_active = 0;
 		restart_game();
 	}
 
@@ -1830,7 +1902,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	mouse_pos.x = (mouse_position.x - ox) / new_w * window_width_px;
     mouse_pos.y = (mouse_position.y - oy) / new_h * window_height_px;
 
-	if (!registry.deathTimers.has(player_hero) && !pause)
+	if (!registry.deathTimers.has(player_hero) && !pause && dialogue_screen_active == 0)
 		for (Entity weapon : registry.weapons.entities)
 			update_weapon_angle(renderer, weapon, mouse_pos);
 }
@@ -1848,7 +1920,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 				return;
 			}
 		}
-		if (!pause && registry.players.size() > 0 && !registry.gravities.get(player_hero).dashing) {
+		if (!pause && dialogue_screen_active == 0 && registry.players.size() > 0 && !registry.gravities.get(player_hero).dashing) {
 			for (Entity weapon : registry.weapons.entities)
 				do_weapon_action(renderer, weapon, mouse_pos);
 		}
