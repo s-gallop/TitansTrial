@@ -56,6 +56,7 @@ public:
     ComponentContainer<ShowWhenPaused> showWhenPaused;
 	ComponentContainer<InGameGUI> inGameGUIs;
 	ComponentContainer<LavaPillar> lavaPillars;
+	ComponentContainer<Dialogue> dialogues;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -105,6 +106,7 @@ public:
         registry_list.push_back(&buttons);
         registry_list.push_back(&showWhenPaused);
 		registry_list.push_back(&lavaPillars);
+		registry_list.push_back(&dialogues);
 	}
 
 	void clear_all_components()

@@ -27,7 +27,7 @@ Entity createHero(RenderSystem *renderer, vec2 pos)
 		{TEXTURE_ASSET_ID::HERO,
 		 EFFECT_ASSET_ID::HERO,
 		 GEOMETRY_BUFFER_ID::SPRITE,
-         true,
+         false,
          true,
          SPRITE_SCALE.at(TEXTURE_ASSET_ID::HERO),
          SPRITE_OFFSET.at(TEXTURE_ASSET_ID::HERO)});
@@ -1292,6 +1292,31 @@ Entity createHealthBar(RenderSystem* renderer, Entity owner) {
     healthBar.owner = owner;
 
     return entity;
+}
+
+Entity createDialogue(RenderSystem* renderer, TEXTURE_ASSET_ID texture_id) {
+	Entity entity = Entity();
+
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { -3000.f, 0.f };
+	motion.position = { 1600, window_height_px / 2 };
+	motion.scale = { window_width_px, window_height_px };
+
+	registry.renderRequests.insert(
+		entity,
+		{ texture_id,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
+
+	registry.dialogues.emplace(entity);
+
+    registry.debugRenderRequests.emplace(entity);
+
+	return entity;
 }
 
 vec2 getRandomWalkablePos(vec2 char_scale, int platform, bool randomness) {

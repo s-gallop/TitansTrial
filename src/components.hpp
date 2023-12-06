@@ -260,6 +260,11 @@ struct ScreenState
 	float screen_darken_factor = -1;
 };
 
+struct Dialogue 
+{
+
+};
+
 // A struct to refer to debugging graphics in the ECS
 struct DebugComponent
 {
@@ -425,7 +430,15 @@ enum class TEXTURE_ASSET_ID
 	LAVA_PILLAR = DB_SATAN + 1,
     HEALTH_BAR = LAVA_PILLAR + 1,
     HEALTH_BAR_HEALTH = HEALTH_BAR + 1,
-	TEXTURE_COUNT = HEALTH_BAR_HEALTH + 1
+	DIALOGUE_1 = HEALTH_BAR_HEALTH + 1,
+	DIALOGUE_2 = DIALOGUE_1 + 1,
+	DIALOGUE_3 = DIALOGUE_2 + 1,
+	DIALOGUE_4 = DIALOGUE_3 + 1,
+	DIALOGUE_5 = DIALOGUE_4 + 1,
+	DIALOGUE_6 = DIALOGUE_5 + 1,
+	DIALOGUE_7 = DIALOGUE_6 + 1,
+	DIALOGUE_8 = DIALOGUE_7 + 1,
+	TEXTURE_COUNT = DIALOGUE_8 + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -448,7 +461,8 @@ enum class EFFECT_ASSET_ID
 	LAVA_PILLAR = SCREEN_LAYER + 1,
     BOSS = LAVA_PILLAR + 1,
     HEALTH_BAR = BOSS + 1,
-	EFFECT_COUNT = HEALTH_BAR + 1
+	DIALOGUE_LAYER = HEALTH_BAR + 1,
+	EFFECT_COUNT = DIALOGUE_LAYER + 1,
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

@@ -29,9 +29,13 @@ enum class SOUND_EFFECT {
     PICKAXE = HEAL + 1,
     DASH = PICKAXE + 1,
     EQUIPMENT_DROP = DASH + 1,
-    BUTTON_CLICK = EQUIPMENT_DROP + 1
+    BUTTON_CLICK = EQUIPMENT_DROP + 1,
+    TELEPORT = BUTTON_CLICK + 1,
+    LAUGH = TELEPORT + 1
 };
 
 void play_music();
 void play_sound(SOUND_EFFECT id);
 void toggle_mute_music();
+void play_dialogue_music();
+void stop_dialogue_music();

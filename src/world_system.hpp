@@ -73,6 +73,8 @@ public:
     static bool debug;
 	static bool mouse_clicked;
 	static bool isTitleScreen;
+	static int dialogue_screen_active;
+
 	// Creates a window
 	GLFWwindow *create_window();
 
@@ -88,6 +90,11 @@ public:
 	void changeScore(int score);
 
 	TEXTURE_ASSET_ID connectNumber(int digit);
+
+	void show_dialogue(int dialogue_number);
+	TEXTURE_ASSET_ID connectDialogue(int digit);
+
+	SOUND_EFFECT effect_to_play(int dialogue_number);
 
 	void update_graphics_all_enemies();
 
