@@ -131,6 +131,7 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     enemy.hit_animation = 11;
     enemy.hitting = false;
     enemy.health = BOSS_HEALTH;
+    enemy.total_health = BOSS_HEALTH;
 
     AnimationInfo& aniInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS));
     aniInfo.oneTimeState = 9;
@@ -1256,6 +1257,42 @@ Entity createLavaPillar(RenderSystem* renderer, vec2 pos) {
 		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::LAVA_PILLAR) });
 	registry.debugRenderRequests.emplace(entity);
 	return entity;
+}
+
+Entity createHealthBar(RenderSystem* renderer, Entity owner) {
+    auto entity = Entity();
+
+
+    Motion& motion = registry.motions.emplace(entity);
+    motion.position = vec2(window_width_px/2, window_height_px-40);
+    motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH);
+    HealthBar& healthBar = registry.healthBar.emplace(entity);
+    registry.renderRequests.insert(
+            entity,
+            { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH,
+              EFFECT_ASSET_ID::HEALTH_BAR,
+              GEOMETRY_BUFFER_ID::SPRITE,
+              false,
+              true,
+              motion.scale});
+
+    auto bar = Entity();
+    Motion& motion2 = registry.motions.emplace(bar);
+    motion2.position = motion.position;
+    motion2.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::HEALTH_BAR);
+    registry.renderRequests.insert(
+            bar,
+            { TEXTURE_ASSET_ID::HEALTH_BAR,
+              EFFECT_ASSET_ID::TEXTURED,
+              GEOMETRY_BUFFER_ID::SPRITE,
+              false,
+              true,
+              motion2.scale });
+
+    healthBar.bar = bar;
+    healthBar.owner = owner;
+
+    return entity;
 }
 
 vec2 getRandomWalkablePos(vec2 char_scale, int platform, bool randomness) {

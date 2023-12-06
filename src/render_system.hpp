@@ -111,7 +111,9 @@ class RenderSystem
 		textures_path("difficulty/db_boss_skull.png"),
 		textures_path("difficulty/difficulty_bar_broken.png"),
 		textures_path("difficulty/satan_shader.png"),
-		textures_path("lava_pillar.png")};
+		textures_path("lava_pillar.png"),
+        textures_path("health_bar.png"),
+        textures_path("health_in_bar.png")};
 
 
 	std::array<GLuint, effect_count> effects;
@@ -131,7 +133,8 @@ class RenderSystem
 		shader_path("following_enemy"),
         shader_path("screen_layer"),
 		shader_path("lava_pillar"),
-        shader_path("boss")};
+        shader_path("boss"),
+        shader_path("health_bar")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;

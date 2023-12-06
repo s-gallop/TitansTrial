@@ -105,7 +105,9 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 42}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)},
+        { TEXTURE_ASSET_ID::HEALTH_BAR, vec2(62, 19) * 3.f},
+        { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH, vec2(56, 3) * 3.f},
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -256,5 +258,6 @@ Entity createDBFlame(RenderSystem* renderer, vec2 pos);
 Entity createDBSkull(RenderSystem* renderer, vec2 pos);
 Entity createDBSatan(RenderSystem* renderer, vec2 pos);
 Entity createLavaPillar(RenderSystem* renderer, vec2 pos);
+Entity createHealthBar(RenderSystem* renderer, Entity owner);
 
 vec2 getRandomWalkablePos(vec2 char_scale, int platform = -1, bool randomness = true);

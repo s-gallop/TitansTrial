@@ -593,6 +593,7 @@ void WorldSystem::update_graphics_all_enemies()
 
 		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
 			registry.remove_all_components_of(entity);
+            update_health_bar();
 		} else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
 			enemy.hittable = true;
 			enemy.hitting = true;
@@ -904,6 +905,9 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
     if (info.oneTimeState > 10) {
         boss_state.phase = 0;
         boss_state.state = BOSS_STATE::SIZE;
+        for (auto hurt_box : boss_state.hurt_boxes) {
+            registry.weaponHitBoxes.get(hurt_box).isActive = false;
+        }
         return;
     }
     switch (boss_state.state) {
@@ -1041,7 +1045,8 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
     //TODO: enable this to start with boss
-    //boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
@@ -1612,6 +1617,16 @@ void WorldSystem::clear_enemies()
 	for (Entity e : justKillThem) registry.remove_all_components_of(e);
 }
 
+void WorldSystem::update_health_bar()
+{
+    for(Entity e : registry.healthBar.entities) {
+        if (!registry.enemies.has(registry.healthBar.get(e).owner)) {
+            registry.remove_all_components_of(registry.healthBar.get(e).bar);
+            registry.remove_all_components_of(e);
+        }
+    }
+}
+
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
@@ -1723,6 +1738,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             } else {
                 clear_enemies();
             }
+            update_health_bar();
 		}
 
 		if (key == GLFW_KEY_X && action == GLFW_PRESS)

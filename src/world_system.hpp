@@ -127,6 +127,8 @@ private:
 
 	void clear_enemies();
 
+    static void update_health_bar();
+
 	void motion_helper(Motion& playerMotion);
 
 	// restart level

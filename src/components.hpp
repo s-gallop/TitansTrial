@@ -64,6 +64,12 @@ struct Boss
     std::vector<Entity> hurt_boxes;
 };
 
+struct HealthBar
+{
+    Entity owner;
+    Entity bar;
+};
+
 struct Block
 {
 };
@@ -80,6 +86,7 @@ struct Enemies
 	bool hitting = true;
 
 	int health = 2;
+    int total_health = health;
 	int hit_animation = -2;
 	
 	int death_animation = -2;
@@ -416,7 +423,9 @@ enum class TEXTURE_ASSET_ID
 	DIFFICULTY_BAR_BROKEN = DB_BOSS_SKULL + 1,
 	DB_SATAN = DIFFICULTY_BAR_BROKEN + 1,
 	LAVA_PILLAR = DB_SATAN + 1,
-	TEXTURE_COUNT = LAVA_PILLAR + 1
+    HEALTH_BAR = LAVA_PILLAR + 1,
+    HEALTH_BAR_HEALTH = HEALTH_BAR + 1,
+	TEXTURE_COUNT = HEALTH_BAR_HEALTH + 1
 };
 
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -438,7 +447,8 @@ enum class EFFECT_ASSET_ID
     SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	LAVA_PILLAR = SCREEN_LAYER + 1,
     BOSS = LAVA_PILLAR + 1,
-	EFFECT_COUNT = BOSS + 1
+    HEALTH_BAR = BOSS + 1,
+	EFFECT_COUNT = HEALTH_BAR + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 

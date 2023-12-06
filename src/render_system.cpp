@@ -90,6 +90,16 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3 &projection, bool 
 			glUniform1f(pi_loc, M_PI);
 		}
 
+        if (registry.healthBar.has(entity)) {
+            float percent = 0;
+            if (registry.enemies.has(registry.healthBar.get(entity).owner)) {
+                Enemies& enemy = registry.enemies.get(registry.healthBar.get(entity).owner);
+                percent = (float)enemy.health/(float)enemy.total_health;
+            }
+            GLint health_percent_loc = glGetUniformLocation(program, "percent");
+            glUniform1f(health_percent_loc, percent);
+        }
+
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
