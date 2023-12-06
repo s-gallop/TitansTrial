@@ -29,7 +29,7 @@ const float ANIMATION_SPEED_FACTOR = 10.0f;
 const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_BOULDERS = 2;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
-const size_t MAX_GHOULS = 1;
+const size_t MAX_GHOULS = 5;
 const size_t MAX_SPITTERS = 3;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
@@ -43,7 +43,7 @@ const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.f;
 const float JUMP_INITIAL_SPEED = 350.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
-const float DDF_PUNISHMENT = 30.f;
+const float DDF_PUNISHMENT = 10.f;
 const float HEART_START_POS = 70.f;
 const float HEART_GAP = 35.f;
 const float HEART_Y_CORD = 20.f;
@@ -163,10 +163,13 @@ private:
 	RenderSystem *renderer;
 	float current_speed;
 	float current_enemy_spawning_speed;
-	float current_spitter_spawning_speed;
 	float current_ghoul_spawning_speed;
+	float current_spitter_spawning_speed;
+	float current_boulder_spawning_speed;
 	float next_enemy_spawn;
+	float next_ghoul_spawn;
 	float next_spitter_spawn;
+	float next_boulder_spawn;
 	Entity player_hero;
 
 	// C++ random number generator
