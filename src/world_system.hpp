@@ -61,6 +61,7 @@ const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 730.f };
+const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
 
 class WorldSystem
 {
@@ -110,6 +111,7 @@ public:
 	bool is_over() const;
 
     static void change_pause();
+
 
 private:
 	// Input callback functions

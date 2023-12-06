@@ -1141,3 +1141,31 @@ Entity createDBSatan(RenderSystem* renderer, vec2 pos) {
 
 	return entity;
 }
+
+Entity createLavaPillar(RenderSystem* renderer, vec2 pos) {
+	auto entity = Entity();
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, -530.f };
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::LAVA_PILLAR);
+	registry.gravities.emplace(entity);
+	Enemies& enemy = registry.enemies.emplace(entity);
+	enemy.hittable = false;
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::LAVA_PILLAR));
+	registry.lavaPillars.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LAVA_PILLAR, // TEXTURE_COUNT indicates that no txture is needed
+		 EFFECT_ASSET_ID::LAVA_PILLAR,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::LAVA_PILLAR),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::LAVA_PILLAR) });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}

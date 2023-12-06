@@ -53,6 +53,8 @@ int ddl;
 float ddf;
 float recorded_max_ddf;
 
+float lavaPillarTimer = 0;
+
 // Create the fish world
 WorldSystem::WorldSystem()
 	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f), next_ghoul_spawn(0.f), next_boulder_spawn(0.f)
@@ -212,6 +214,12 @@ void WorldSystem::create_almanac_screen() {
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
+	lavaPillarTimer += elapsed_ms_since_last_update;
+	if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
+		lavaPillarTimer = 0;
+		createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
+		createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
+	}
 	for (AnimationInfo& animation: registry.animated.components) {
 		if (animation.oneTimeState != -1) {
 			animation.oneTimer += elapsed_ms_since_last_update / 1000.f;
@@ -422,7 +430,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.remove_all_components_of(motion_container.entities[i]);
 		else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
 			registry.remove_all_components_of(motion_container.entities[i]);
-		else if (registry.boulders.has(motion_container.entities[i]) && motion.position.y > window_height_px + motion.scale.y)
+		else if ((registry.boulders.has(motion_container.entities[i]) || registry.lavaPillars.has(motion_container.entities[i])) && (motion.position.y > window_height_px + motion.scale.y))
 			registry.remove_all_components_of(motion_container.entities[i]);
 	}
 
@@ -435,7 +443,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 	update_explosions(elapsed_ms_since_last_update * current_speed);
-
 	// Animation Stuff
 	vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 	AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -515,9 +522,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
+	
 	return true;
 }
+
+
 
 void WorldSystem::changeScore(int score)
 {
@@ -978,6 +987,8 @@ void WorldSystem::restart_game()
 	
 	// Adds whatever's needed in the pause screen
 	create_pause_screen();
+
+	
 
 	//testing screen dimensions
 	/*for (int i = 10; i < window_width_px; i += ENEMY_BB_WIDTH) {

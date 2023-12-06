@@ -109,7 +109,8 @@ class RenderSystem
 		textures_path("difficulty/db_boss_flame.png"),
 		textures_path("difficulty/db_boss_skull.png"),
 		textures_path("difficulty/difficulty_bar_broken.png"),
-		textures_path("difficulty/satan_shader.png")};
+		textures_path("difficulty/satan_shader.png"),
+		textures_path("lava_pillar.png")};
 
 
 	std::array<GLuint, effect_count> effects;
@@ -127,7 +128,8 @@ class RenderSystem
 		shader_path("spitter"),
 		shader_path("spitter_bullet"),
 		shader_path("following_enemy"),
-        shader_path("screen_layer")};
+        shader_path("screen_layer"),
+		shader_path("lava_pillar")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
