@@ -934,6 +934,7 @@ void WorldSystem::boss_action_teleport(){
     Boss& boss_state = registry.boss.get(boss);
     Enemies& enemy_info = registry.enemies.get(boss);
     if (boss_state.phase == 0) {
+        enemy_info.hitting = false;
         enemy_info.hittable = false;
         info.oneTimeState = PHASE_OUT;
         boss_state.phase++;
@@ -946,6 +947,7 @@ void WorldSystem::boss_action_teleport(){
         info.oneTimeState = PHASE_IN;
         boss_state.phase++;
     } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
+        enemy_info.hitting = true;
         boss_state.phase = 0;
         boss_state.state = BOSS_STATE::SIZE;
     }
@@ -1045,8 +1047,8 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
     //TODO: enable this to start with boss
-//    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
-//    createHealthBar(renderer, boss);
+    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });

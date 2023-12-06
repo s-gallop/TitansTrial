@@ -129,7 +129,6 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     Enemies& enemy = registry.enemies.emplace(entity);
     enemy.death_animation = 12;
     enemy.hit_animation = 11;
-    enemy.hitting = false;
     enemy.health = BOSS_HEALTH;
     enemy.total_health = BOSS_HEALTH;
 
