@@ -531,7 +531,8 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         motion.scale});
+         SPRITE_SCALE.at(TEXTURE_ASSET_ID::GUN),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GUN)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -648,7 +649,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = GRENADE_LAUNCHER_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER);
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -656,14 +657,16 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	registry.grenadeLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.solids.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
-		 EFFECT_ASSET_ID::TEXTURED,
+		 EFFECT_ASSET_ID::GRENADE_ORB,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
-		 motion.scale});
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -680,7 +683,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.velocity = velocity;
-	motion.scale = GRENADE_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE);
 
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	projectile.friction_x = .6f;
@@ -689,14 +692,16 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE));
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
-			EFFECT_ASSET_ID::TEXTURED,
+			EFFECT_ASSET_ID::GRENADE_ORB,
 			GEOMETRY_BUFFER_ID::SPRITE,
 			false,
 			true,
-			motion.scale});
+		SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE),
+		SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;

@@ -15,11 +15,11 @@ const float EXPLOSION_SCALING = 2.0f;
 const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
 const vec2 BOULDER_BB = vec2(15.f, 14.f);
 const vec2 SWORD_BB = vec2(21.f, 50.f);
-const vec2 GUN_BB = vec2(32.f, 32.f);
-const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
-const vec2 ROCKET_BB = vec2(43.f, 7.f);
-const vec2 GRENADE_LAUNCHER_BB = vec2(41.f, 18.f) * 1.3f;
-const vec2 GRENADE_BB = vec2(18.f, 19.f);
+const vec2 GUN_BB = vec2(45.f, 32.f);
+const vec2 ROCKET_LAUNCHER_BB = vec2(64.f, 32.f) * .8f;
+const vec2 ROCKET_BB = vec2(16.f, 16.f) * 1.2f;
+const vec2 GRENADE_LAUNCHER_BB = vec2(39.f, 39.f) * 0.6f;
+const vec2 GRENADE_BB = vec2(39.f, 39.f) * 0.6f;
 const vec2 LASER_RIFLE_BB = vec2(83.f, 28.f) * .8f;
 const vec2 LASER_BB = vec2(window_width_px, 30.f * 0.4f);
 const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
@@ -108,6 +108,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)},
         { TEXTURE_ASSET_ID::HEALTH_BAR, vec2(62, 19) * 3.f},
         { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH, vec2(56, 3) * 3.f},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, GRENADE_LAUNCHER_BB},
+        { TEXTURE_ASSET_ID::GRENADE, GRENADE_BB}
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -119,7 +121,10 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::BOSS, {222 * BOSS_SCALING, 119 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, GRENADE_LAUNCHER_BB},
+        { TEXTURE_ASSET_ID::GRENADE, GRENADE_BB},
+        { TEXTURE_ASSET_ID::GUN, GUN_BB}
 };
 
 const float BULLET_MESH_SCALE = 4.0f;
@@ -133,7 +138,10 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::BOSS, {0 * BOSS_SCALING, -29.5 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, {4 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GRENADE, {0 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GUN, {-2 * CHARACTER_SCALING, 0 * CHARACTER_SCALING}}
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -190,6 +198,18 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {4},
             0,
             4
+        }},
+       {TEXTURE_ASSET_ID::GRENADE_LAUNCHER, {
+            1,
+            {20},
+            0,
+            20
+        }},
+       {TEXTURE_ASSET_ID::GRENADE, {
+            1,
+            {20},
+            0,
+            20
         }}
 };
 // the player

@@ -1830,7 +1830,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 
 		if (key == GLFW_KEY_C && action == GLFW_PRESS && debug) {
-			show_dialogue(2);
+			show_dialogue(7);
 		}
 
 	}
