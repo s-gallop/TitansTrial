@@ -530,8 +530,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		screen.screen_darken_factor = 1 - min_timer_ms / 3000;
 
-		return true;
 	}
+
+	return true;
 }
 
 void WorldSystem::changeScore(int score)
@@ -616,6 +617,8 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 		case 8:
 			return SOUND_EFFECT::LAUGH;
 			break;
+		default:
+			return SOUND_EFFECT::TELEPORT;
 	}
 }
 
