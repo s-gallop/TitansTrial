@@ -14,14 +14,14 @@ const float EXPLOSION_SCALING = 2.0f;
 
 const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
 const vec2 BOULDER_BB = vec2(15.f, 14.f);
-const vec2 SWORD_BB = vec2(21.f, 50.f);
+const vec2 SWORD_BB = vec2(32.f, 64.f);
 const vec2 GUN_BB = vec2(45.f, 32.f);
 const vec2 ROCKET_LAUNCHER_BB = vec2(64.f, 32.f) * .8f;
 const vec2 ROCKET_BB = vec2(16.f, 16.f) * 1.2f;
 const vec2 GRENADE_LAUNCHER_BB = vec2(39.f, 39.f) * 0.6f;
 const vec2 GRENADE_BB = vec2(39.f, 39.f) * 0.6f;
-const vec2 LASER_RIFLE_BB = vec2(83.f, 28.f) * .8f;
-const vec2 LASER_BB = vec2(window_width_px, 30.f * 0.4f);
+const vec2 LASER_RIFLE_BB = vec2(32.f, 32.f);
+const vec2 LASER_BB = vec2(window_width_px, 92.f * 0.2f);
 const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
 const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
