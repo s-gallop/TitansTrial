@@ -63,6 +63,9 @@ const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 730.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
+const uint MDP_HORIZON = 10;
+const float MDP_DISCOUNT_FACTOR = 0.9f;
+const float MDP_BASE_REWARD = 100;
 
 class WorldSystem
 {
@@ -115,7 +118,7 @@ public:
     void boss_action_decision(float elapsed_ms);
     void boss_action_teleport();
     void boss_action_swipe();
-    void boss_action_summon();
+    void boss_action_summon(uint type);
 	void boss_action_sword_spawn(bool create, vec2 pos, vec2 scale);
 
 	// Check for collisions
@@ -147,6 +150,12 @@ private:
 	void load_game();
 
 	int save_weapon(Entity weapon);
+
+	//MDP
+	BOSS_STATE get_action();
+	float mdp_helper(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num);
+	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters);
+	float get_reward(vec2 boss_pos, uint num_ghouls, uint num_spitters);
 
     // creates pause gui
     void create_pause_screen();

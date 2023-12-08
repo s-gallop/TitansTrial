@@ -984,8 +984,14 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
         case BOSS_STATE::SWIPE:
             boss_action_swipe();
             break;
-        case BOSS_STATE::SUMMON:
-            boss_action_summon();
+        case BOSS_STATE::SUMMON_GHOULS:
+            boss_action_summon(0);
+            break;
+		case BOSS_STATE::SUMMON_SPITTERS:
+            boss_action_summon(1);
+            break;
+		case BOSS_STATE::SUMMON_BULLETS:
+            boss_action_summon(2);
             break;
         case BOSS_STATE::SIZE:
             boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
@@ -1051,7 +1057,7 @@ void WorldSystem::boss_action_swipe(){
     }
 }
 
-void WorldSystem::boss_action_summon(){
+void WorldSystem::boss_action_summon(uint type){
     const int SUMMON = 6;
     const int STAND_UP = 10;
     AnimationInfo& info = registry.animated.get(boss);
@@ -1061,16 +1067,18 @@ void WorldSystem::boss_action_summon(){
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
         info.oneTimeState = STAND_UP;
-        switch (rand() % 2) {
+        switch (type) {
             case 0:
                 for(int i = 0; i < 3 + rand() % 4; i++) {
                     createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
                 }
-                for(int i = 0; i < 1 + rand() % 3; i++) {
+                break;
+			case 1:
+				for(int i = 0; i < 1 + rand() % 3; i++) {
                     createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
                 }
-                break;
-            case 1:
+				break;
+            case 2:
                 for(int i = 0; i < 10 + rand() % 6; i++) {
                     Motion& motion = registry.motions.get(boss);
                     createSpitterEnemyBullet(renderer, motion.position, motion.angle);
@@ -1118,6 +1126,68 @@ void WorldSystem::boss_action_sword_spawn(bool create, vec2 pos, vec2 scale) {
 	//	//create_boss_sword(renderer, find_index_from_map(vec2(12, 8)), rand() % 2);
 	//	
 	//}
+}
+
+BOSS_STATE WorldSystem::get_action() {
+	vec2 boss_pos = registry.motions.get(boss).position;
+	uint num_ghouls = registry.spitterEnemies.entities.size();
+	uint num_spitters = registry.spitterEnemies.entities.size();
+	BOSS_STATE action;
+	float max_utility = -1;
+	for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
+		float utility = mdp_helper((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0);
+		if (utility > max_utility) {
+			max_utility = utility;
+			action = (BOSS_STATE) i;
+		}
+	}
+	return action;
+}
+
+float WorldSystem::mdp_helper(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num) {
+	float reward = get_action_reward(action, boss_pos, num_ghouls, num_spitters);
+	float max_utility = -1;
+	if (step_num <= MDP_HORIZON) {
+		for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
+			float utility = mdp_helper((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, step_num + 1);
+			if (utility > max_utility) {
+				max_utility = utility;
+			}
+		}
+	}
+	return reward + MDP_DISCOUNT_FACTOR * max_utility;
+}
+
+float WorldSystem::get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters) {
+	float reward = 0;
+	switch (action) {
+		case BOSS_STATE::TELEPORT:
+			reward += get_reward(getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 0, false), num_ghouls, num_spitters)/4;
+			reward += get_reward(getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false), num_ghouls, num_spitters)/4;
+			reward += get_reward(getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 2, false), num_ghouls, num_spitters)/4;
+			reward += get_reward(getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 7, false), num_ghouls, num_spitters)/4;
+			break;
+        case BOSS_STATE::SWIPE:
+			vec2 pos_dif = {abs(boss_pos.x - registry.motions.get(player_hero).position.x), abs(boss_pos.y - registry.motions.get(player_hero).position.y)};
+			reward = MDP_BASE_REWARD * (1 - min(pos_dif.x / 300, 1.f)) * (1 - min(pos_dif.y / 60, 1.f));
+			break;
+        case BOSS_STATE::SUMMON_GHOULS:
+			for (uint i = 3; i <= 3 + 4; i++)
+				reward += get_reward(boss_pos, num_ghouls + i, num_spitters) / (4 + 1);
+			break;
+		case BOSS_STATE::SUMMON_SPITTERS:
+            for (uint i = 1; i <= 1 + 3; i++)
+				reward += get_reward(boss_pos, num_ghouls, num_spitters + i) / (3 + 1);
+            break;
+		case BOSS_STATE::SUMMON_BULLETS:
+            
+            break;
+	}
+	return reward;
+}
+
+float WorldSystem::get_reward(vec2 boss_pos, uint num_ghouls, uint num_spitters) {
+
 }
 
 // Reset the world state to its initial state
