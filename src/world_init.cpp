@@ -377,7 +377,7 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 {
 	Entity entity = Entity();
 	vec2 vel;
-	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
+	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::BACKGROUND_COLOR || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
 	{
 		vel = vec2();
 	}
@@ -408,6 +408,7 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	motion.velocity = vel;
 	motion.position = pos;
 	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND ||
+		texture_id == TEXTURE_ASSET_ID::BACKGROUND_COLOR ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
