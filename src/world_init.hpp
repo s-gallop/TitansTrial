@@ -14,7 +14,7 @@ const float EXPLOSION_SCALING = 2.0f;
 
 const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
 const vec2 BOULDER_BB = vec2(15.f, 14.f);
-const vec2 SWORD_BB = vec2(32.f, 64.f);
+const vec2 SWORD_BB = vec2(32.f, 64.f) * 0.7f;
 const vec2 GUN_BB = vec2(45.f, 32.f);
 const vec2 ARROW_BB = vec2(64.f, 64.f) * 0.5f;
 const vec2 ROCKET_LAUNCHER_BB = vec2(64.f, 32.f) * .8f;
