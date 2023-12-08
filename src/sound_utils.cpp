@@ -4,8 +4,7 @@
 Mix_Music *background_music;
 std::vector<Mix_Chunk *> sound_effects;
 Mix_Music *dialogue_background_music;
-
-bool is_music_muted;
+bool is_music_muted = false;
 
 uint init_sound()
 {
