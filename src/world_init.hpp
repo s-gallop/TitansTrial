@@ -16,6 +16,7 @@ const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
 const vec2 BOULDER_BB = vec2(15.f, 14.f);
 const vec2 SWORD_BB = vec2(32.f, 64.f);
 const vec2 GUN_BB = vec2(45.f, 32.f);
+const vec2 ARROW_BB = vec2(64.f, 64.f) * 0.5f;
 const vec2 ROCKET_LAUNCHER_BB = vec2(64.f, 32.f) * .8f;
 const vec2 ROCKET_BB = vec2(16.f, 16.f) * 1.2f;
 const vec2 GRENADE_LAUNCHER_BB = vec2(39.f, 39.f) * 0.6f;
@@ -126,8 +127,6 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::GRENADE, GRENADE_BB},
         { TEXTURE_ASSET_ID::GUN, GUN_BB}
 };
-
-const float BULLET_MESH_SCALE = 4.0f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10 * CHARACTER_SCALING, -1 * CHARACTER_SCALING}},
