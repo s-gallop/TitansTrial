@@ -19,6 +19,8 @@ uint init_sound()
 		fprintf(stderr, "Failed to open audio device");
 		return 1;
 	}
+	Mix_VolumeMusic(60);
+	Mix_Volume(-1, 60);
 
 	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
 	dialogue_background_music = Mix_LoadMUS(audio_path("dialogue_bg_music.wav").c_str());
@@ -107,7 +109,7 @@ void toggle_mute_music()
 	}
 	else
 	{
-		Mix_VolumeMusic(MIX_MAX_VOLUME);
+		Mix_VolumeMusic(100);
 		is_music_muted = false;
 	}
 }
