@@ -56,6 +56,8 @@ class RenderSystem
 		textures_path("explosion.png"),
 		textures_path("laser_stave.png"),
 		textures_path("laser.png"),
+		textures_path("trident.png"),
+		textures_path("water_ball.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
 		/*
@@ -140,6 +142,7 @@ class RenderSystem
 		shader_path("animated"),
 		shader_path("hero"),
 		shader_path("explosion"),
+		shader_path("water_ball"),
 		shader_path("fire_enemy"),
 		shader_path("ghoul"),
 		shader_path("spitter"),

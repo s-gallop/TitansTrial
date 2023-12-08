@@ -433,7 +433,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				}
 			}
 			
-			if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
+			if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i]))) // || registry.waterBalls.has(motion_container.entities[i])
 				registry.remove_all_components_of(motion_container.entities[i]);
 			else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
 				registry.remove_all_components_of(motion_container.entities[i]);
@@ -441,8 +441,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
 
-		if (registry.players.get(player_hero).hasWeapon)
+		if (registry.players.get(player_hero).hasWeapon) {
 			update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
+			update_water_balls(elapsed_ms_since_last_update * current_speed, registry.weapons.get(registry.players.get(player_hero).weapon).type, mouse_clicked);
+		} else {
+			update_water_balls(elapsed_ms_since_last_update * current_speed, COLLECTABLE_TYPE::COLLECTABLE_COUNT, mouse_clicked);
+		}
 
 		update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
@@ -450,6 +454,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 		update_explosions(elapsed_ms_since_last_update * current_speed);
+		
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -532,9 +537,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 
 		screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
 	}
-
 	return true;
 }
 
@@ -629,13 +632,9 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 		case 6:
 			return SOUND_EFFECT::TELEPORT;
 			break;
-		case 3:
-		case 7:
-		case 8:
+		default: // cases 3, 7, 8. Needed default case to compile
 			return SOUND_EFFECT::LAUGH;
 			break;
-		default:
-			return SOUND_EFFECT::TELEPORT;
 	}
 }
 
@@ -1586,10 +1585,10 @@ void WorldSystem::handle_collisions()
 				float vCollisionDepth = scale1.y + scale2.y - abs(block_motion.position.y - solid_motion.position.y);
 				float hCollisionDepth = scale1.x + scale2.x - abs(block_motion.position.x - solid_motion.position.x);
 				if (vCollisionDepth > 0 && (hCollisionDepth <= 0 || vCollisionDepth < hCollisionDepth)) {
-					if (solid_motion.position.y < block_motion.position.y && solid_motion.velocity.y > 0) {
+					if (solid_motion.position.y < block_motion.position.y && (solid_motion.velocity.y > 0 || registry.waterBalls.has(entity_other))) {
 						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.y;
 						solid_motion.velocity.y = 0;
-					} else if (solid_motion.position.y > block_motion.position.y && solid_motion.velocity.y < 0) {
+					} else if (solid_motion.position.y > block_motion.position.y && (solid_motion.velocity.y < 0 || registry.waterBalls.has(entity_other))) {
 						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.y;
 						solid_motion.velocity.y = 0;
 					}
@@ -1610,11 +1609,13 @@ void WorldSystem::handle_collisions()
 						registry.colors.insert(entity_other, {1, .8f, .8f});
 						registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
-					}
-					else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
+					} else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
 						//registry.colors.insert(entity_other, { 1, .8f, .8f });
 						registry.spitterEnemies.get(entity_other).left_x = max(block_motion.position.x - scale1.x, 70.f);
 						registry.spitterEnemies.get(entity_other).right_x = min(block_motion.position.x + scale1.x, 1125.f);
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = M_PI/2;
+						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.x;
 					}
 				} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2.f - solid_motion.scale.x / 2.f) {
 					if (registry.players.has(entity_other) && motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
@@ -1622,6 +1623,8 @@ void WorldSystem::handle_collisions()
 					} else if (registry.ghouls.has(entity_other)) {
 						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
 						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = 0;
 					}
 				} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2.f + solid_motion.scale.x / 2.f) {
 					if (registry.players.has(entity_other) && motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
@@ -1629,7 +1632,25 @@ void WorldSystem::handle_collisions()
 					} else if (registry.ghouls.has(entity_other)) {
 						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
 						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = M_PI;
 					}
+				} else {
+					if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = -M_PI/2;
+						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.x;
+					}
+				}
+
+				if (registry.waterBalls.has(entity_other)) {
+					registry.waterBalls.get(entity_other).drawing = false;
+					registry.waterBalls.get(entity_other).state = -1;
+					for (Entity line: registry.waterBalls.get(entity_other).trajectory)
+						registry.remove_all_components_of(line);
+					registry.animated.get(entity_other).oneTimeState = 2;
+					registry.animated.get(entity_other).oneTimer = 0;
+					registry.weaponHitBoxes.get(entity_other).isActive = false;
+					solid_motion.velocity = {0, 0};
 				}
 			} 
 			else if (registry.projectiles.has(entity_other))
@@ -1651,9 +1672,14 @@ void WorldSystem::handle_collisions()
 				projectile_motion.velocity = vec2(projectile_motion.velocity.x * projectile.friction_x, projectile_motion.velocity.y * projectile.friction_y);
 			} 
 		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
-			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
+			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other) || registry.waterBalls.has(entity_other)) {
+				if (registry.waterBalls.has(entity_other)) {
+					registry.waterBalls.get(entity_other).drawing = false;
+					for (Entity line: registry.waterBalls.get(entity_other).trajectory)
+						registry.remove_all_components_of(line);
+				}
 				registry.remove_all_components_of(entity_other);
-			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
+			} else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
 				// Scream, reset timer, and make the hero fall
 				registry.deathTimers.emplace(entity_other);
 				Player& player = registry.players.get(entity_other);
@@ -1817,12 +1843,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		} else if (key == GLFW_KEY_5 && action == GLFW_PRESS && !pause && debug) {
 			createLaserRifle(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_6 && action == GLFW_PRESS && !pause && debug) {
-			createHeart(renderer, registry.motions.get(player_hero).position);
+			createTrident(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_7 && action == GLFW_PRESS && !pause && debug) {
-			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+			createHeart(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
-			createPickaxe(renderer, registry.motions.get(player_hero).position);
+			createWingedBoots(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug) {
+			createPickaxe(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_0 && action == GLFW_PRESS && !pause && debug) {
 			createDashBoots(renderer, registry.motions.get(player_hero).position);
 		}
 
@@ -1932,7 +1960,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 	if (!registry.deathTimers.has(player_hero) && !pause && dialogue_screen_active == 0)
 		for (Entity weapon : registry.weapons.entities)
-			update_weapon_angle(renderer, weapon, mouse_pos);
+			update_weapon_angle(renderer, weapon, mouse_pos, mouse_clicked);
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
@@ -1954,6 +1982,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 		}
 	} else if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
 		mouse_clicked = false;
+		weapon_mouse_release();
 		for (Entity entity: registry.buttons.entities) {
         	GameButton &buttonInfo = registry.buttons.get(entity);
 			if (buttonInfo.clicked) {
