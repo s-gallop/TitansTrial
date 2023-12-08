@@ -477,11 +477,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(curHeart).visibility = false;
 		}
 
-		//spawn_move_normal_enemies(elapsed_ms_since_last_update);
-		//spawn_boulder(elapsed_ms_since_last_update);
-		//spawn_move_ghouls(elapsed_ms_since_last_update);
-		//spawn_spitter_enemy(elapsed_ms_since_last_update);
-		//update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+		spawn_move_normal_enemies(elapsed_ms_since_last_update);
+		spawn_boulder(elapsed_ms_since_last_update);
+		spawn_move_ghouls(elapsed_ms_since_last_update);
+		spawn_spitter_enemy(elapsed_ms_since_last_update);
+		update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
 		
 		if (boss && registry.boss.size()) {
 			boss_action_decision(elapsed_ms_since_last_update);
@@ -1087,14 +1087,14 @@ void WorldSystem::boss_action_summon(){
 
 void WorldSystem::boss_action_sword_spawn(bool create, vec2 pos, vec2 scale) {
 	float SWORD_SPEED1 = 40.f;
-	float SWORD_SPEED2 = 60.f;
+	float SWORD_SPEED2 = 80.f;
 
 	if (create) {
 		vec2 rad = vec2(scale.x/2.f, scale.y/2.f);
 		float angle = ((float)rand() / RAND_MAX) * (2.f * M_PI);
 		vec2 spawn_pos = pos + (rad * vec2(cos(angle), sin(angle)));
 		//printf("Position: %f\n", angle);
-		create_boss_sword(renderer, spawn_pos, 1);
+		//create_boss_sword(renderer, spawn_pos, 1);
 		create_boss_sword(renderer, spawn_pos, rand() % 2);
 	}
 	else {

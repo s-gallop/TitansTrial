@@ -101,7 +101,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {32 * BOSS_SCALING, 60 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::BOSS_SWORD_S, {19, 21}},
-        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {13, 13}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {19, 21}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
@@ -120,7 +120,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57 * CHARACTER_SCALING, 39 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {222 * BOSS_SCALING, 119 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::BOSS_SWORD_S, {19, 21}},
-        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {13, 13}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {19, 21}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
         { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB}
@@ -187,9 +187,9 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
         }},
         {TEXTURE_ASSET_ID::BOSS_SWORD_L, {
                 1,
-                {6},
+                {1},
                 0,
-                6
+                1
         }},
         {TEXTURE_ASSET_ID::EXPLOSION, {
             1,
