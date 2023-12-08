@@ -26,7 +26,7 @@ const float GRENADE_SPEED_FACTOR = 1.f;
 const size_t GRENADE_TRAJECTORY_WIDTH = 3;
 const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
-const size_t LASER_COOLDOWN = 2000;
+const size_t LASER_COOLDOWN = 1200;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 

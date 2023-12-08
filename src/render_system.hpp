@@ -25,14 +25,13 @@ class RenderSystem
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet.obj"))
 		// specify meshes of other assets here
 	};
 
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> collision_mesh_paths = 
 	{
 		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SPRITE, mesh_path("sprite_hull.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("bullet_hull.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET, mesh_path("arrow.obj")),
 		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::CIRCLE, mesh_path("circle_hull.obj"))
 	};
 
@@ -47,14 +46,15 @@ class RenderSystem
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
         textures_path("boss.png"),
-		textures_path("sword.png"),
-		textures_path("pistol.png"),
-		textures_path("rocket_launcher.png"),
-		textures_path("rocket.png"),
-		textures_path("grenade_launcher.png"),
-		textures_path("grenade.png"),
+		textures_path("sword_upgraded.png"),
+		textures_path("bow.png"),
+		textures_path("arrow.png"),
+		textures_path("staff.png"),
+		textures_path("staff_orb.png"),
+		textures_path("grenade_orb.png"),
+		textures_path("grenade_orb.png"),
 		textures_path("explosion.png"),
-		textures_path("laser_rifle.png"),
+		textures_path("laser_stave.png"),
 		textures_path("laser.png"),
 		textures_path("heart.png"),
 		textures_path("pickaxe.png"),
@@ -145,7 +145,8 @@ class RenderSystem
 		shader_path("lava_pillar"),
         shader_path("boss"),
         shader_path("health_bar"),
-		shader_path("dialogue_layer")};
+		shader_path("dialogue_layer"),
+		shader_path("grenade_orb")};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
