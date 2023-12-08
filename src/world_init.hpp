@@ -100,6 +100,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::GHOUL_ENEMY, {13 * CHARACTER_SCALING, 20 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {32 * BOSS_SCALING, 60 * BOSS_SCALING}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_S, {19, 21}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {13, 13}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {16*CHARACTER_SCALING, 24*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
@@ -117,6 +119,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57 * CHARACTER_SCALING, 39 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {222 * BOSS_SCALING, 119 * BOSS_SCALING}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_S, {19, 21}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {13, 13}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
         { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB}
@@ -131,6 +135,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, { -1 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10 * CHARACTER_SCALING, -6 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {0 * BOSS_SCALING, -29.5 * BOSS_SCALING}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_S, {0, 0}},
+        { TEXTURE_ASSET_ID::BOSS_SWORD_L, {0, 0}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
         { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}}
@@ -173,6 +179,18 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
                 0,
                 36
         }},
+        {TEXTURE_ASSET_ID::BOSS_SWORD_S, {
+                1,
+                {1},
+                0,
+                1
+        }},
+        {TEXTURE_ASSET_ID::BOSS_SWORD_L, {
+                1,
+                {6},
+                0,
+                6
+        }},
         {TEXTURE_ASSET_ID::EXPLOSION, {
             1,
             {6},
@@ -203,6 +221,7 @@ Entity createGhoul(RenderSystem* renderer, vec2 position);
 Entity createFollowingEnemy(RenderSystem* renderer, vec2 position);
 // the boss
 Entity createBossEnemy(RenderSystem *renderer, vec2 pos);
+Entity create_boss_sword(RenderSystem* renderer, vec2 pos, int size);
 // spitter enemy
 Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos);
 // spitter enemy bullet

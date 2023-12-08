@@ -47,6 +47,8 @@ class RenderSystem
 		textures_path("spitter.png"),
 		textures_path("spitter_bullet.png"),
         textures_path("boss.png"),
+		textures_path("boss_sword_small.png"),
+		textures_path("boss_sword_big.png"),
 		textures_path("sword.png"),
 		textures_path("pistol.png"),
 		textures_path("rocket_launcher.png"),
@@ -142,6 +144,8 @@ class RenderSystem
         shader_path("screen_layer"),
 		shader_path("lava_pillar"),
         shader_path("boss"),
+		shader_path("boss_sword_small"),
+		shader_path("boss_sword_large"),
         shader_path("health_bar"),
 		shader_path("dialogue_layer")};
 

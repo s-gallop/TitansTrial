@@ -116,6 +116,7 @@ public:
     void boss_action_teleport();
     void boss_action_swipe();
     void boss_action_summon();
+	void boss_action_sword_spawn(bool create, vec2 pos, vec2 scale);
 
 	// Check for collisions
 	void handle_collisions();

@@ -447,6 +447,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 		update_explosions(elapsed_ms_since_last_update * current_speed);
+		boss_action_sword_spawn(false, vec2(0,0), vec2(0,0));
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -476,11 +477,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(curHeart).visibility = false;
 		}
 
-		spawn_move_normal_enemies(elapsed_ms_since_last_update);
-		spawn_boulder(elapsed_ms_since_last_update);
-		spawn_move_ghouls(elapsed_ms_since_last_update);
-		spawn_spitter_enemy(elapsed_ms_since_last_update);
-		update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+		//spawn_move_normal_enemies(elapsed_ms_since_last_update);
+		//spawn_boulder(elapsed_ms_since_last_update);
+		//spawn_move_ghouls(elapsed_ms_since_last_update);
+		//spawn_spitter_enemy(elapsed_ms_since_last_update);
+		//update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+		
 		if (boss && registry.boss.size()) {
 			boss_action_decision(elapsed_ms_since_last_update);
 		}
@@ -532,6 +534,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		return true;
 	}
+	return false;
 }
 
 void WorldSystem::changeScore(int score)
@@ -617,6 +620,7 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 			return SOUND_EFFECT::LAUGH;
 			break;
 	}
+	return SOUND_EFFECT::TELEPORT;
 }
 
 TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
@@ -1081,6 +1085,41 @@ void WorldSystem::boss_action_summon(){
 
 }
 
+void WorldSystem::boss_action_sword_spawn(bool create, vec2 pos, vec2 scale) {
+	float SWORD_SPEED1 = 40.f;
+	float SWORD_SPEED2 = 60.f;
+
+	if (create) {
+		vec2 rad = vec2(scale.x/2.f, scale.y/2.f);
+		float angle = ((float)rand() / RAND_MAX) * (2.f * M_PI);
+		vec2 spawn_pos = pos + (rad * vec2(cos(angle), sin(angle)));
+		//printf("Position: %f\n", angle);
+		create_boss_sword(renderer, spawn_pos, 1);
+		create_boss_sword(renderer, spawn_pos, rand() % 2);
+	}
+	else {
+		Motion& hero_motion = registry.motions.get(player_hero);
+		auto& sword_container = registry.bossSwords;
+		for (uint i = 0; i < sword_container.size(); i++)
+		{
+			BossSword& sword = sword_container.components[i];
+			Entity entity = sword_container.entities[i];
+			Motion& motion = registry.motions.get(entity);
+
+			vec2 following_direction = hero_motion.position - motion.position;
+			following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+
+			motion.velocity = following_direction * ((sword.type == 1) ? SWORD_SPEED1 : SWORD_SPEED2);
+		}
+	}
+	
+	//if (registry.bossSwords.components.size() < 2)
+	//{
+	//	//create_boss_sword(renderer, find_index_from_map(vec2(12, 8)), rand() % 2);
+	//	
+	//}
+}
+
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
@@ -1110,8 +1149,8 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
     //TODO: enable this to start with boss
-    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
-    createHealthBar(renderer, boss);
+   /* boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);*/
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -1524,6 +1563,10 @@ void WorldSystem::handle_collisions()
 						{
 							ddf += 5.f;
 						}
+						if (registry.enemies.get(entity_other).death_animation = -2) {
+							registry.remove_all_components_of(entity_other);
+							continue;
+						}
 						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
@@ -1870,6 +1913,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		ddf = 500;
 	}
 	
+	if (key == GLFW_KEY_U && action == GLFW_RELEASE && debug) {
+		boss_action_sword_spawn(true, registry.motions.get(player_hero).position, registry.motions.get(player_hero).scale);
+	}
+
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
 		toggle_mute_music();
 	}
