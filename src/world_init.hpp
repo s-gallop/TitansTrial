@@ -30,6 +30,7 @@ const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 320);
+const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -255,6 +256,8 @@ Entity createWingedBoots(RenderSystem* renderer, vec2 position);
 Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
+
+Entity createMainMenuBackground(RenderSystem* renderer);
 
 // the parallax backgrounds
 Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);

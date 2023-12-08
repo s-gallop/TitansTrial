@@ -62,6 +62,7 @@ class RenderSystem
 		© <a href='https://www.123rf.com/profile_captainvector'>captainvector</a>, <a href='https://www.123rf.com/free-images/'>123RF Free Images</a>*/
 		textures_path("winged_boots.png"),
 		textures_path("dash_boots.png"),
+		textures_path("main_menu_bg.png"),
 		textures_path("background.png"),
 		textures_path("parallax_rain.png"),
 		textures_path("parallax_moon.png"),

@@ -42,6 +42,7 @@ enum class SOUND_EFFECT {
     LAUGH = TELEPORT + 1
 };
 
+void play_main_menu_music();
 void play_music();
 void play_sound(SOUND_EFFECT id);
 void toggle_mute_music();

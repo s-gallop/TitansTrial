@@ -151,14 +151,13 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 {
 	this->renderer = renderer_arg;
 	
-	// Play background music
-	play_music();
+	// Play main menu background music
+	play_main_menu_music();
 
 	// Set all states to default
 	if (isTitleScreen) {
 		create_title_screen();
 	}
-	
 	
 }
 
@@ -177,7 +176,8 @@ void WorldSystem::create_title_screen()
 		registry.remove_all_components_of(registry.motions.entities.back());
 
 	//these magic number are just the vertical position of where the buttons are
-	createTitleText(renderer, { window_width_px / 2, 150 });
+	createMainMenuBackground(renderer);
+	createTitleText(renderer, { window_width_px / 2, 100 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
 	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
 	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
@@ -1108,7 +1108,7 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
-
+	play_music();
 	// Reset the game speed
 	current_speed = 1.f;
 	current_enemy_spawning_speed = 0.f;

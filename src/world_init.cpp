@@ -353,6 +353,26 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	return entity;
 }
 
+Entity createMainMenuBackground(RenderSystem *renderer) {
+	Entity entity = Entity();
+	auto &motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    motion.velocity = {0.f, 0.f};
+    motion.scale = MAIN_MENU_BG_BB;
+    motion.position = {window_width_px/2, window_height_px/2};
+
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::TITLE_SCREEN_BG,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             false,
+             true,
+             motion.scale});
+
+    return entity;
+}
+
 Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
