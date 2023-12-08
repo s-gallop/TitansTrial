@@ -13,7 +13,8 @@ enum class COLLECTABLE_TYPE
 	ROCKET_LAUNCHER = GUN + 1,
 	GRENADE_LAUNCHER = ROCKET_LAUNCHER + 1,
 	LASER_RIFLE = GRENADE_LAUNCHER + 1,
-	HEART = LASER_RIFLE + 1,
+	TRIDENT = LASER_RIFLE + 1,
+	HEART = TRIDENT + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -182,6 +183,25 @@ struct LaserRifle {
 
 struct Laser {
 
+};
+
+struct Trident {
+	float cooldown = 0;
+	bool loaded = true;
+};
+
+struct WaterBall {
+	vec2 spawn;
+	bool drawing = true;
+	float draw_time = 0;
+	uint state = 0; //starting = 0, waiting = 1, moving = 2, non-perscribed = -1
+	std::vector<vec2> points;
+	std::vector<float> lengths;
+	float total_length;
+	float start_length;
+	float t = 0;
+	uint curve_num = 0;
+	std::vector<Entity> trajectory;
 };
 
 // Weapon the player has picked up
@@ -374,7 +394,9 @@ enum class TEXTURE_ASSET_ID
 	EXPLOSION = GRENADE + 1,
 	LASER_RIFLE = EXPLOSION + 1,
 	LASER = LASER_RIFLE + 1,
-	HEART = LASER + 1,
+	TRIDENT = LASER + 1,
+	WATER_BALL = TRIDENT + 1,
+	HEART = WATER_BALL + 1,
 	PICKAXE = HEART + 1,
 	WINGED_BOOTS = PICKAXE + 1,
 	DASH_BOOTS = WINGED_BOOTS + 1,
@@ -452,7 +474,8 @@ enum class EFFECT_ASSET_ID
 	ANIMATED = SCREEN + 1,
 	HERO = ANIMATED + 1,
 	EXPLOSION = HERO + 1,
-	FIRE_ENEMY = EXPLOSION + 1,
+	WATER_BALL = EXPLOSION + 1,
+	FIRE_ENEMY = WATER_BALL + 1,
 	GHOUL = FIRE_ENEMY + 1,
 	SPITTER_ENEMY = GHOUL + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,

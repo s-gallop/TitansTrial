@@ -29,7 +29,7 @@ const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 const vec2 HELPER_BB = vec2(1058, 532) / 3.f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 320);
-
+const vec2 TRIDENT_BB = vec2(16, 32) * 1.5f;
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -108,6 +108,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)},
         { TEXTURE_ASSET_ID::HEALTH_BAR, vec2(62, 19) * 3.f},
         { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH, vec2(56, 3) * 3.f},
+        { TEXTURE_ASSET_ID::WATER_BALL, {30, 20}},
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -119,7 +120,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::BOSS, {222 * BOSS_SCALING, 119 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB},
+        { TEXTURE_ASSET_ID::WATER_BALL, {64, 64}},
 };
 
 const float BULLET_MESH_SCALE = 4.0f;
@@ -133,7 +135,8 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::BOSS, {0 * BOSS_SCALING, -29.5 * BOSS_SCALING}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}},
+        { TEXTURE_ASSET_ID::WATER_BALL, {-17,0}},
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -190,6 +193,12 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {4},
             0,
             4
+        }},
+        {TEXTURE_ASSET_ID::WATER_BALL, {
+            3,
+            {4, 5, 5},
+            0,
+            5
         }}
 };
 // the player
@@ -227,6 +236,10 @@ Entity createExplosion(RenderSystem* renderer, vec2 position, float size);
 Entity createLaserRifle(RenderSystem* renderer, vec2 position);
 
 Entity createLaser(RenderSystem* renderer, vec2 position, float angle);
+
+Entity createTrident(RenderSystem* renderer, vec2 position);
+
+Entity createWaterBall(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createHeart(RenderSystem* renderer, vec2 position);
 

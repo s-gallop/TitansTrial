@@ -8,25 +8,29 @@
 float next_collectable_spawn = 600.f;
 vec2 mouse_click_pos = {-1.f, -1.f};
 vec2 mouse_cur_pos = {-1.f, -1.f};
-float grenade_launch_timer = 0.f;
+float drag_delay = 0.f;
 float pickaxe_disable = 0.f;
 float dash_window = 0.f;
 float dash_time = 0.f;
 uint dash_direction = 0;
 
 const size_t COLLECTABLE_DELAY_MS = 3000;
+const size_t DRAG_DELAY = 100;
 const size_t MAX_COLLECTABLES = 6;
 const size_t GUN_COOLDOWN = 800;
 const size_t EQUIPMENT_DURATION = 20000;
 const size_t ROCKET_COOLDOWN = 3000;
 const float ROCKET_EXPLOSION_FACTOR = 3.5f;
 const size_t GRENADE_COOLDOWN = 1750;
-const size_t GRENADE_LAUNCH_TIMER = 100;
 const float GRENADE_SPEED_FACTOR = 1.f;
-const size_t GRENADE_TRAJECTORY_WIDTH = 3;
+const size_t TRAJECTORY_WIDTH = 3;
 const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
 const size_t LASER_COOLDOWN = 2000;
+const size_t TRIDENT_COOLDOWN = 1500;
+const size_t WATER_BALL_SPEED = 500;
+const size_t MAX_WATER_BALL_DRAW_TIME = 1000;
+const size_t MAX_WATER_BALL_DRAW_DIST = 500;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
@@ -37,7 +41,7 @@ void initiate_weapons() {
 	next_collectable_spawn = 600.f;
 	mouse_click_pos = {-1.f, -1.f};
 	mouse_cur_pos = {-1.f, -1.f};
-	grenade_launch_timer = 0.f;
+	drag_delay = 0.f;
 	pickaxe_disable = 0.f;
 	dash_window = 0.f;
 	dash_time = 0.f;
@@ -50,9 +54,13 @@ void collect_weapon(Entity weapon, Entity hero) {
 			registry.remove_all_components_of(weapon);
 		} else {
 			if (registry.players.get(hero).hasWeapon) {
-				if (registry.grenadeLaunchers.has(registry.players.get(hero).weapon))
+				if (registry.grenadeLaunchers.has(registry.players.get(hero).weapon)) {
 					for(Entity line: registry.grenadeLaunchers.get(registry.players.get(hero).weapon).trajectory)
 						registry.remove_all_components_of(line);
+				} else if (registry.tridents.has(weapon)) {
+					for (WaterBall& water_ball: registry.waterBalls.components)
+						water_ball.drawing = false;
+				}
 				registry.remove_all_components_of(registry.players.get(hero).weapon);
 			}
 			registry.gravities.remove(weapon);
@@ -80,6 +88,8 @@ void collect_weapon(Entity weapon, Entity hero) {
 				motion.positionOffset.x = 14.f;
 			} else if (registry.laserRifles.has(weapon)) {
 				motion.positionOffset.x = 25.f;
+			} else if (registry.tridents.has(weapon)) {
+				motion.positionOffset.y = -25.f;
 			}
 		}
 	}
@@ -93,6 +103,7 @@ void collect(Entity collectable, Entity hero) {
 		case COLLECTABLE_TYPE::ROCKET_LAUNCHER:
 		case COLLECTABLE_TYPE::GRENADE_LAUNCHER:
 		case COLLECTABLE_TYPE::LASER_RIFLE:
+		case COLLECTABLE_TYPE::TRIDENT:
 			collect_weapon(collectable, hero);
 			break;
 		case COLLECTABLE_TYPE::HEART: {
@@ -124,7 +135,7 @@ void rotate_weapon(Entity weapon, vec2 mouse_pos) {
 	if (!registry.swords.has(weapon) || registry.swords.get(weapon).swing == 0) {
 		motion.angle = atan2(mouse_pos.y - motion.position.y, mouse_pos.x - motion.position.x);
 		
-		if (registry.swords.has(weapon))
+		if (registry.swords.has(weapon) || registry.tridents.has(weapon))
 			motion.angle += M_PI/2;
 		motion.angleBackup = motion.angle;
 		
@@ -152,16 +163,16 @@ std::vector<Entity> create_grenade_trajectory(RenderSystem* renderer, vec2 launc
 		end_point = start_point + velocity * segment_seconds;
 		vec2 line_position = launch_start;
 		vec2 line_offset = (start_point + end_point) / 2.f - launch_start;
-		vec2 line_scale = {sqrt(dot(end_point - start_point, end_point - start_point)), GRENADE_TRAJECTORY_WIDTH};
+		vec2 line_scale = {sqrt(dot(end_point - start_point, end_point - start_point)), TRAJECTORY_WIDTH};
 		float line_angle = atan2(end_point.y - start_point.y, end_point.x - start_point.x);
 		lines.push_back(createLine(renderer, line_position, line_offset, line_scale, line_angle));
 	}
 	return lines;
 }
 
-void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
+void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos, bool mouse_clicked) {
 	mouse_cur_pos = mouse_pos;
-	if (mouse_click_pos != vec2(-1.f, -1.f) && grenade_launch_timer <= 0) {
+	if (mouse_click_pos != vec2(-1.f, -1.f) && drag_delay <= 0) {
 		rotate_weapon(weapon, registry.motions.get(weapon).position + mouse_click_pos - mouse_cur_pos);
 		for (Entity line: registry.grenadeLaunchers.get(weapon).trajectory) {
 			registry.remove_all_components_of(line);
@@ -170,6 +181,22 @@ void update_weapon_angle(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) 
 		float angle = motion.angle;
 		mat2 rot_mat = {{cos(angle), -sin(angle)}, {sin(angle), cos(angle)}};
 		registry.grenadeLaunchers.get(weapon).trajectory = create_grenade_trajectory(renderer, motion.position + vec2(motion.positionOffset.x + abs(motion.scale.x) / 2.f, 0) * rot_mat, (mouse_click_pos - mouse_cur_pos) * GRENADE_SPEED_FACTOR);
+	} else if (registry.weapons.get(weapon).type == COLLECTABLE_TYPE::TRIDENT && mouse_clicked) {
+		for (Entity entity: registry.waterBalls.entities) {
+			WaterBall& water_ball = registry.waterBalls.get(entity);
+			if (water_ball.drawing && water_ball.draw_time < MAX_WATER_BALL_DRAW_TIME && water_ball.total_length < MAX_WATER_BALL_DRAW_DIST) {
+				float dist = sqrt(dot(mouse_pos - water_ball.points[water_ball.points.size() - 1], mouse_pos - water_ball.points[water_ball.points.size() - 1]));
+				water_ball.lengths.push_back(dist/2);
+				water_ball.lengths.push_back(dist/2);
+				vec2 last = water_ball.points[water_ball.points.size() - 1];
+				vec2 betweener = (last + mouse_pos) / 2.f;
+				water_ball.points.push_back(betweener);
+				water_ball.points.push_back(mouse_pos);
+				float angle = atan2(mouse_pos.y - water_ball.points[water_ball.points.size() - 3].y, mouse_pos.x - water_ball.points[water_ball.points.size() - 3].x);
+				water_ball.trajectory.push_back(createLine(renderer, betweener, {0, 0}, {dist, TRAJECTORY_WIDTH}, angle));
+			}
+		}
+		rotate_weapon(weapon, mouse_pos);
 	} else {
 		rotate_weapon(weapon, mouse_pos);
 	}
@@ -232,7 +259,123 @@ void update_explosions(float elapsed_ms) {
 	}
 }
 
+vec2 bezier_curve(float t, vec2 a, vec2 b, vec2 c) {
+	return (1-t)*(1-t)*a + 2*t*(1-t)*b + t*t*c;
+}
+
+void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mouse_clicked) {
+	for (Entity entity: registry.waterBalls.entities) {
+		WaterBall& water_ball = registry.waterBalls.get(entity);
+		Motion& motion = registry.motions.get(entity);
+		AnimationInfo& animation = registry.animated.get(entity);
+		WeaponHitBox& hit_box = registry.weaponHitBoxes.get(entity);
+		RenderRequest& render = registry.renderRequests.get(entity);
+		
+		if (water_ball.draw_time < MAX_WATER_BALL_DRAW_TIME) {
+			water_ball.draw_time += elapsed_ms;
+			if (water_ball.draw_time >= MAX_WATER_BALL_DRAW_TIME || water_ball.total_length >= MAX_WATER_BALL_DRAW_DIST) {
+				if (water_ball.points.size() > 1) {
+					water_ball.lengths[0] += water_ball.lengths[1];
+					water_ball.lengths.erase(water_ball.lengths.begin() + 1);
+					water_ball.points.erase(water_ball.points.begin() + 1);
+					if (water_ball.points.size() > 2) {
+						water_ball.lengths[water_ball.lengths.size() - 1] += water_ball.lengths[water_ball.lengths.size() - 2];
+						water_ball.lengths.erase(water_ball.lengths.end() - 2);
+						water_ball.points.erase(water_ball.points.end() - 2);
+					}
+				}
+			}
+		}
+		
+		float move_factor = WATER_BALL_SPEED * elapsed_ms / 1000.f;
+		if (water_ball.state == 0) {
+			water_ball.t += move_factor / water_ball.start_length;
+			move_factor = 0;
+			if (water_ball.t > 1)
+				water_ball.t = 1;
+			motion.position = water_ball.spawn + water_ball.t * (water_ball.points[0] - water_ball.spawn);
+			if (water_ball.t == 1) {
+				if (water_ball.drawing || water_ball.points.size() > 1) {
+					water_ball.state++;
+					water_ball.t = 0;
+					animation.curState = 0;
+					hit_box.isActive = false;
+					motion.angleBackup = motion.angle;
+					motion.angle = 0;
+				} else {
+					motion.velocity = vec2(WATER_BALL_SPEED, 0) * mat2({cos(motion.angle), -sin(motion.angle)}, {sin(motion.angle), cos(motion.angle)});
+					water_ball.state = -1;
+				}
+			}
+		} 
+		
+		if (water_ball.state == 1 && !water_ball.drawing) {
+			animation.curState = 1;
+			hit_box.isActive = true;
+			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			for (Entity line: water_ball.trajectory)
+				registry.remove_all_components_of(line);
+			
+			if (water_ball.trajectory.size() > 1) {
+				water_ball.state++;
+			} else {
+				motion.velocity = vec2(WATER_BALL_SPEED, 0) * mat2({cos(motion.angleBackup), -sin(motion.angleBackup)}, {sin(motion.angleBackup), cos(motion.angleBackup)});
+				motion.angle = motion.angleBackup;
+				water_ball.state = -1;
+			}
+		}
+		
+		if (water_ball.state == 2) {
+			uint curve_start = water_ball.curve_num * 2;
+			if (water_ball.points.size() <= curve_start + 2) {
+				motion.velocity = vec2(WATER_BALL_SPEED, 0) * mat2({cos(motion.angle), -sin(motion.angle)}, {sin(motion.angle), cos(motion.angle)});
+				water_ball.state = -1;
+			} else {
+				water_ball.t += move_factor / (water_ball.lengths[curve_start] + water_ball.lengths[curve_start + 1]);
+				if (water_ball.t > 1)
+					water_ball.t = 1;
+				vec2 next_pos = bezier_curve(water_ball.t, water_ball.points[curve_start], water_ball.points[curve_start + 1], water_ball.points[curve_start + 2]);
+				
+				motion.angle = atan2(next_pos.y - motion.position.y, next_pos.x - motion.position.x);
+				if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
+					render.scale.y = -1*abs(render.scale.y);
+					motion.scale.y = -1*abs(motion.scale.y);
+				} else {
+					render.scale.y = abs(render.scale.y);
+					motion.scale.y = abs(motion.scale.y);
+				}
+				
+				motion.position = next_pos;
+				if (water_ball.t == 1) {
+					water_ball.curve_num++;
+					water_ball.t = 0;
+				}
+			}
+		}
+
+		if (animation.oneTimeState == 2 && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[2])
+			registry.remove_all_components_of(entity);
+	}
+}
+
+void weapon_mouse_release() {
+	for (WaterBall& water_ball: registry.waterBalls.components) {
+		if (water_ball.drawing && drag_delay > 0) {
+			vec2 start = water_ball.points[0];
+			water_ball.points.clear();
+			water_ball.points.push_back(start);
+			for (Entity line: water_ball.trajectory)
+				registry.remove_all_components_of(line);
+		}
+		water_ball.drawing = false;
+	}
+}
+
 void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool mouse_clicked) {
+	if (drag_delay > 0) {
+		drag_delay -= elapsed_ms;
+	}
+	
 	Entity weapon = registry.players.get(hero).weapon;
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
@@ -276,15 +419,12 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 				launcher.loaded = true;
 			}
 		} 
-		if (grenade_launch_timer > 0) {
-			grenade_launch_timer -= elapsed_ms;
-		}
 		if (mouse_click_pos != vec2({-1.f, -1.f}) && !mouse_clicked) {
 			Motion launcher_motion = registry.motions.get(weapon);
 			mat2 rot_mat = mat2({cos(launcher_motion.angle), -sin(launcher_motion.angle)}, {sin(launcher_motion.angle), cos(launcher_motion.angle)});
 			vec2 position = launcher_motion.position + vec2(launcher_motion.positionOffset.x + abs(launcher_motion.scale.x) / 2.f, 0) * rot_mat;
 			vec2 velocity = (mouse_click_pos - mouse_cur_pos) * GRENADE_SPEED_FACTOR;
-			if (registry.grenadeLaunchers.get(weapon).trajectory.empty() || grenade_launch_timer > 0)
+			if (registry.grenadeLaunchers.get(weapon).trajectory.empty() || drag_delay > 0)
 				velocity = vec2(500.f, 0) * rot_mat;
 			createGrenade(renderer, position, velocity);
 			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
@@ -300,6 +440,15 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 				registry.motions.get(line).position = weaponMot.position + vec2(weaponMot.positionOffset.x + abs(weaponMot.scale.x) / 2.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
 			}
 		} 
+	} else if (registry.tridents.has(weapon)) {
+		Trident& trident = registry.tridents.get(weapon);
+		if (trident.cooldown > 0) {
+			trident.cooldown -= elapsed_ms;
+			if (!trident.loaded) {
+				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
+				trident.loaded = true;
+			}
+		}
 	}
 }
 
@@ -424,7 +573,7 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown <= 0) {
 			mouse_click_pos = mouse_pos;
-			grenade_launch_timer = GRENADE_LAUNCH_TIMER;
+			drag_delay = DRAG_DELAY;
 		}
 	} else if (registry.laserRifles.has(weapon)) {
 		 LaserRifle& launcher = registry.laserRifles.get(weapon);
@@ -438,6 +587,30 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 			 launcher.cooldown = LASER_COOLDOWN;
 			 launcher.loaded = false;
 		 }
+	} else if (registry.tridents.has(weapon)) {
+		Trident& trident = registry.tridents.get(weapon);
+		if (trident.cooldown <= 0) {
+			trident.cooldown = TRIDENT_COOLDOWN;
+			drag_delay = DRAG_DELAY;
+			Motion& trident_motion = registry.motions.get(weapon);
+			float angle = trident_motion.angle - M_PI/2;
+			vec2 pos = trident_motion.position + vec2(abs(trident_motion.scale.y) / 2, 0) * mat2({ cos(angle), -sin(angle) }, { sin(angle), cos(angle) });
+			Entity entity = createWaterBall(renderer, pos, trident_motion.angle - M_PI/2);
+			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			WaterBall& water_ball = registry.waterBalls.get(entity);
+			water_ball.spawn = pos;
+			water_ball.points.push_back(mouse_pos);
+			water_ball.start_length = sqrt(dot(mouse_pos - pos, mouse_pos - pos));
+			Motion& motion = registry.motions.get(entity);
+			RenderRequest& render = registry.renderRequests.get(entity);
+			if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
+				render.scale.y = -1*abs(render.scale.y);
+				motion.scale.y = -1*abs(motion.scale.y);
+			} else {
+				render.scale.y = abs(render.scale.y);
+				motion.scale.y = abs(motion.scale.y);
+			}
+		}
 	}
 }
 

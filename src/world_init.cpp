@@ -794,6 +794,68 @@ Entity createLaser(RenderSystem* renderer, vec2 position, float angle) {
 	return entity;
 }
 
+Entity createTrident(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+	motion.scale = TRIDENT_BB;
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::TRIDENT;
+	registry.tridents.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TRIDENT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
+Entity createWaterBall(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::WATER_BALL);
+
+	AnimationInfo& animation = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::WATER_BALL));
+	animation.curState = 1;
+
+	registry.waterBalls.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::WATER_BALL,
+			EFFECT_ASSET_ID::WATER_BALL,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			SPRITE_SCALE.at(TEXTURE_ASSET_ID::WATER_BALL),
+			SPRITE_OFFSET.at(TEXTURE_ASSET_ID::WATER_BALL)});
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
 Entity createHeart(RenderSystem* renderer, vec2 position) {
 	auto entity = Entity();
 

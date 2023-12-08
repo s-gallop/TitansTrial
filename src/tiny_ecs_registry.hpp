@@ -47,6 +47,8 @@ public:
 	ComponentContainer<Explosion> explosions;
 	ComponentContainer<LaserRifle> laserRifles;
 	ComponentContainer<Laser> lasers;
+	ComponentContainer<Trident> tridents;
+	ComponentContainer<WaterBall> waterBalls;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
@@ -98,6 +100,8 @@ public:
 		registry_list.push_back(&explosions);
 		registry_list.push_back(&laserRifles);
 		registry_list.push_back(&lasers);
+		registry_list.push_back(&tridents);
+		registry_list.push_back(&waterBalls);
 		registry_list.push_back(&weapons);
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
