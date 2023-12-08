@@ -14,7 +14,7 @@ class PhysicsSystem
 public:
 	void init(RenderSystem* renderer);
 	void step(float elapsed_ms, int dialogue);
-	bool collides(const Entity &entity1, const Entity &entity2);
+	static bool collides(const Entity &entity1, const Entity &entity2);
 	bool laser_collides(Motion& motion1, Motion& motion2);
 	PhysicsSystem()
 	{

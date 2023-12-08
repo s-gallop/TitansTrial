@@ -155,7 +155,7 @@ private:
 	BOSS_STATE get_action();
 	float mdp_helper(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num);
 	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters);
-	float get_reward(vec2 boss_pos, uint num_ghouls, uint num_spitters);
+	float get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, vec2 boss_pos, uint num_ghouls, uint num_spitters);
 
     // creates pause gui
     void create_pause_screen();
