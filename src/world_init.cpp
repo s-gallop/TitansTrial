@@ -1131,7 +1131,7 @@ Entity createScore(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
@@ -1154,7 +1154,7 @@ Entity createNumber(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);

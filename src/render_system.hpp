@@ -121,7 +121,9 @@ class RenderSystem
 		textures_path("dialogues/dialogue_5_thanatos.png"),
 		textures_path("dialogues/dialogue_6_thanatos.png"),
 		textures_path("dialogues/dialogue_7_hades.png"),
-		textures_path("dialogues/dialogue_8_hades.png")};
+		textures_path("dialogues/dialogue_8_hades.png"),
+		textures_path("difficulty/single_boss_difficulty_bar.png"),
+		textures_path("difficulty/single_broken_difficulty_bar.png") };
 
 
 	std::array<GLuint, effect_count> effects;

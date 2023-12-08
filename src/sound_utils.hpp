@@ -9,8 +9,16 @@
 
 #include "common.hpp"
 
+#ifndef SOUND_UTILS_HPP
+#define SOUND_UTILS_HPP
+
+extern bool is_music_muted;
+
+#endif
+
 uint init_sound();
 void destroy_sound();
+
 
 enum class SOUND_EFFECT {
     HERO_DEAD = 0,
