@@ -23,7 +23,6 @@ int WorldSystem::dialogue_screen_active = 0; // 0 means no dialogue screen is ac
 std::bitset<2> motionKeyStatus("00");
 bool pickupKeyStatus = false;
 vec3 player_color;
-std::vector<std::vector<char>> grid_vec = create_grid();
 std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity difficulty_bar;
@@ -59,7 +58,7 @@ float lavaPillarTimer = 0;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f), next_spitter_spawn(0.f), next_ghoul_spawn(0.f), next_boulder_spawn(0.f)
+	: points(0), next_enemy_spawn(0.f)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -158,7 +157,7 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 	if (isTitleScreen) {
 		create_title_screen();
 	}
-	
+
 }
 
 
@@ -221,7 +220,7 @@ void WorldSystem::create_almanac_screen() {
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	if (dialogue_screen_active == 0) {
-		if (ddl == 4) 
+		if (ddl == 4)
 		{
 			lavaPillarTimer += elapsed_ms_since_last_update;
 			if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
@@ -357,46 +356,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		if (ddl < 4)
 			registry.motions.get(indicator).position[0] = 30.f + ddf * INDICATOR_VECLOCITY;
 
-		switch (ddl)
-		{
-			case 0:
-				current_enemy_spawning_speed = 1.0f;
-				current_spitter_spawning_speed = 0.0f;
-				current_ghoul_spawning_speed = 0.0f;
-				current_boulder_spawning_speed = 0.0f;
-				break;
-			case 1:
-				current_enemy_spawning_speed = 0.5f;
-				current_ghoul_spawning_speed = 0.5f;
-				current_spitter_spawning_speed = 0.0f;
-				current_boulder_spawning_speed = 0.5f;
-				break;
-			case 2:
-				current_enemy_spawning_speed = 0.0f;
-				current_ghoul_spawning_speed = 0.0f;
-				current_spitter_spawning_speed = 1.0f;
-				current_boulder_spawning_speed = 1.0f;
-				break;
-			case 3:
-				current_enemy_spawning_speed = 0.0f;
-				current_ghoul_spawning_speed = 1.0f;
-				current_spitter_spawning_speed = 1.0f;
-				current_boulder_spawning_speed = 0.0f;
-				break;
-			case 4:
-				current_enemy_spawning_speed = 0.0f;
-				current_ghoul_spawning_speed = 0.0f;
-				current_spitter_spawning_speed = 0.0f;
-				current_boulder_spawning_speed = 0.0f;
-				break;
-			default:
-				current_enemy_spawning_speed = 1.0f;
-				current_ghoul_spawning_speed = 1.0f;
-				current_spitter_spawning_speed = 1.0f;
-				current_boulder_spawning_speed = 1.0f;
-				break;
-		}
-
 		if (ddl == 4)
 			ddf = 499.0;
 		else
@@ -442,19 +401,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 
 		if (registry.players.get(player_hero).hasWeapon) {
-			update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
-			update_water_balls(elapsed_ms_since_last_update * current_speed, registry.weapons.get(registry.players.get(player_hero).weapon).type, mouse_clicked);
+			update_weapon(renderer, elapsed_ms_since_last_update, player_hero, mouse_clicked);
+			update_water_balls(elapsed_ms_since_last_update, registry.weapons.get(registry.players.get(player_hero).weapon).type, mouse_clicked);
 		} else {
-			update_water_balls(elapsed_ms_since_last_update * current_speed, COLLECTABLE_TYPE::COLLECTABLE_COUNT, mouse_clicked);
+			update_water_balls(elapsed_ms_since_last_update, COLLECTABLE_TYPE::COLLECTABLE_COUNT, mouse_clicked);
 		}
 
-		update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
-		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
-		update_pickaxe(elapsed_ms_since_last_update * current_speed);
+		update_equipment(elapsed_ms_since_last_update, player_hero);
+		update_dash_boots(elapsed_ms_since_last_update, player_hero, motionKeyStatus, BASIC_SPEED);
+		update_pickaxe(elapsed_ms_since_last_update);
 
-		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
-		update_explosions(elapsed_ms_since_last_update * current_speed);
-		
+		update_grenades(renderer, elapsed_ms_since_last_update);
+		update_explosions(elapsed_ms_since_last_update);
+
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -484,14 +443,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			registry.renderRequests.get(curHeart).visibility = false;
 		}
 
-		spawn_move_normal_enemies(elapsed_ms_since_last_update);
-		spawn_boulder(elapsed_ms_since_last_update);
-		spawn_move_ghouls(elapsed_ms_since_last_update);
-		spawn_spitter_enemy(elapsed_ms_since_last_update);
-		update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+
+		update_collectable_timer(elapsed_ms_since_last_update, renderer, ddl);
+        move_firelings(renderer);
+        move_boulder( renderer);
+        move_ghouls(renderer, player_hero);
+        move_spitters(elapsed_ms_since_last_update, renderer);
 		if (boss && registry.boss.size()) {
-			boss_action_decision(elapsed_ms_since_last_update);
+			boss_action_decision(boss, renderer);
 		}
+        doEnemySpawn(elapsed_ms_since_last_update);
 		update_graphics_all_enemies();
 
 		if ((ddl == 2 || ddl == 3) && following_enemies.empty())
@@ -503,7 +464,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 		else if ((ddl == 2 || ddl == 3) && !following_enemies.empty())
 		{
-			spawn_move_following_enemies(elapsed_ms_since_last_update);
+            move_tracer(elapsed_ms_since_last_update, player_hero);
 		}
 		else if ((ddl != 2 && ddl != 3) && !following_enemies.empty())
 		{
@@ -662,436 +623,26 @@ TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
 	}
 }
 
-//update elements of all enemies
 void WorldSystem::update_graphics_all_enemies()
 {
-	for (Entity entity: registry.enemies.entities)
-	{ 
-		Enemies& enemy = registry.enemies.get(entity);
+    for (Entity entity: registry.enemies.entities)
+    {
+        Enemies& enemy = registry.enemies.get(entity);
 
-		if (!registry.animated.has(entity))
-			continue;
-		AnimationInfo& animation = registry.animated.get(entity);
+        if (!registry.animated.has(entity))
+            continue;
+        AnimationInfo& animation = registry.animated.get(entity);
 
-		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
-			registry.remove_all_components_of(entity);
+        if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
+            registry.remove_all_components_of(entity);
             update_health_bar();
-		} else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
-			enemy.hittable = true;
-			enemy.hitting = true;
-			if (registry.motions.get(entity).velocity.x != 0)
-				registry.motions.get(entity).dir = registry.motions.get(entity).velocity.x > 0 ? 1 : -1;
-		}
-	}
-}
-
-// deal with normal eneimies' spawning and moving
-void WorldSystem::spawn_move_normal_enemies(float elapsed_ms_since_last_update)
-{
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.enemies.components.size() < MAX_FIRE_ENEMIES && next_enemy_spawn < 0.f)
-	{
-		// Reset timer
-		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		srand(time(0));
-		float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-		int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-		float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-		Entity newEnemy = createFireEnemy(renderer, vec2(window_width_px, rightHeight));
-		TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
-		enemyTestAI.departFromRight = true;
-		enemyTestAI.a = (float)squareFactor;
-		enemyTestAI.b = curveParameter;
-		enemyTestAI.c = (float)leftHeight;
-	}
-
-	auto &testAI_container = registry.testAIs;
-	for (uint i = 0; i < testAI_container.size(); i++)
-	{
-		TestAI &testAI = testAI_container.components[i];
-		Entity entity = testAI_container.entities[i];
-		Motion &motion = registry.motions.get(entity);
-		if (testAI.departFromRight && motion.position[0] < 0)
-		{
-			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-			int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-			motion.position = vec2(0.0, testAI.c);
-			float curveParameter = (float)(rightHeight - testAI.c - window_width_px * window_width_px * squareFactor) / window_width_px;
-			testAI.departFromRight = false;
-			testAI.a = (float)squareFactor;
-			testAI.b = curveParameter;
-			motion.dir = 1;
-		}
-		else if (!testAI.departFromRight && motion.position[0] > window_width_px)
-		{
-			float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-			int rightHeight = testAI.a * window_width_px * window_width_px + testAI.b * window_width_px + testAI.c;
-			int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-			motion.position = vec2(window_width_px, rightHeight);
-			float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-			testAI.departFromRight = true;
-			testAI.a = (float)squareFactor;
-			testAI.b = curveParameter;
-			testAI.c = (float)leftHeight;
-			motion.dir = -1;
-		}
-		float gradient = 2 * testAI.a * motion.position[0] + testAI.b;
-		float basicFactor = sqrt(BASIC_SPEED * BASIC_SPEED / (gradient * gradient + 1));
-		float direction = testAI.departFromRight ? -1.0 : 1.0;
-		motion.velocity = direction * vec2(basicFactor, gradient * basicFactor);
-	}
-}
-
-void WorldSystem::spawn_boulder(float elapsed_ms_since_last_update) {
-	next_boulder_spawn -= elapsed_ms_since_last_update * current_boulder_spawning_speed;
-	if (registry.boulders.components.size() < MAX_BOULDERS && next_boulder_spawn < 0.f) {
-		next_boulder_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		srand(time(0));
-		float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-		float x_speed = 50 + 100 * uniform_dist(rng);
-		x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
-		float size = 3 + uniform_dist(rng);
-		createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
-	}
-
-	for (Entity boulder: registry.boulders.entities) {
-		Motion& motion = registry.motions.get(boulder);
-		if (motion.velocity.x > 0) {
-			motion.angle += M_PI / 64;
-		} else if (motion.velocity.x < 0) {
-			motion.angle -= M_PI / 64;
-		}
-	}
-}
-
-void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
-{
-	float GHOUL_SPEED = 100.f;
-	float EDGE_DISTANCE = 0.f;
-
-	next_ghoul_spawn -= elapsed_ms_since_last_update * current_ghoul_spawning_speed;
-	if (registry.ghouls.components.size() < MAX_GHOULS && next_ghoul_spawn < 0.f)
-	{
-		// Reset timer
-        next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		Entity newGhoul = createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
-		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
-	}
-	
-
-	Motion& hero_motion = registry.motions.get(player_hero);
-	for (uint i = 0; i < registry.ghouls.entities.size(); i++) {
-		Entity enemy = registry.ghouls.entities[i];
-		Motion& enemy_motion = registry.motions.get(enemy);
-		AnimationInfo& animation = registry.animated.get(enemy);
-		Ghoul& enemy_reg = registry.ghouls.get(enemy);
-		//printf("Position: %f\n", enemy_motion.position.x);
-		if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
-			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
-			direction = direction / abs(direction);
-			enemy_motion.velocity.x = direction * GHOUL_SPEED * current_speed;
-			enemy_motion.dir = (int)direction;
-		}
-		// Reverse direction
-		else if (enemy_motion.position.x - enemy_reg.left_x <= EDGE_DISTANCE && enemy_motion.velocity.y == 0.f && enemy_motion.velocity.x != 0.f) {
-			enemy_motion.velocity.x = GHOUL_SPEED * current_speed;
-			enemy_motion.dir = 1;
-		}
-		else if (enemy_reg.right_x - enemy_motion.position.x <= EDGE_DISTANCE && enemy_motion.velocity.y == 0.f && enemy_motion.velocity.x != 0.f) {
-			enemy_motion.velocity.x = -1.f * GHOUL_SPEED * current_speed;
-			enemy_motion.dir = -1;
-		}
-	}
-}
-
-// deal with normal eneimies' spawning and moving
-void WorldSystem::spawn_move_following_enemies(float elapsed_ms_since_last_update)
-{
-	const uint PHASE_IN_STATE = 1;
-	const uint PHASE_OUT_STATE = 4;
-
-	/*
-	next_enemy_spawn -= elapsed_ms_since_last_update * current_enemy_spawning_speed;
-	if (registry.followingEnemies.components.size() < MAX_FOLLOWING_ENEMIES && next_enemy_spawn < 0.f)
-	{
-		// Reset timer
-		next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
-		Entity newEnemy = createFollowingEnemy(renderer, find_index_from_map(vec2(12, 8)));
-
-		std::vector<std::vector<char>> vec = grid_vec;
-		bfs_follow_start(vec, registry.motions.get(newEnemy).position, registry.motions.get(player_hero).position, newEnemy);
-	}
-	*/
-
-	Motion& hero_motion = registry.motions.get(player_hero);
-	for (uint i = 0; i < registry.followingEnemies.entities.size(); i++) {
-		Entity enemy = registry.followingEnemies.entities[i];
-		Motion& enemy_motion = registry.motions.get(enemy);
-		AnimationInfo& animation = registry.animated.get(enemy);
-		FollowingEnemies& enemy_reg = registry.followingEnemies.get(enemy);
-		Enemies enemies = registry.enemies.get(enemy);
-
-		enemy_reg.next_blink_time -= elapsed_ms_since_last_update * current_speed;
-		if (enemy_reg.next_blink_time < 0.f && enemy_reg.blinked == false)
-		{
-			//Time between blinks
-			enemy_reg.next_blink_time = 700.f;
-
-			//enemies.hittable = true;
-			//enemy_reg.hittable = true;
-
-			if (enemy_reg.path.size() == 0 && find_map_index(enemy_motion.position) != find_map_index(hero_motion.position)) {
-				std::vector<std::vector<char>> vec = grid_vec;
-				bfs_follow_start(vec, enemy_motion.position, hero_motion.position, enemy);
-			}
-
-			//Don't blink when not moving: next pos in path is same pos as current
-			if (enemy_reg.path.size() != 0 && find_index_from_map(enemy_reg.path.back()) == enemy_motion.position) {
-				enemy_reg.path.pop_back();
-			}
-			 else if (enemy_reg.path.size() != 0)
-			{
-				animation.oneTimeState = PHASE_IN_STATE;
-				animation.oneTimer = 0;
-				vec2 converted_pos = find_index_from_map(enemy_reg.path.back());
-				enemy_motion.dir = (converted_pos.x > enemy_motion.position.x) ? -1 : 1;
-				enemy_motion.position = converted_pos;
-				enemy_reg.path.pop_back();
-
-				//Don't blink when not moving: next loop will be to re-calc the path
-				if (enemy_reg.path.size() != 0) {
-					enemy_reg.blinked = true;
-				}
-			}
-		}
-
-		if (enemy_reg.next_blink_time < 0.0f && enemy_reg.blinked == true) {
-			enemy_reg.next_blink_time = 100.f;
-			animation.oneTimeState = PHASE_OUT_STATE;
-			animation.oneTimer = 0;
-			//enemy_reg.hittable = false;
-			//enemies.hittable = false;
-			enemy_reg.blinked = false;
-		}
-	}
-}
-
-void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
-    const uint SHOOT_STATE = 2;
-    const uint SPITTER_FIRE_FRAME = 4;
-	const uint WALKING_TIME = 5;
-	const float WALKING_SPEED = 100.f;
-	float EDGE_DISTANCE = 10.f;
-	const float STOP_WALK_TIME = 300.f;
-
-	next_spitter_spawn -= elapsed_ms_since_last_update * current_spitter_spawning_speed;
-	if (registry.spitterEnemies.components.size() < MAX_SPITTERS && next_spitter_spawn < 0.f)
-	{
-		next_spitter_spawn = (SPITTER_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_SPAWN_DELAY_MS / 2);
-		createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
-	}
-
-	auto &spitterEnemy_container = registry.spitterEnemies;
-	for (uint i = 0; i < spitterEnemy_container.size(); i++)
-	{
-		SpitterEnemy &spitterEnemy = spitterEnemy_container.components[i];
-		spitterEnemy.timeUntilNextShotMs -= elapsed_ms_since_last_update * current_speed;
-		Entity entity = spitterEnemy_container.entities[i];
-		Motion &motion = registry.motions.get(entity);
-		AnimationInfo &animation = registry.animated.get(entity);
-
-		if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs > STOP_WALK_TIME && motion.velocity.y == 0.f && animation.oneTimeState != 2) {
-			if (spitterEnemy.left_x != -1.f && motion.velocity.x == 0.f) {
-				float direction;
-				if (motion.position.x <= spitterEnemy.left_x || motion.position.x >= spitterEnemy.right_x) {
-					direction = max(motion.position.x - spitterEnemy.left_x, spitterEnemy.right_x - motion.position.x);
-				}
-				else {
-					direction = uniform_dist(rng) - 0.5f;
-				}
-				
-				direction = direction / abs(direction);
-				motion.velocity.x = direction * WALKING_SPEED * current_speed;
-				motion.dir = (int)direction;
-			}
-			// Reverse direction
-			else if (motion.position.x - spitterEnemy.left_x <= EDGE_DISTANCE && motion.velocity.x != 0.f) {
-				motion.velocity.x = WALKING_SPEED * current_speed;
-				motion.dir = 1;
-			}
-			else if (spitterEnemy.right_x - motion.position.x <= EDGE_DISTANCE && motion.velocity.x != 0.f) {
-				motion.velocity.x = -1.f * WALKING_SPEED * current_speed;
-				motion.dir = -1;
-			}
-		}
-		else if (spitterEnemy.canShoot || spitterEnemy.timeUntilNextShotMs <= STOP_WALK_TIME) {
-			motion.velocity.x = 0;
-		}
-
-		animation.curState = (motion.velocity.x != 0)? 1: 0;
-
-        if (animation.oneTimeState == SHOOT_STATE && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == SPITTER_FIRE_FRAME && spitterEnemy.canShoot) {
-            Entity spitterBullet = createSpitterEnemyBullet(renderer, motion.position, motion.angle);
-            float absolute_scale_x = abs(registry.motions.get(entity).scale[0]);
-            if (registry.motions.get(spitterBullet).velocity[0] < 0.0f)
-                registry.motions.get(entity).scale[0] = -absolute_scale_x;
-            else
-                registry.motions.get(entity).scale[0] = absolute_scale_x;
-            spitterEnemy.canShoot = false;
+        } else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
+            enemy.hittable = true;
+            enemy.hitting = true;
+            if (registry.motions.get(entity).velocity.x != 0)
+                registry.motions.get(entity).dir = registry.motions.get(entity).velocity.x > 0 ? 1 : -1;
         }
-		if (spitterEnemy.bulletsRemaining > 0 && spitterEnemy.timeUntilNextShotMs <= 0.f && registry.enemies.get(entity).hitting == true)
-		{
-			// attack animation
-            animation.oneTimeState = SHOOT_STATE;
-			animation.oneTimer = 0;
-            spitterEnemy.canShoot = true;
-			// create bullet at same position as enemy
-
-			spitterEnemy.bulletsRemaining--;
-			spitterEnemy.timeUntilNextShotMs = SPITTER_PROJECTILE_DELAY_MS;
-		}
-	}
-
-	// decay spitter bullets
-	auto& spitterBullets_container = registry.spitterBullets;
-	for (uint i = 0; i < spitterBullets_container.size(); i++)
-	{
-		SpitterBullet& spitterBullet = spitterBullets_container.components[i];
-		Entity entity = spitterBullets_container.entities[i];
-        RenderRequest& render = registry.renderRequests.get(entity);
-		Motion& motion = registry.motions.get(entity);
-		// make bullets smaller over time
-		motion.scale = vec2(motion.scale.x / spitterBullet.mass, motion.scale.y / spitterBullet.mass);
-		spitterBullet.mass -= elapsed_ms_since_last_update / SPITTER_PROJECTILE_REDUCTION_FACTOR;
-		motion.scale = vec2(motion.scale.x * spitterBullet.mass, motion.scale.y * spitterBullet.mass);
-        render.scale = motion.scale;
-		if (spitterBullet.mass <= SPITTER_PROJECTILE_MIN_SIZE)
-		{
-			spitterBullet.mass = 0;
-			registry.remove_all_components_of(entity);
-		}
-	}
-}
-
-void WorldSystem::boss_action_decision(float elapsed_ms){
-    Boss& boss_state = registry.boss.get(boss);
-    AnimationInfo& info = registry.animated.get(boss);
-    // 11 and 12 are hurt and death animation
-    if (info.oneTimeState > 10) {
-        boss_state.phase = 0;
-        boss_state.state = BOSS_STATE::SIZE;
-        for (auto hurt_box : boss_state.hurt_boxes) {
-            registry.weaponHitBoxes.get(hurt_box).isActive = false;
-        }
-        return;
     }
-    switch (boss_state.state) {
-        case BOSS_STATE::TELEPORT:
-            boss_action_teleport();
-            break;
-        case BOSS_STATE::SWIPE:
-            boss_action_swipe();
-            break;
-        case BOSS_STATE::SUMMON:
-            boss_action_summon();
-            break;
-        case BOSS_STATE::SIZE:
-            boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
-            break;
-    }
-}
-
-void WorldSystem::boss_action_teleport(){
-    const int PHASE_OUT = 8;
-    const int PHASE_IN = 9;
-    const std::vector<int> boss_platforms{0,1,2,7};
-    AnimationInfo& info = registry.animated.get(boss);
-    Boss& boss_state = registry.boss.get(boss);
-    Enemies& enemy_info = registry.enemies.get(boss);
-    if (boss_state.phase == 0) {
-        enemy_info.hitting = false;
-        enemy_info.hittable = false;
-        info.oneTimeState = PHASE_OUT;
-        boss_state.phase++;
-    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
-        Motion& motion = registry.motions.get(boss);
-        motion.position = getRandomWalkablePos(motion.scale, boss_platforms[rand() % boss_platforms.size()], false);
-        boss_state.phase++;
-    } else if(boss_state.phase == 2) {
-        enemy_info.hittable = true;
-        info.oneTimeState = PHASE_IN;
-        boss_state.phase++;
-    } else if(boss_state.phase == 3 && info.oneTimeState == -1) {
-        enemy_info.hitting = true;
-        boss_state.phase = 0;
-        boss_state.state = BOSS_STATE::SIZE;
-    }
-}
-
-void WorldSystem::boss_action_swipe(){
-    const int SWIPE = 1;
-    const int STAND_UP = 10;
-    Boss& boss_state = registry.boss.get(boss);
-    AnimationInfo& info = registry.animated.get(boss);
-    if (boss_state.phase == 0) {
-        info.oneTimeState = SWIPE;
-        registry.motions.get(boss_state.hurt_boxes[0]).position = registry.motions.get(boss).position + vec2(0,55);
-        registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
-        boss_state.phase++;
-    } else if (boss_state.phase == 1 && info.oneTimeState != -1) {
-        Motion& motion = registry.motions.get(boss);
-        int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
-        if (frame == 1) {
-            registry.weaponHitBoxes.get(boss_state.hurt_boxes[0]).isActive = true;
-        } else if (frame == 3) {
-            registry.weaponHitBoxes.get(boss_state.hurt_boxes[1]).isActive = true;
-        } else {
-            for (auto hurt_box : boss_state.hurt_boxes) {
-                registry.weaponHitBoxes.get(hurt_box).isActive = false;
-            }
-        }
-    } else if (boss_state.phase == 1 && info.oneTimeState == -1) {
-        info.oneTimeState = STAND_UP;
-        boss_state.phase++;
-    } else if (boss_state.phase == 2 && info.oneTimeState == -1) {
-        boss_state.phase = 0;
-        boss_state.state = BOSS_STATE::SIZE;
-    }
-}
-
-void WorldSystem::boss_action_summon(){
-    const int SUMMON = 6;
-    const int STAND_UP = 10;
-    AnimationInfo& info = registry.animated.get(boss);
-    Boss& boss_state = registry.boss.get(boss);
-    if (boss_state.phase == 0) {
-        info.oneTimeState = SUMMON;
-        boss_state.phase++;
-    } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
-        info.oneTimeState = STAND_UP;
-        switch (rand() % 2) {
-            case 0:
-                for(int i = 0; i < 3 + rand() % 4; i++) {
-                    createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
-                }
-                for(int i = 0; i < 1 + rand() % 3; i++) {
-                    createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
-                }
-                break;
-            case 1:
-                for(int i = 0; i < 10 + rand() % 6; i++) {
-                    Motion& motion = registry.motions.get(boss);
-                    createSpitterEnemyBullet(renderer, motion.position, motion.angle);
-                }
-                break;
-        }
-        boss_state.phase++;
-    } else if(boss_state.phase == 2 && info.oneTimeState == -1) {
-        boss_state.phase = 0;
-        boss_state.state = BOSS_STATE::SIZE;
-    }
-
 }
 
 // Reset the world state to its initial state
@@ -1103,14 +654,9 @@ void WorldSystem::restart_game()
 	printf("Restarting\n");
 	play_music();
 	// Reset the game speed
-	current_speed = 1.f;
-	current_enemy_spawning_speed = 0.f;
-	current_spitter_spawning_speed = 0.f;
+	current_enemy_spawning_speed = 1.f;
 	points = 0;
 	next_enemy_spawn = ENEMY_DELAY_MS / 2;
-	next_boulder_spawn = ENEMY_DELAY_MS / 2;
-	next_ghoul_spawn = ENEMY_DELAY_MS / 2;
-	next_spitter_spawn = SPITTER_SPAWN_DELAY_MS / 2;
 
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all, ... but that would be more cumbersome
@@ -1142,7 +688,7 @@ void WorldSystem::restart_game()
 	create_inGame_GUIs();
 
     for(auto value : platforms) {
-        createBlock(renderer, value.x, value.y, grid_vec);
+        createBlock(renderer, value.x, value.y);
     }
 	
 	// Adds whatever's needed in the pause screen
@@ -1223,7 +769,6 @@ void WorldSystem::save_game() {
 				"x_v", registry.motions.get(spitter).velocity.x,
 				"y_v", registry.motions.get(spitter).velocity.y,
 				"dir", registry.motions.get(spitter).dir,
-				"bullets", registry.spitterEnemies.get(spitter).bulletsRemaining,
 				"timer", registry.spitterEnemies.get(spitter).timeUntilNextShotMs,
 				"shootable", registry.spitterEnemies.get(spitter).canShoot,
 				"right_x", registry.spitterEnemies.get(spitter).right_x,
@@ -1389,7 +934,6 @@ void WorldSystem::load_game() {
 				ns_basic.hittable = true;
 				ns_basic.hitting = true;
 				SpitterEnemy& ns_info = registry.spitterEnemies.get(ns);
-				ns_info.bulletsRemaining = ss["bullets"].ToInt();
 				ns_info.canShoot = ss["shootable"].ToBool();
 				ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
 				ns_info.left_x = ss["left_x"].ToFloat();
@@ -1650,7 +1194,7 @@ void WorldSystem::handle_collisions()
 					registry.weaponHitBoxes.get(entity_other).isActive = false;
 					solid_motion.velocity = {0, 0};
 				}
-			} 
+			}
 			else if (registry.projectiles.has(entity_other))
 			{
 				Motion& block_motion = registry.motions.get(entity);
@@ -1754,6 +1298,59 @@ void WorldSystem::update_health_bar()
     }
 }
 
+void WorldSystem::doEnemySpawn(float elapsed_ms) {
+    next_enemy_spawn -= elapsed_ms * current_enemy_spawning_speed;
+
+    if (registry.enemies.components.size() < max_firelings && next_enemy_spawn < 0.f)
+    {
+        srand(time(0));
+        // Reset timer
+        next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+        float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+        int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+        int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+        float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+        Entity newEnemy = createFireEnemy(renderer, vec2(window_width_px, rightHeight));
+        TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
+        enemyTestAI.departFromRight = true;
+        enemyTestAI.a = (float)squareFactor;
+        enemyTestAI.b = curveParameter;
+        enemyTestAI.c = (float)leftHeight;
+    }
+
+
+    if (registry.boulders.components.size() < max_boulders && next_enemy_spawn < 0.f) {
+        next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+        srand(time(0));
+        float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+        float x_speed = 50 + 100 * uniform_dist(rng);
+        x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
+        float size = 3 + uniform_dist(rng);
+        createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
+        x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+        x_speed = 50 + 100 * uniform_dist(rng);
+        x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
+        size = 3 + uniform_dist(rng);
+        createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
+    }
+//
+//
+//    if (registry.ghouls.components.size() < max_ghouls && next_enemy_spawn < 0.f)
+//    {
+//        // Reset timer
+//        next_enemy_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
+//        createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
+//    }
+//
+//
+//    if (registry.spitterEnemies.components.size() < max_spitters && next_enemy_spawn < 0.f)
+//    {
+//        next_enemy_spawn = (SPITTER_SPAWN_DELAY_MS / 2) + uniform_dist(rng) * (SPITTER_SPAWN_DELAY_MS / 2);
+//        createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
+//    }
+
+}
+
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
@@ -1821,8 +1418,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_2 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-				next_boulder_spawn = -1.0;
-				spawn_boulder(0);
+
 			} else {
 				createGun(renderer, registry.motions.get(player_hero).position);
 			}

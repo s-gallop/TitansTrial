@@ -121,7 +121,6 @@ struct FollowingEnemies
 
 struct SpitterEnemy
 {
-	uint bulletsRemaining;
 	float timeUntilNextShotMs;
     bool canShoot;
 	float right_x = -1.f;

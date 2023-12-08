@@ -6,6 +6,7 @@
 // stlib
 #include <vector>
 #include <random>
+#include <map>
 
 // #define SDL_MAIN_HANDLED
 // #include <SDL.h>
@@ -15,8 +16,7 @@
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
 #include "ai_system.hpp"
-#include <map>
-
+#include "enemy_utils.hpp"
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 
@@ -26,20 +26,17 @@
 const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
-const size_t MAX_FIRE_ENEMIES = 10;
-const size_t MAX_BOULDERS = 2;
-const size_t MAX_FOLLOWING_ENEMIES = 1;
-const size_t MAX_GHOULS = 5;
-const size_t MAX_SPITTERS = 3;
+static size_t max_firelings = 10;
+static size_t max_boulders = 2;
+static size_t max_ghouls = 5;
+static size_t max_spitters = 3;
+static float spitter_projectile_delay_ms = 5000.f;
+static size_t ENEMY_DELAY_MS = 2000 * 3;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
-const size_t ENEMY_DELAY_MS = 2000 * 3;
 const int BOSS_HEALTH = 10;
-const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
-const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
 const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
-const uint SPITTER_PROJECTILE_AMT = 10;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 200.f;
 const float JUMP_INITIAL_SPEED = 350.f;
@@ -64,6 +61,15 @@ const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
+
+enum EnemyType {
+        FIRELINGS = 0,
+        GHOULS = FIRELINGS + 1,
+        SPITTERS = GHOULS + 1,
+        BOULDERS = SPITTERS + 1,
+        TRACER = BOULDERS + 1,
+        ENEMY_COUNT = TRACER + 1
+};
 
 class WorldSystem
 {
@@ -99,24 +105,6 @@ public:
 
 	void update_graphics_all_enemies();
 
-	// spawn normal enemies (refactor)
-	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
-
-	void spawn_boulder(float elapsed_ms_since_last_update);
-
-	// spawn ghoul enemies (refactor)
-	void spawn_move_ghouls(float elapsed_ms_since_last_update);
-
-	// spawn following enemies (refactor)
-	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
-
-	// spawn splitter enemies
-	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
-
-    void boss_action_decision(float elapsed_ms);
-    void boss_action_teleport();
-    void boss_action_swipe();
-    void boss_action_summon();
 
 	// Check for collisions
 	void handle_collisions();
@@ -138,6 +126,8 @@ private:
     static void update_health_bar();
 
 	void motion_helper(Motion& playerMotion);
+
+    void doEnemySpawn(float elapsed_ms);
 
 	// restart level
 	void restart_game();
@@ -178,15 +168,8 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
-	float current_speed;
 	float current_enemy_spawning_speed;
-	float current_ghoul_spawning_speed;
-	float current_spitter_spawning_speed;
-	float current_boulder_spawning_speed;
 	float next_enemy_spawn;
-	float next_ghoul_spawn;
-	float next_spitter_spawn;
-	float next_boulder_spawn;
 	Entity player_hero;
     Entity boss;
 

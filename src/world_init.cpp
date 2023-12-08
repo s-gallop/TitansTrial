@@ -290,7 +290,6 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	SpitterEnemy &spitterEnemy = registry.spitterEnemies.emplace(entity);
 	// wait 1s for first shot
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
-	spitterEnemy.bulletsRemaining = SPITTER_PROJECTILE_AMT;
 
 	registry.enemies.emplace(entity);
 	registry.enemies.get(entity).hit_animation = 3;
@@ -988,7 +987,7 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position) {
 	return entity;
 }
 
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid)
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 {
 	auto entity = Entity();
 	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -999,7 +998,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std:
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.scale = size;
-	fill_grid(grid, pos, size);
+	fill_grid((std::vector<std::vector<char>> &) grid_vec, pos, size);
 	registry.blocks.emplace(entity);
 	registry.renderRequests.insert(
 		entity,

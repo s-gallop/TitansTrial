@@ -3,10 +3,13 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 #include "render_system.hpp"
+#include "ai_system.hpp"
 #include <map>
 #include <vector>
 
 // These are hard coded to the dimensions of the entity texture
+
+const static std::vector<std::vector<char>> grid_vec = create_grid();
 
 const float CHARACTER_SCALING = 3.0f;
 const float BOSS_SCALING = 2.5f;
@@ -278,7 +281,7 @@ Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID tex
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer, float size);
 Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type);
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 // the ui button
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
 Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);

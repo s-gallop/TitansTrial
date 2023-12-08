@@ -34,8 +34,8 @@ const size_t MAX_WATER_BALL_DRAW_DIST = 500;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
 
-std::default_random_engine rng = std::default_random_engine(std::random_device()());
-std::uniform_real_distribution<float> uniform_dist;
+static std::default_random_engine rng = std::default_random_engine(std::random_device()());
+static std::uniform_real_distribution<float> uniform_dist;
 
 void initiate_weapons() {
 	next_collectable_spawn = 600.f;
