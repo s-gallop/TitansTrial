@@ -531,7 +531,8 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         motion.scale});
+         SPRITE_SCALE.at(TEXTURE_ASSET_ID::GUN),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GUN)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -539,10 +540,9 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	auto entity = Entity();
-    const float GREY_SCALE = .47f;
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::BULLET);
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	CollisionMesh &collisionMesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::BULLET);
@@ -552,19 +552,16 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.angle = angle;
-	motion.velocity = vec2(800.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = mesh.original_size * BULLET_MESH_SCALE;
-	
-	vec3& colour = registry.colors.emplace(entity);
-	colour = {GREY_SCALE, GREY_SCALE, GREY_SCALE};
+	motion.velocity = vec2(600.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = mesh.original_size * 36.f;
 
 	registry.bullets.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-			EFFECT_ASSET_ID::BULLET,
-			GEOMETRY_BUFFER_ID::BULLET,
+		{ TEXTURE_ASSET_ID::ARROW,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
           false,
           true,
           motion.scale});
@@ -648,7 +645,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = GRENADE_LAUNCHER_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER);
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -656,14 +653,16 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	registry.grenadeLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.solids.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
-		 EFFECT_ASSET_ID::TEXTURED,
+		 EFFECT_ASSET_ID::GRENADE_ORB,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
-		 motion.scale});
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -680,7 +679,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.velocity = velocity;
-	motion.scale = GRENADE_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE);
 
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	projectile.friction_x = .6f;
@@ -689,14 +688,16 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE));
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
-			EFFECT_ASSET_ID::TEXTURED,
+			EFFECT_ASSET_ID::GRENADE_ORB,
 			GEOMETRY_BUFFER_ID::SPRITE,
 			false,
 			true,
-			motion.scale});
+		SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE),
+		SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -1192,7 +1193,7 @@ Entity createScore(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
@@ -1215,7 +1216,7 @@ Entity createNumber(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);

@@ -4,8 +4,7 @@
 Mix_Music *background_music;
 std::vector<Mix_Chunk *> sound_effects;
 Mix_Music *dialogue_background_music;
-
-bool is_music_muted;
+bool is_music_muted = false;
 
 uint init_sound()
 {
@@ -19,22 +18,24 @@ uint init_sound()
 		fprintf(stderr, "Failed to open audio device");
 		return 1;
 	}
+	Mix_VolumeMusic(60);
+	Mix_Volume(-1, 60);
 
 	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
 	dialogue_background_music = Mix_LoadMUS(audio_path("dialogue_bg_music.wav").c_str());
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_hurt.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_jump.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("sword_swing.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("bullet_shoot.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("gun_lever.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("rocket_launcher_fire.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("rocket_launcher_reload.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("grenade_launcher_fire.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("bow_shoot.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("bow_loading.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("staff_fire.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("recharge.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("swoosh.wav").c_str()));
 	//Sound Effect by <a href="https://pixabay.com/users/jigokukarano_sisya-39731529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=168857">jigokukarano_sisya</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=168857">Pixabay</a>
-	sound_effects.push_back(Mix_LoadWAV(audio_path("grenade_launcher_reload.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("charge.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("explosion.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_rifle_fire.wav").c_str()));
-	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_rifle_reload.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_fire.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("laser_reload.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("heal.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("pickaxe.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("dash.wav").c_str()));
@@ -107,7 +108,7 @@ void toggle_mute_music()
 	}
 	else
 	{
-		Mix_VolumeMusic(MIX_MAX_VOLUME);
+		Mix_VolumeMusic(100);
 		is_music_muted = false;
 	}
 }

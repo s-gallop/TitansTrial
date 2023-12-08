@@ -28,9 +28,9 @@ std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity difficulty_bar;
 Entity indicator;
+Entity score_text;
 std::vector<Entity> score_GUI = { };
 std::vector<Entity> following_enemies = { };
-std::vector<Entity> db_decorator = { };
 
 json::JSON state;
 
@@ -53,6 +53,7 @@ int ddl;
 */
 float ddf;
 float recorded_max_ddf;
+bool should_score_prepare_to_show = false;
 
 float lavaPillarTimer = 0;
 
@@ -218,12 +219,16 @@ void WorldSystem::create_almanac_screen() {
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	if (dialogue_screen_active == 0) {
-		lavaPillarTimer += elapsed_ms_since_last_update;
-		if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
-			lavaPillarTimer = 0;
-			createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
-			createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
+		if (ddl == 4) 
+		{
+			lavaPillarTimer += elapsed_ms_since_last_update;
+			if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
+				lavaPillarTimer = 0;
+				createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
+				createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
+			}
 		}
+
 		for (AnimationInfo& animation: registry.animated.components) {
 			if (animation.oneTimeState != -1) {
 				animation.oneTimer += elapsed_ms_since_last_update / 1000.f;
@@ -285,60 +290,56 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		{
 			ddl = 0;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv0\n");
+				show_dialogue(1);
 			}
 		}
 		else if (ddf >= 100 && ddf < 200 && ddl != 1)
 		{
 			ddl = 1;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv1\n");
+				show_dialogue(2);
 			}
 		}
 		else if (ddf >= 200 && ddf < 300 && ddl != 2)
 		{
 			ddl = 2;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv2\n");
+				show_dialogue(3);
 			}
 		}
 		else if (ddf >= 300 && ddf < 400 && ddl != 3)
 		{
 			ddl = 3;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv3\n");
+				show_dialogue(4);
 			}
 		}
 		else if (ddf >= 400 && ddf < 500 && ddl != 4)
 		{
 			ddl = 4;
 			registry.remove_all_components_of(indicator);
+			/*
 			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
 			db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
 			db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
+			*/
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BOSS_SINGLE;
+			registry.renderRequests.get(difficulty_bar).scale.y = 125.f;
+			registry.motions.get(difficulty_bar).position = DB_BOSS_CORD;
 			clear_enemies();
+			boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+			createHealthBar(renderer, boss);
 			if (ddf > recorded_max_ddf) {
-				// STUB
+				show_dialogue(5);
 				printf("\nLv4\n");
 			}
 		}
 		else if (ddf >= 500 && ddf < 600 && ddl != 5)
 		{
 			ddl = 5;
-			for (Entity decorator : db_decorator) {
-				registry.remove_all_components_of(decorator);
-			}
-			db_decorator.clear();
-			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-			registry.motions.get(difficulty_bar).position[1] = 730.f;
-			db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+			clear_enemies();
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv5\n");
+				show_dialogue(6);
 			}
 		}
 		else if (ddf >= 600)
@@ -594,6 +595,18 @@ void WorldSystem::show_dialogue(int dialogue_number)
 	{
 		Entity dialogue = registry.dialogues.entities.back();
 		registry.remove_all_components_of(dialogue);
+		motionKeyStatus.reset();
+		if (should_score_prepare_to_show)
+		{
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BROKEN_SINGLE;
+			registry.motions.get(difficulty_bar).position = DB_SATAN_CORD;
+			registry.renderRequests.get(difficulty_bar).scale = { 220.f, 128.f };
+			registry.renderRequests.get(score_text).visibility = true;
+			for (Entity n : score_GUI)
+			{
+				registry.renderRequests.get(n).visibility = true;
+			}
+		}
 	}
 
 	dialogue_screen_active = dialogue_number;
@@ -1111,9 +1124,6 @@ void WorldSystem::restart_game()
 	
 	create_parallax_background();
 	initiate_weapons();
-    //TODO: enable this to start with boss
-    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
-    createHealthBar(renderer, boss);
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -1130,7 +1140,6 @@ void WorldSystem::restart_game()
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
-	db_decorator.clear();
 
 	create_inGame_GUIs();
 
@@ -1156,6 +1165,7 @@ void WorldSystem::save_game() {
 	{
 		state =
 		{
+			"mute", is_music_muted,
 			"ddl", ddl,
 			"ddf", ddf,
 			"recorded_max_ddf", recorded_max_ddf,
@@ -1212,6 +1222,9 @@ void WorldSystem::save_game() {
 				"hp", registry.enemies.get(spitter).health,
 				"x_pos", registry.motions.get(spitter).position.x,
 				"y_pos", registry.motions.get(spitter).position.y,
+				"x_v", registry.motions.get(spitter).velocity.x,
+				"y_v", registry.motions.get(spitter).velocity.y,
+				"dir", registry.motions.get(spitter).dir,
 				"bullets", registry.spitterEnemies.get(spitter).bulletsRemaining,
 				"timer", registry.spitterEnemies.get(spitter).timeUntilNextShotMs,
 				"shootable", registry.spitterEnemies.get(spitter).canShoot,
@@ -1287,26 +1300,32 @@ void WorldSystem::load_game() {
 	if (jsonString != "")
 	{
 		state = json::JSON::Load(jsonString);
-
+		if (state["mute"].ToBool())
+		{
+			toggle_mute_music();
+		}
 		ddl = state["ddl"].ToInt();
+		ddf = state["ddf"].ToFloat();
+		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
 		switch (ddl)
 		{
 			case 4:
-				registry.remove_all_components_of(indicator);
-				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
-				db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
-				db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
-				clear_enemies();
+				ddf = 400.f;
+				recorded_max_ddf = 399.f;
+				ddl = 3;
 				break;
 			case 5:
 				registry.remove_all_components_of(indicator);
-				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-				registry.motions.get(difficulty_bar).position[1] = 730.f;
-				db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BROKEN_SINGLE;
+				registry.motions.get(difficulty_bar).position = DB_SATAN_CORD;
+				registry.renderRequests.get(difficulty_bar).scale = { 220.f, 128.f };
+				registry.renderRequests.get(score_text).visibility = true;
+				for (Entity n : score_GUI)
+				{
+					registry.renderRequests.get(n).visibility = true;
+				}
 				break;
 		}
-		ddf = state["ddf"].ToFloat();
-		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
 		points = state["score"].ToInt();
 		Player& player = registry.players.get(player_hero);
 		player.hp = state["hp"].ToInt();
@@ -1373,6 +1392,9 @@ void WorldSystem::load_game() {
 				ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
 				ns_info.left_x = ss["left_x"].ToFloat();
 				ns_info.right_x = ss["right_x"].ToFloat();
+				Motion& ns_mo = registry.motions.get(ns);
+				ns_mo.velocity = { ss["x_v"].ToFloat(), ss["y_v"].ToFloat() };
+				ns_mo.dir = ss["dir"].ToInt();
 			}
 		}
 
@@ -1415,6 +1437,7 @@ void WorldSystem::create_pause_screen() {
 }
 
 void WorldSystem::create_parallax_background() {
+	parallax_background_color = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND_COLOR);
 	parallax_moon = createParallaxItem(renderer, {580, 400}, TEXTURE_ASSET_ID::PARALLAX_MOON);
 	parallax_clouds_far_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
 	parallax_clouds_far_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
@@ -1439,7 +1462,7 @@ void WorldSystem::create_inGame_GUIs() {
 	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
 	difficulty_bar = createDifficultyBar(renderer, DIFF_BAR_CORD);
 	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
-	createScore(renderer, SCORE_CORD);
+	score_text = createScore(renderer, SCORE_CORD);
 	float numberPosition = NUMBER_START_POS;
 	for (int i = 0; i < 5; i++) {
 		score_GUI.push_back(createNumber(renderer, { numberPosition, NUMBER_Y_CORD }));
@@ -1723,6 +1746,8 @@ void WorldSystem::update_health_bar()
         if (!registry.enemies.has(registry.healthBar.get(e).owner)) {
             registry.remove_all_components_of(registry.healthBar.get(e).bar);
             registry.remove_all_components_of(e);
+			ddf = 500;
+			should_score_prepare_to_show = true;
         }
     }
 }
@@ -1739,7 +1764,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		play_sound(SOUND_EFFECT::BUTTON_CLICK);
     }
 
-	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && dialogue_screen_active != 0) {
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && dialogue_screen_active != 0) {
 		show_dialogue(0);
 	}
 
@@ -1787,7 +1812,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_1 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-
+				next_enemy_spawn = -1.0;
+				spawn_move_normal_enemies(0);
 			} else {
 				createSword(renderer, registry.motions.get(player_hero).position);
 			}
@@ -1847,11 +1873,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             update_health_bar();
 		}
 
-		if (key == GLFW_KEY_X && action == GLFW_PRESS)
-		{
-			// save_game();
-		}
-
 		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && dialogue_screen_active == 0 && !registry.gravities.get(player_hero).dashing) {
 			pickupKeyStatus = true;
 		}
@@ -1861,7 +1882,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 
 		if (key == GLFW_KEY_C && action == GLFW_PRESS && debug) {
-			show_dialogue(2);
+			show_dialogue(1);
 		}
 
 	}
@@ -1897,7 +1918,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 	}
 
-	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && ddl == 4) {
+	if (key == GLFW_KEY_X && action == GLFW_PRESS && debug && ddl == 4) {
 		ddf = 500;
 	}
 	
