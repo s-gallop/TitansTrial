@@ -353,6 +353,26 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	return entity;
 }
 
+Entity createMainMenuBackground(RenderSystem *renderer) {
+	Entity entity = Entity();
+	auto &motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    motion.velocity = {0.f, 0.f};
+    motion.scale = MAIN_MENU_BG_BB;
+    motion.position = {window_width_px/2, window_height_px/2};
+
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::TITLE_SCREEN_BG,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             false,
+             true,
+             motion.scale});
+
+    return entity;
+}
+
 Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
@@ -426,16 +446,16 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	return entity;
 }
 
-Entity createHelperText(RenderSystem* renderer)
+Entity createHelperText(RenderSystem* renderer, float size)
 {
-    const int PADDING = 20;
+    const int PADDING = 150;
     Entity entity = Entity();
 
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = HELPER_BB;
-    motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
+    motion.scale = HELPER_BB * size;
+    motion.position = {PADDING, window_height_px/2};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
@@ -455,7 +475,7 @@ Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type) {
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
-    motion.scale = ASSET_SIZE.at(type) * 2.f;
+    motion.scale = ASSET_SIZE.at(type);
     
 	registry.renderRequests.insert(
             entity,
@@ -1358,6 +1378,27 @@ Entity createHealthBar(RenderSystem* renderer, Entity owner) {
 }
 
 Entity createDialogue(RenderSystem* renderer, TEXTURE_ASSET_ID texture_id) {
+	Entity text = Entity();
+
+	auto& text_motion = registry.motions.emplace(text);
+	text_motion.angle = 0.f;
+	text_motion.velocity = { 0.f, 0.f };
+	text_motion.position = { 600, 300 };
+	text_motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::CONTINUE_HELPER);
+
+	registry.renderRequests.insert(
+		text,
+		{ TEXTURE_ASSET_ID::CONTINUE_HELPER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 text_motion.scale });
+
+	registry.dialogueTexts.emplace(text);
+
+    registry.debugRenderRequests.emplace(text);
+
 	Entity entity = Entity();
 
 	auto& motion = registry.motions.emplace(entity);

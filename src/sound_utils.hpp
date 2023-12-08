@@ -43,6 +43,7 @@ enum class SOUND_EFFECT {
     WATER_BALL_SHOOT = LAUGH + 1
 };
 
+void play_main_menu_music();
 void play_music();
 void play_sound(SOUND_EFFECT id);
 void toggle_mute_music();

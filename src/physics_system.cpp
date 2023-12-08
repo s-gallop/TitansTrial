@@ -153,7 +153,7 @@ void PhysicsSystem::step(float elapsed_ms, int dialogue)
         Motion &motion = motion_container.components[i];
         Entity entity = motion_container.entities[i];
         float step_seconds = elapsed_ms / 1000.f;
-        if (registry.dialogues.has(entity)) {
+        if (registry.dialogues.has(entity) || registry.dialogueTexts.has(entity)) {
             // move dialogue only if it's not centered
             if (motion.position.x > window_width_px / 2) {
                 motion.position += motion.velocity * step_seconds;
