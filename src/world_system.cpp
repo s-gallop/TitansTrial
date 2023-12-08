@@ -532,6 +532,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		return true;
 	}
+	return true;
 }
 
 void WorldSystem::changeScore(int score)
@@ -617,6 +618,7 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 			return SOUND_EFFECT::LAUGH;
 			break;
 	}
+	return SOUND_EFFECT::LAUGH;
 }
 
 TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
@@ -749,7 +751,6 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 {
 	float GHOUL_SPEED = 100.f;
 	float EDGE_DISTANCE = 0.f;
-	int BLANK_STATE = 2;
 
 	next_ghoul_spawn -= elapsed_ms_since_last_update * current_ghoul_spawning_speed;
 	if (registry.ghouls.components.size() < MAX_GHOULS && next_ghoul_spawn < 0.f)
@@ -768,13 +769,7 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		AnimationInfo& animation = registry.animated.get(enemy);
 		Ghoul& enemy_reg = registry.ghouls.get(enemy);
 		//printf("Position: %f\n", enemy_motion.position.x);
-		if (enemy_motion.velocity.y != 0.f) {
-			animation.oneTimeState = BLANK_STATE;
-			animation.oneTimer = 0;
-		}
-		else if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
-			registry.enemies.get(enemy).hittable = true;
-			registry.enemies.get(enemy).hitting = true;
+		if (enemy_reg.left_x != -1.f && enemy_motion.velocity.x == 0.f && enemy_motion.velocity.y == 0.f && animation.oneTimeState == -1) {
 			float direction = max(enemy_motion.position.x - enemy_reg.left_x, enemy_reg.right_x - enemy_motion.position.x);
 			direction = direction / abs(direction);
 			enemy_motion.velocity.x = direction * GHOUL_SPEED * current_speed;

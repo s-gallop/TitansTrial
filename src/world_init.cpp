@@ -214,8 +214,6 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
     motion.position = position;
 
 	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).hittable = false;
-	registry.enemies.get(entity).hitting = false;
 	registry.enemies.get(entity).hit_animation = 3;
 	registry.enemies.get(entity).death_animation = 4;
 
