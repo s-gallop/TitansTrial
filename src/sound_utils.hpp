@@ -39,7 +39,8 @@ enum class SOUND_EFFECT {
     EQUIPMENT_DROP = DASH + 1,
     BUTTON_CLICK = EQUIPMENT_DROP + 1,
     TELEPORT = BUTTON_CLICK + 1,
-    LAUGH = TELEPORT + 1
+    LAUGH = TELEPORT + 1,
+    WATER_BALL_SHOOT = LAUGH + 1
 };
 
 void play_music();

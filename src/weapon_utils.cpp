@@ -312,7 +312,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 		if (water_ball.state == 1 && !water_ball.drawing) {
 			animation.curState = 1;
 			hit_box.isActive = true;
-			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			play_sound(SOUND_EFFECT::WATER_BALL_SHOOT);
 			for (Entity line: water_ball.trajectory)
 				registry.remove_all_components_of(line);
 			
@@ -445,7 +445,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		if (trident.cooldown > 0) {
 			trident.cooldown -= elapsed_ms;
 			if (!trident.loaded) {
-				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
+				play_sound(SOUND_EFFECT::ROCKET_LAUNCHER_RELOAD);
 				trident.loaded = true;
 			}
 		}
@@ -591,12 +591,13 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 		Trident& trident = registry.tridents.get(weapon);
 		if (trident.cooldown <= 0) {
 			trident.cooldown = TRIDENT_COOLDOWN;
+			trident.loaded = false;
 			drag_delay = DRAG_DELAY;
 			Motion& trident_motion = registry.motions.get(weapon);
 			float angle = trident_motion.angle - M_PI/2;
 			vec2 pos = trident_motion.position + vec2(abs(trident_motion.scale.y) / 2, 0) * mat2({ cos(angle), -sin(angle) }, { sin(angle), cos(angle) });
 			Entity entity = createWaterBall(renderer, pos, trident_motion.angle - M_PI/2);
-			play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_FIRE);
+			play_sound(SOUND_EFFECT::WATER_BALL_SHOOT);
 			WaterBall& water_ball = registry.waterBalls.get(entity);
 			water_ball.spawn = pos;
 			water_ball.points.push_back(mouse_pos);
