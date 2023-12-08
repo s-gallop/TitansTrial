@@ -68,7 +68,7 @@ Entity createBoulder(RenderSystem* renderer, vec2 position, vec2 velocity, float
 	return entity;
 }
 
-Entity createFireEnemy(RenderSystem *renderer, vec2 position)
+Entity createFireing(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
 
@@ -86,9 +86,12 @@ Entity createFireEnemy(RenderSystem *renderer, vec2 position)
 	motion.dir = -1;
 
 	registry.colors.insert(entity, {1, .8f, .8f});
-	Enemies& enemy = registry.enemies.emplace(entity);
-	enemy.death_animation = 2;
-	enemy.hit_animation = 1;
+	registry.enemies.insert(entity, {
+        1,
+        2,
+        5,
+        5
+    });
 
 	registry.fireEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FIRE_ENEMY));
@@ -126,11 +129,12 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     motion.dir = -1;
 
     registry.colors.insert(entity, {1, .8f, .8f});
-    Enemies& enemy = registry.enemies.emplace(entity);
-    enemy.death_animation = 12;
-    enemy.hit_animation = 11;
-    enemy.health = BOSS_HEALTH;
-    enemy.total_health = BOSS_HEALTH;
+    registry.enemies.insert(entity, {
+        11,
+        12,
+        BOSS_HEALTH,
+        BOSS_HEALTH
+    });
 
     AnimationInfo& aniInfo = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS));
     aniInfo.oneTimeState = 9;
@@ -147,50 +151,21 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
     registry.debugRenderRequests.emplace(entity);
     auto &bossState = registry.boss.emplace(entity);
 
-
-    auto hb1 = Entity();
-    auto hb2 = Entity();
-    auto &motion1 = registry.motions.emplace(hb1);
-    motion1.scale = vec2(480, 40);
-    motion1.position = motion.position;
-    auto &motion2 = registry.motions.emplace(hb2);
-    motion2.scale = vec2(560, 40);
-    motion2.position = motion.position;
-    registry.collisionMeshPtrs.emplace(hb1, &mesh);
-    registry.collisionMeshPtrs.emplace(hb2, &mesh);
-    registry.weaponHitBoxes.insert(hb1, {
-        false,
-        false,
-        1,
-        false,
-        true
-    });
-    registry.weaponHitBoxes.insert(hb2, {
-            false,
-            false,
-            1,
-            false,
-            true
-    });
-    registry.renderRequests.insert(
-            hb1,
-            {TEXTURE_ASSET_ID::LINE,
-             EFFECT_ASSET_ID::TEXTURED,
-             GEOMETRY_BUFFER_ID::SPRITE,
-             true,
-             false,
-             motion1.scale});
-    registry.renderRequests.insert(
-            hb2,
-            {TEXTURE_ASSET_ID::LINE,
-             EFFECT_ASSET_ID::TEXTURED,
-             GEOMETRY_BUFFER_ID::SPRITE,
-             true,
-             false,
-             motion2.scale});
-    registry.debugRenderRequests.emplace(hb1);
-    registry.debugRenderRequests.emplace(hb2);
-    bossState.hurt_boxes = {hb1, hb2};
+    bossState.hurt_boxes = {
+            createWeaponHitBox(renderer, motion.position, vec2(480, 40), {
+                    false,
+                    false,
+                    1,
+                    false,
+                    true
+            }), createWeaponHitBox(renderer, motion.position, vec2(560, 40), {
+                    false,
+                    false,
+                    1,
+                    false,
+                    true
+            })
+    };
 
 
 
@@ -213,9 +188,12 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY);
     motion.position = position;
 
-	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).hit_animation = 3;
-	registry.enemies.get(entity).death_animation = 4;
+	registry.enemies.insert(entity, {
+        3,
+        4,
+        8,
+        8
+    });
 
 	registry.ghouls.emplace(entity);
 	registry.gravities.emplace(entity);
@@ -252,8 +230,7 @@ Entity createFollowingEnemy(RenderSystem* renderer, vec2 position)
 	motion.velocity = vec2(0.f, 0.f);
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY);
 
-	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).hittable = false;
+	registry.enemies.emplace(entity).hittable = false;
 
 	registry.followingEnemies.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::FOLLOWING_ENEMY));
@@ -291,9 +268,12 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	// wait 1s for first shot
 	spitterEnemy.timeUntilNextShotMs = INITIAL_SPITTER_PROJECTILE_DELAY_MS;
 
-	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).hit_animation = 3;
-	registry.enemies.get(entity).death_animation = 4;
+	registry.enemies.insert(entity, {
+        3,
+        4,
+        12,
+        12
+    });
 	registry.colors.insert(entity, {1, .8f, .8f});
 
 	registry.solids.emplace(entity);
@@ -556,7 +536,7 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
-Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
+Entity createArrow(RenderSystem* renderer, vec2 position, float angle) {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
@@ -574,7 +554,7 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	motion.scale = mesh.original_size * 36.f;
 
 	registry.bullets.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity).damage = ARROW_DMG;
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::ARROW,
@@ -636,7 +616,7 @@ Entity createRocket(RenderSystem* renderer, vec2 position, float angle) {
 	motion.scale = ROCKET_BB;
 
 	registry.rockets.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity).damage = DIR_EXPLOSIVE_DMG;
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::ROCKET,
@@ -704,7 +684,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	projectile.friction_y = .6f;
 
 	registry.grenades.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity).damage = DIR_EXPLOSIVE_DMG;
 	registry.gravities.emplace(entity);
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE));
 	registry.renderRequests.insert(
@@ -737,6 +717,7 @@ Entity createExplosion(RenderSystem *renderer, vec2 position, float size)
 	registry.explosions.emplace(entity);
 	auto &hitbox = registry.weaponHitBoxes.emplace(entity);
 	hitbox.hurtsHero = true;
+    hitbox.damage = EXPLOSIVE_DMG;
 
 	AnimationInfo& info = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::EXPLOSION));
 	info.oneTimeState = 0;
@@ -800,7 +781,7 @@ Entity createLaser(RenderSystem* renderer, vec2 position, float angle) {
 	motion.scale = LASER_BB;
 
 	registry.lasers.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity).damage = LASER_DMG;
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::LASER,
@@ -1012,7 +993,7 @@ Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, WeaponHitBox hitBoxInfo)
 {
 	auto entity = Entity();
 	CollisionMesh &mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
@@ -1021,7 +1002,7 @@ Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size)
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.scale = size;
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.insert(entity, hitBoxInfo);
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
@@ -1322,8 +1303,7 @@ Entity createLavaPillar(RenderSystem* renderer, vec2 pos) {
 	motion.velocity = { 0.f, -530.f };
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::LAVA_PILLAR);
 	registry.gravities.emplace(entity);
-	Enemies& enemy = registry.enemies.emplace(entity);
-	enemy.hittable = false;
+	registry.enemies.emplace(entity).hittable = false;
 	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::LAVA_PILLAR));
 	registry.lavaPillars.emplace(entity);
 	registry.renderRequests.insert(

@@ -206,7 +206,7 @@ void move_spitters(float elapsed_ms_since_last_update, RenderSystem* renderer) {
             animation.oneTimer = 0;
             spitterEnemy.canShoot = true;
             // create bullet at same position as enemy
-            spitterEnemy.timeUntilNextShotMs = spitterProjectileDelayMs;
+            spitterEnemy.timeUntilNextShotMs = spitter_projectile_delay_ms;
         }
     }
 

@@ -26,19 +26,16 @@
 const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
-static size_t max_firelings = 10;
-static size_t max_boulders = 2;
-static size_t max_ghouls = 5;
-static size_t max_spitters = 3;
 static float spitter_projectile_delay_ms = 5000.f;
-static size_t ENEMY_DELAY_MS = 2000 * 3;
+static float spawn_delay_variance = 0.6;
+static size_t spawn_delay = 6000;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
-const int BOSS_HEALTH = 10;
+const int BOSS_HEALTH = 80;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
 const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
 const uint MAX_JUMPS = 2;
-const float BASIC_SPEED = 200.f;
+const float BASIC_SPEED = 220.f;
 const float JUMP_INITIAL_SPEED = 350.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 10.f;
@@ -49,27 +46,25 @@ const vec2 POWER_CORD = { 20.f, 60.f };
 const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
 const vec2 DB_BOSS_CORD = { 140.f, 717.5f };
 const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
-const vec2 INDICATOR_LEVEL_ONE_CORD = { 85.f, 710.f };
-const vec2 INDICATOR_LEVEL_TWO_CORD = { 140.f, 710.f };
-const vec2 INDICATOR_LEVEL_THREE_CORD = { 195.f, 710.f };
-const vec2 INDICATOR_END_CORD = { 250.f, 710.f };
-const float INDICATOR_VECLOCITY = 55.f / 100.f;
+const float INDICATOR_VELOCITY = 55.f / 100.f;
 const vec2 SCORE_CORD = { 1050.f, 700.f };
 const float NUMBER_START_POS = 992.f;
 const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
-const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
 
-enum EnemyType {
+enum SpawnableEnemyType {
         FIRELINGS = 0,
         GHOULS = FIRELINGS + 1,
         SPITTERS = GHOULS + 1,
         BOULDERS = SPITTERS + 1,
-        TRACER = BOULDERS + 1,
-        ENEMY_COUNT = TRACER + 1
+        ENEMY_COUNT = BOULDERS + 1
 };
+
+static std::vector<int> max_spawns;
+
+static std::vector<float> spawn_prob;
 
 class WorldSystem
 {
@@ -127,7 +122,9 @@ private:
 
 	void motion_helper(Motion& playerMotion);
 
-    void doEnemySpawn(float elapsed_ms);
+    void do_enemy_spawn(float elapsed_ms);
+
+    void adjust_difficulty();
 
 	// restart level
 	void restart_game();
@@ -168,7 +165,6 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
-	float current_enemy_spawning_speed;
 	float next_enemy_spawn;
 	Entity player_hero;
     Entity boss;
