@@ -455,7 +455,7 @@ Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type) {
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
-    motion.scale = ASSET_SIZE.at(type) * 2.f;
+    motion.scale = ASSET_SIZE.at(type);
     
 	registry.renderRequests.insert(
             entity,
