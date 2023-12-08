@@ -191,7 +191,7 @@ void WorldSystem::create_almanac_screen() {
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
 
-	Entity helper = createHelperText(renderer);
+	Entity helper = createHelperText(renderer, 1.f);
 	Motion& motion = registry.motions.get(helper);
 	motion.position = {window_width_px / 2, 150};
 	registry.renderRequests.get(helper).visibility = true;
@@ -1438,7 +1438,7 @@ void WorldSystem::load_game() {
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
     createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {save_game(); }, false);
-    createHelperText(renderer);
+    createHelperText(renderer, 1.4f);
 }
 
 void WorldSystem::create_parallax_background() {

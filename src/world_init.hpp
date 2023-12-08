@@ -28,9 +28,8 @@ const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
 const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
-const vec2 HELPER_BB = vec2(1058, 532) / 3.f;
+const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 320);
-
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -260,7 +259,7 @@ Entity createPickaxe(RenderSystem* renderer, vec2 position);
 // the parallax backgrounds
 Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
-Entity createHelperText(RenderSystem* renderer);
+Entity createHelperText(RenderSystem* renderer, float size);
 Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
 // the ui button

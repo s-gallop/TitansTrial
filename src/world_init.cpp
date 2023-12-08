@@ -426,16 +426,16 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	return entity;
 }
 
-Entity createHelperText(RenderSystem* renderer)
+Entity createHelperText(RenderSystem* renderer, float size)
 {
-    const int PADDING = 20;
+    const int PADDING = 150;
     Entity entity = Entity();
 
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = HELPER_BB;
-    motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
+    motion.scale = HELPER_BB * size;
+    motion.position = {PADDING, window_height_px/2};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
