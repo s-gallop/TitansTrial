@@ -1291,6 +1291,8 @@ int WorldSystem::save_weapon(Entity weapon) {
 		return 3;
 	else if (registry.laserRifles.has(weapon))
 		return 4;
+	else if (registry.tridents.has(weapon))
+		return 5;
 	else
 		return -1;
 }
@@ -1345,6 +1347,8 @@ void WorldSystem::load_game() {
 			collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
 		else if (weapon == 4)
 			collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 5)
+			collect(createTrident(renderer, { 0.f, 0.f }), player_hero);
 
 		for (int i = 0; i < state["fire_enemy"].size(); i++)
 		{
