@@ -151,14 +151,13 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 {
 	this->renderer = renderer_arg;
 	
-	// Play background music
-	play_music();
+	// Play main menu background music
+	play_main_menu_music();
 
 	// Set all states to default
 	if (isTitleScreen) {
 		create_title_screen();
 	}
-	
 	
 }
 
@@ -177,7 +176,8 @@ void WorldSystem::create_title_screen()
 		registry.remove_all_components_of(registry.motions.entities.back());
 
 	//these magic number are just the vertical position of where the buttons are
-	createTitleText(renderer, { window_width_px / 2, 150 });
+	createMainMenuBackground(renderer);
+	createTitleText(renderer, { window_width_px / 2, 100 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
 	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
 	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
@@ -191,7 +191,7 @@ void WorldSystem::create_almanac_screen() {
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
 
-	Entity helper = createHelperText(renderer);
+	Entity helper = createHelperText(renderer, 1.f);
 	Motion& motion = registry.motions.get(helper);
 	motion.position = {window_width_px / 2, 150};
 	registry.renderRequests.get(helper).visibility = true;
@@ -210,6 +210,8 @@ void WorldSystem::create_almanac_screen() {
 	createToolTip(renderer, {window_width_px * 2 / 3, 550}, TEXTURE_ASSET_ID::PICKAXE_HELPER);
 	createDashBoots(renderer, {window_width_px / 6, 600});
 	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
+	createLaserRifle(renderer, {window_width_px / 6, 650});
+	createToolTip(renderer, {window_width_px * 2 / 3, 650}, TEXTURE_ASSET_ID::LASER_HELPER);
 
 	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
 }
@@ -592,6 +594,8 @@ void WorldSystem::show_dialogue(int dialogue_number)
 	{
 		Entity dialogue = registry.dialogues.entities.back();
 		registry.remove_all_components_of(dialogue);
+		Entity text = registry.dialogueTexts.entities.back();
+		registry.remove_all_components_of(text);
 		motionKeyStatus.reset();
 		if (should_score_prepare_to_show)
 		{
@@ -1104,7 +1108,7 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
-
+	play_music();
 	// Reset the game speed
 	current_speed = 1.f;
 	current_enemy_spawning_speed = 0.f;
@@ -1434,7 +1438,7 @@ void WorldSystem::load_game() {
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
     createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {save_game(); }, false);
-    createHelperText(renderer);
+    createHelperText(renderer, 1.4f);
 }
 
 void WorldSystem::create_parallax_background() {

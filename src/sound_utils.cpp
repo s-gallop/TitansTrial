@@ -4,6 +4,7 @@
 Mix_Music *background_music;
 std::vector<Mix_Chunk *> sound_effects;
 Mix_Music *dialogue_background_music;
+Mix_Music *main_menu_background_music;
 bool is_music_muted = false;
 
 uint init_sound()
@@ -23,6 +24,7 @@ uint init_sound()
 
 	background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
 	dialogue_background_music = Mix_LoadMUS(audio_path("dialogue_bg_music.wav").c_str());
+	main_menu_background_music = Mix_LoadMUS(audio_path("main_menu_bg_music.wav").c_str());
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_hurt.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hero_jump.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("sword_swing.wav").c_str()));
@@ -92,8 +94,15 @@ void destroy_sound()
 	Mix_CloseAudio();
 }
 
+void play_main_menu_music() {
+	Mix_PlayMusic(main_menu_background_music, -1);
+	is_music_muted = false;
+	fprintf(stderr, "Loaded main menu music\n");
+}
+
 void play_music()
 {
+	Mix_FadeOutMusic(300);
 	Mix_PlayMusic(background_music, -1);
 	is_music_muted = false;
 	fprintf(stderr, "Loaded music\n");

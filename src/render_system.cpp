@@ -408,7 +408,7 @@ void RenderSystem::draw(bool pause, bool debug, int dialogue)
 	for (Entity entity : registry.renderRequests.entities)
 	{
         RenderRequest &render_request = registry.renderRequests.get(entity);
-		if (registry.dialogues.has(entity))
+		if (registry.dialogues.has(entity) || registry.dialogueTexts.has(entity))
 			continue;
 		if (!registry.motions.has(entity) || !render_request.visibility)
 			continue;
@@ -423,6 +423,10 @@ void RenderSystem::draw(bool pause, bool debug, int dialogue)
 
 	if (registry.dialogues.entities.size() != 0) {
 		drawTexturedMesh(registry.dialogues.entities[0], projection_2D, pause);
+	}
+
+	if (registry.dialogueTexts.entities.size() != 0) {
+		drawTexturedMesh(registry.dialogueTexts.entities[0], projection_2D, pause);
 	}
 
     drawScreenLayer(projection_2D, pause);

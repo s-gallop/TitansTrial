@@ -28,9 +28,9 @@ const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
 const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
-const vec2 HELPER_BB = vec2(1058, 532) / 3.f;
+const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 320);
-
+const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -88,13 +88,15 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
         { TEXTURE_ASSET_ID::PLAY, {204, 56}},
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
-        { TEXTURE_ASSET_ID::SWORD_HELPER, {101, 9}},
-        { TEXTURE_ASSET_ID::GUN_HELPER, {153, 9}},
-        { TEXTURE_ASSET_ID::GRENADE_HELPER, {314, 9}},
-        { TEXTURE_ASSET_ID::ROCKET_HELPER, {150, 9}},
-        { TEXTURE_ASSET_ID::WINGED_BOOTS_HELPER, {142, 9}},
-        { TEXTURE_ASSET_ID::PICKAXE_HELPER, {199, 9}},
-        { TEXTURE_ASSET_ID::DASH_BOOTS_HELPER, {178, 9}},
+        { TEXTURE_ASSET_ID::SWORD_HELPER, {180, 17}},
+        { TEXTURE_ASSET_ID::GUN_HELPER, {263, 17}},
+        { TEXTURE_ASSET_ID::GRENADE_HELPER, {534, 17}},
+        { TEXTURE_ASSET_ID::ROCKET_HELPER, {311, 17}},
+        { TEXTURE_ASSET_ID::LASER_HELPER, {301, 17}},
+        { TEXTURE_ASSET_ID::WINGED_BOOTS_HELPER, {249, 17}},
+        { TEXTURE_ASSET_ID::PICKAXE_HELPER, {333, 17}},
+        { TEXTURE_ASSET_ID::DASH_BOOTS_HELPER, {316, 17}},
+        { TEXTURE_ASSET_ID::CONTINUE_HELPER, {311, 21}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
@@ -255,10 +257,12 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
 
+Entity createMainMenuBackground(RenderSystem* renderer);
+
 // the parallax backgrounds
 Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
-Entity createHelperText(RenderSystem* renderer);
+Entity createHelperText(RenderSystem* renderer, float size);
 Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
 // the ui button
