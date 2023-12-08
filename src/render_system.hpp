@@ -63,6 +63,7 @@ class RenderSystem
 		textures_path("winged_boots.png"),
 		textures_path("dash_boots.png"),
 		textures_path("background.png"),
+		textures_path("background_color.png"),
 		textures_path("parallax_rain.png"),
 		textures_path("parallax_moon.png"),
 		textures_path("parallax_cloud_close.png"),

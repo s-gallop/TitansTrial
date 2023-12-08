@@ -162,6 +162,7 @@ private:
 	// backgrounds
     void create_parallax_background();
 	Entity parallax_background;
+	Entity parallax_background_color;
 	Entity parallax_clouds_far_1;
 	Entity parallax_clouds_far_2;
 	Entity parallax_clouds_close_1;

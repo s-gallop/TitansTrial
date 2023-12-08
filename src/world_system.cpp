@@ -1438,6 +1438,7 @@ void WorldSystem::create_pause_screen() {
 }
 
 void WorldSystem::create_parallax_background() {
+	parallax_background_color = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND_COLOR);
 	parallax_moon = createParallaxItem(renderer, {580, 400}, TEXTURE_ASSET_ID::PARALLAX_MOON);
 	parallax_clouds_far_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
 	parallax_clouds_far_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
