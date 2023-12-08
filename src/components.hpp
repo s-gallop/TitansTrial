@@ -305,6 +305,11 @@ struct AnimationInfo
 struct ShowWhenPaused {
 };
 
+struct DialogueText
+{
+
+};
+
 struct GameButton {
     int clicked;
     std::function<void ()> callback;
@@ -398,7 +403,8 @@ enum class TEXTURE_ASSET_ID
 	WINGED_BOOTS_HELPER = ROCKET_HELPER + 1,
 	PICKAXE_HELPER = WINGED_BOOTS_HELPER + 1,
 	DASH_BOOTS_HELPER = PICKAXE_HELPER + 1,
-	PLAY = DASH_BOOTS_HELPER + 1,
+	CONTINUE_HELPER = DASH_BOOTS_HELPER + 1,
+	PLAY = CONTINUE_HELPER + 1,
 	PLAY_PRESSED = PLAY + 1,
 	ALMANAC = PLAY_PRESSED + 1,
 	ALMANAC_PRESSED = ALMANAC + 1,

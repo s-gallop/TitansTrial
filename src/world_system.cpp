@@ -592,6 +592,8 @@ void WorldSystem::show_dialogue(int dialogue_number)
 	{
 		Entity dialogue = registry.dialogues.entities.back();
 		registry.remove_all_components_of(dialogue);
+		Entity text = registry.dialogueTexts.entities.back();
+		registry.remove_all_components_of(text);
 		motionKeyStatus.reset();
 		if (should_score_prepare_to_show)
 		{

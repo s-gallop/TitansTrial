@@ -1296,6 +1296,27 @@ Entity createHealthBar(RenderSystem* renderer, Entity owner) {
 }
 
 Entity createDialogue(RenderSystem* renderer, TEXTURE_ASSET_ID texture_id) {
+	Entity text = Entity();
+
+	auto& text_motion = registry.motions.emplace(text);
+	text_motion.angle = 0.f;
+	text_motion.velocity = { 0.f, 0.f };
+	text_motion.position = { 600, 300 };
+	text_motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::CONTINUE_HELPER);
+
+	registry.renderRequests.insert(
+		text,
+		{ TEXTURE_ASSET_ID::CONTINUE_HELPER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 text_motion.scale });
+
+	registry.dialogueTexts.emplace(text);
+
+    registry.debugRenderRequests.emplace(text);
+
 	Entity entity = Entity();
 
 	auto& motion = registry.motions.emplace(entity);

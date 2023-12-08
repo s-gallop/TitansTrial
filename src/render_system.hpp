@@ -80,6 +80,7 @@ class RenderSystem
 		textures_path("helpers/winged_boots_helper.png"),
 		textures_path("helpers/pickaxe_helper.png"),
 		textures_path("helpers/dash_boots_helper.png"),
+		textures_path("helpers/continue.png"),
 		textures_path("buttons/play.png"),
 		textures_path("buttons/play_pressed.png"),
 		textures_path("buttons/almanac.png"),
