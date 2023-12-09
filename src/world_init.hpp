@@ -29,7 +29,7 @@ const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
 const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
 const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
-const vec2 LAVA_PILLAR_BB = vec2(120, 320);
+const vec2 LAVA_PILLAR_BB = vec2(120, 536);
 const vec2 TRIDENT_BB = vec2(16, 32) * 1.5f;
 const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
 
@@ -111,7 +111,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::EXPLOSION, {60, 55}},
         { TEXTURE_ASSET_ID::PLAYER_HEART, {40, 40}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 42}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)},
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.4f, LAVA_PILLAR_BB.y)},
         { TEXTURE_ASSET_ID::HEALTH_BAR, vec2(62, 19) * 3.f},
         { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH, vec2(56, 3) * 3.f},
         { TEXTURE_ASSET_ID::WATER_BALL, {30, 20}},
@@ -148,7 +148,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::BOSS_SWORD_L, {0, 0}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}},
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,-80}},
         { TEXTURE_ASSET_ID::WATER_BALL, {-17,0}},
         { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, {4 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::GRENADE, {0 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},

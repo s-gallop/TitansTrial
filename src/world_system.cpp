@@ -56,7 +56,7 @@ float recorded_max_ddf;
 bool should_score_prepare_to_show = false;
 bool death_skip_dialogue = false;
 
-float lavaPillarTimer = 0;
+float lavaPillarTimer = LAVA_PILLAR_SPAWN_DELAY;
 
 // Create the fish world
 WorldSystem::WorldSystem()
