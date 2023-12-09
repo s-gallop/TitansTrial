@@ -54,7 +54,7 @@ float ddf;
 float recorded_max_ddf;
 bool should_score_prepare_to_show = false;
 
-float lavaPillarTimer = 0;
+float lavaPillarTimer = LAVA_PILLAR_SPAWN_DELAY;
 
 // Create the fish world
 WorldSystem::WorldSystem()
@@ -411,7 +411,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		update_grenades(renderer, elapsed_ms_since_last_update);
 		update_explosions(elapsed_ms_since_last_update);
-
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -448,7 +447,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
         move_ghouls(renderer, player_hero);
         move_spitters(elapsed_ms_since_last_update, renderer);
 		if (boss && registry.boss.size()) {
-			boss_action_decision(boss, renderer);
+			boss_action_decision(player_hero, boss, renderer, elapsed_ms_since_last_update);
 		}
         do_enemy_spawn(elapsed_ms_since_last_update, renderer, ddl);
 		update_graphics_all_enemies();
@@ -595,7 +594,6 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 			return SOUND_EFFECT::LAUGH;
 			break;
 	}
-	return SOUND_EFFECT::LAUGH;
 }
 
 TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
@@ -665,6 +663,10 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
 
+    //TODO: enable this to start with boss
+   /* boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);*/
+
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
 	registry.colors.insert(player_hero, { 1, 0.8f, 0.8f });
@@ -677,6 +679,7 @@ void WorldSystem::restart_game()
 	ddl = -1;
 	ddf = 0.f;
 	recorded_max_ddf = -1.f;
+	should_score_prepare_to_show = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
@@ -1091,11 +1094,16 @@ void WorldSystem::handle_collisions()
 						{
 							ddf += 5.f;
 						}
-						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+						if (registry.enemies.get(entity_other).death_animation == -2) {
+							registry.remove_all_components_of(entity_other);
+						} else {
+							registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+							registry.animated.get(entity_other).oneTimer = 0;
+						}
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
+						registry.animated.get(entity_other).oneTimer = 0;
 					}
-					registry.animated.get(entity_other).oneTimer = 0;
 				}
 				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
@@ -1149,6 +1157,8 @@ void WorldSystem::handle_collisions()
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
 					} else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
 						//registry.colors.insert(entity_other, { 1, .8f, .8f });
+						registry.animated.get(entity_other).oneTimeState = 3;
+						registry.animated.get(entity_other).oneTimer = 0;
 						registry.spitterEnemies.get(entity_other).left_x = max(block_motion.position.x - scale1.x, 70.f);
 						registry.spitterEnemies.get(entity_other).right_x = min(block_motion.position.x + scale1.x, 1125.f);
 					} else if (registry.waterBalls.has(entity_other)) {
@@ -1462,7 +1472,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	if (key == GLFW_KEY_X && action == GLFW_PRESS && debug && ddl == 4) {
 		ddf = 500;
 	}
-	
+
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
 		toggle_mute_music();
 	}

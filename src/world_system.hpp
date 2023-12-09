@@ -29,8 +29,11 @@ const float ANIMATION_SPEED_FACTOR = 10.0f;
 static float spitter_projectile_delay_ms = 5000.f;
 static float spawn_delay_variance = 0.6;
 static size_t spawn_delay = 6000;
+const size_t BOSS_MAX_GHOULS = 14;
+const size_t BOSS_MAX_SPITTERS = 8;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const int BOSS_HEALTH = 80;
+const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {12000, 2000, 70000, 10000, 2000, 5000};
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
 const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
@@ -52,7 +55,10 @@ const float NUMBER_START_POS = 992.f;
 const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
-const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
+const float LAVA_PILLAR_SPAWN_DELAY = 15000.f;
+const uint MDP_HORIZON = 2;
+const float MDP_DISCOUNT_FACTOR = 0.9f;
+const float MDP_BASE_REWARD = 100;
 
 enum SpawnableEnemyType {
         FIRELINGS = 0,
@@ -99,7 +105,6 @@ public:
 	SOUND_EFFECT effect_to_play(int dialogue_number);
 
 	void update_graphics_all_enemies();
-
 
 	// Check for collisions
 	void handle_collisions();
