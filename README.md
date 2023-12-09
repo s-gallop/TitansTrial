@@ -6,6 +6,19 @@ Titan's Trial - A 2D Endless survival game
 
 Please see [ATTRIBUTIONS.MD](ATTRIBUTIONS.md).
 
+## Write-up Milestone 4 (Final Game)
+
+Changes from M3_Proposal can be seen highlighted in green in the M4_Proposal document. The additions/changes include:
+
+* Story Elements
+* Reloadability
+* Advanced AI
+* Complex prescribed motion
+* Precise collision
+* Game balance (read below)
+
+### A note on game balance
+
 ## Write-up Milestone 3
 
 Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:
