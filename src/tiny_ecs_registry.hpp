@@ -22,6 +22,7 @@ public:
 	ComponentContainer<ParallaxBackground> parallaxBackgrounds;
 	ComponentContainer<Player> players;
     ComponentContainer<Boss> boss;
+	ComponentContainer<BossSword> bossSwords;
     ComponentContainer<HealthBar> healthBar;
 	ComponentContainer<Block> blocks;
 	ComponentContainer<Mesh *> meshPtrs;
@@ -76,6 +77,7 @@ public:
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);
         registry_list.push_back(&boss);
+		registry_list.push_back(&bossSwords);
         registry_list.push_back(&healthBar);
 		registry_list.push_back(&blocks);
 		registry_list.push_back(&meshPtrs);
