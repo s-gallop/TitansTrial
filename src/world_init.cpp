@@ -1427,6 +1427,6 @@ vec2 getRandomWalkablePos(vec2 char_scale, int platform, bool randomness) {
     float no_over_edge = values[2] - char_scale.x/2.f;
     // first tries to stay inside platform. If platform too small we let it overflow. Then pick a random offset position
     float rand_offset = (no_over_edge > 0 ? no_over_edge : values[2]) * ((double)rand() / RAND_MAX) * (rand() % 2 == 0 ? 1.f : -1.f);
-    printf("value: %f,",rand_offset);
+    //printf("value: %f,",rand_offset);
     return {values.x+(randomness ? rand_offset : 0), values.y-char_scale.y/2.f};
 }
