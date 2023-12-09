@@ -900,7 +900,7 @@ void WorldSystem::spawn_spitter_enemy(float elapsed_ms_since_last_update) {
 		Motion &motion = registry.motions.get(entity);
 		AnimationInfo &animation = registry.animated.get(entity);
 
-		if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs > STOP_WALK_TIME && motion.velocity.y == 0.f && animation.oneTimeState != 2) {
+		if (!spitterEnemy.canShoot && spitterEnemy.timeUntilNextShotMs > STOP_WALK_TIME && motion.velocity.y == 0.f && animation.oneTimeState != 2 && animation.oneTimeState != 3) {
 			if (spitterEnemy.left_x != -1.f && motion.velocity.x == 0.f) {
 				float direction;
 				if (motion.position.x <= spitterEnemy.left_x || motion.position.x >= spitterEnemy.right_x) {
