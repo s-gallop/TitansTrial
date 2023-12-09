@@ -663,9 +663,6 @@ void WorldSystem::restart_game()
 	create_parallax_background();
 	initiate_weapons();
 
-    //TODO: enable this to start with boss
-   /* boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
-    createHealthBar(renderer, boss);*/
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
