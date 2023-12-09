@@ -47,6 +47,8 @@ public:
 	ComponentContainer<Explosion> explosions;
 	ComponentContainer<LaserRifle> laserRifles;
 	ComponentContainer<Laser> lasers;
+	ComponentContainer<Trident> tridents;
+	ComponentContainer<WaterBall> waterBalls;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<WeaponHitBox> weaponHitBoxes;
 	ComponentContainer<DebugComponent> debugComponents;
@@ -57,6 +59,7 @@ public:
 	ComponentContainer<InGameGUI> inGameGUIs;
 	ComponentContainer<LavaPillar> lavaPillars;
 	ComponentContainer<Dialogue> dialogues;
+	ComponentContainer<DialogueText> dialogueTexts;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -98,6 +101,8 @@ public:
 		registry_list.push_back(&explosions);
 		registry_list.push_back(&laserRifles);
 		registry_list.push_back(&lasers);
+		registry_list.push_back(&tridents);
+		registry_list.push_back(&waterBalls);
 		registry_list.push_back(&weapons);
 		registry_list.push_back(&weaponHitBoxes);
 		registry_list.push_back(&debugComponents);
@@ -106,7 +111,8 @@ public:
         registry_list.push_back(&buttons);
         registry_list.push_back(&showWhenPaused);
 		registry_list.push_back(&lavaPillars);
-		registry_list.push_back(&dialogues);
+        registry_list.push_back(&dialogues);
+		registry_list.push_back(&dialogueTexts);
 	}
 
 	void clear_all_components()

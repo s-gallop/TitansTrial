@@ -9,8 +9,16 @@
 
 #include "common.hpp"
 
+#ifndef SOUND_UTILS_HPP
+#define SOUND_UTILS_HPP
+
+extern bool is_music_muted;
+
+#endif
+
 uint init_sound();
 void destroy_sound();
+
 
 enum class SOUND_EFFECT {
     HERO_DEAD = 0,
@@ -31,9 +39,11 @@ enum class SOUND_EFFECT {
     EQUIPMENT_DROP = DASH + 1,
     BUTTON_CLICK = EQUIPMENT_DROP + 1,
     TELEPORT = BUTTON_CLICK + 1,
-    LAUGH = TELEPORT + 1
+    LAUGH = TELEPORT + 1,
+    WATER_BALL_SHOOT = LAUGH + 1
 };
 
+void play_main_menu_music();
 void play_music();
 void play_sound(SOUND_EFFECT id);
 void toggle_mute_music();

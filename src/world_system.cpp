@@ -28,9 +28,9 @@ std::vector<Entity> player_hearts_GUI = { };
 Entity powerup_GUI;
 Entity difficulty_bar;
 Entity indicator;
+Entity score_text;
 std::vector<Entity> score_GUI = { };
 std::vector<Entity> following_enemies = { };
-std::vector<Entity> db_decorator = { };
 
 json::JSON state;
 
@@ -53,6 +53,7 @@ int ddl;
 */
 float ddf;
 float recorded_max_ddf;
+bool should_score_prepare_to_show = false;
 
 float lavaPillarTimer = 0;
 
@@ -150,14 +151,13 @@ void WorldSystem::init(RenderSystem *renderer_arg)
 {
 	this->renderer = renderer_arg;
 	
-	// Play background music
-	play_music();
+	// Play main menu background music
+	play_main_menu_music();
 
 	// Set all states to default
 	if (isTitleScreen) {
 		create_title_screen();
 	}
-	
 	
 }
 
@@ -176,7 +176,8 @@ void WorldSystem::create_title_screen()
 		registry.remove_all_components_of(registry.motions.entities.back());
 
 	//these magic number are just the vertical position of where the buttons are
-	createTitleText(renderer, { window_width_px / 2, 150 });
+	createMainMenuBackground(renderer);
+	createTitleText(renderer, { window_width_px / 2, 100 });
 	createButton(renderer, { window_width_px / 2, 450 }, TEXTURE_ASSET_ID::PLAY, [&]() {load_game(); });
 	createButton(renderer, { window_width_px / 2, 550 }, TEXTURE_ASSET_ID::ALMANAC, [&]() {create_almanac_screen(); });
 	createButton(renderer, { window_width_px / 2, 650 }, TEXTURE_ASSET_ID::QUIT, [&]() {exit(0); });
@@ -190,7 +191,7 @@ void WorldSystem::create_almanac_screen() {
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
 
-	Entity helper = createHelperText(renderer);
+	Entity helper = createHelperText(renderer, 1.f);
 	Motion& motion = registry.motions.get(helper);
 	motion.position = {window_width_px / 2, 150};
 	registry.renderRequests.get(helper).visibility = true;
@@ -209,6 +210,8 @@ void WorldSystem::create_almanac_screen() {
 	createToolTip(renderer, {window_width_px * 2 / 3, 550}, TEXTURE_ASSET_ID::PICKAXE_HELPER);
 	createDashBoots(renderer, {window_width_px / 6, 600});
 	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
+	createLaserRifle(renderer, {window_width_px / 6, 650});
+	createToolTip(renderer, {window_width_px * 2 / 3, 650}, TEXTURE_ASSET_ID::LASER_HELPER);
 
 	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
 }
@@ -218,12 +221,16 @@ void WorldSystem::create_almanac_screen() {
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	if (dialogue_screen_active == 0) {
-		lavaPillarTimer += elapsed_ms_since_last_update;
-		if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
-			lavaPillarTimer = 0;
-			createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
-			createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
+		if (ddl == 4) 
+		{
+			lavaPillarTimer += elapsed_ms_since_last_update;
+			if (lavaPillarTimer > LAVA_PILLAR_SPAWN_DELAY) {
+				lavaPillarTimer = 0;
+				createLavaPillar(renderer, { window_width_px * 0.71,window_height_px + LAVA_PILLAR_BB.y / 2.f });
+				createLavaPillar(renderer, { window_width_px * 0.29, window_height_px + LAVA_PILLAR_BB.y / 2.f });
+			}
 		}
+
 		for (AnimationInfo& animation: registry.animated.components) {
 			if (animation.oneTimeState != -1) {
 				animation.oneTimer += elapsed_ms_since_last_update / 1000.f;
@@ -285,60 +292,56 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		{
 			ddl = 0;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv0\n");
+				show_dialogue(1);
 			}
 		}
 		else if (ddf >= 100 && ddf < 200 && ddl != 1)
 		{
 			ddl = 1;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv1\n");
+				show_dialogue(2);
 			}
 		}
 		else if (ddf >= 200 && ddf < 300 && ddl != 2)
 		{
 			ddl = 2;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv2\n");
+				show_dialogue(3);
 			}
 		}
 		else if (ddf >= 300 && ddf < 400 && ddl != 3)
 		{
 			ddl = 3;
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv3\n");
+				show_dialogue(4);
 			}
 		}
 		else if (ddf >= 400 && ddf < 500 && ddl != 4)
 		{
 			ddl = 4;
 			registry.remove_all_components_of(indicator);
+			/*
 			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
 			db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
 			db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
+			*/
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BOSS_SINGLE;
+			registry.renderRequests.get(difficulty_bar).scale.y = 125.f;
+			registry.motions.get(difficulty_bar).position = DB_BOSS_CORD;
 			clear_enemies();
+			boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+			createHealthBar(renderer, boss);
 			if (ddf > recorded_max_ddf) {
-				// STUB
+				show_dialogue(5);
 				printf("\nLv4\n");
 			}
 		}
 		else if (ddf >= 500 && ddf < 600 && ddl != 5)
 		{
 			ddl = 5;
-			for (Entity decorator : db_decorator) {
-				registry.remove_all_components_of(decorator);
-			}
-			db_decorator.clear();
-			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-			registry.motions.get(difficulty_bar).position[1] = 730.f;
-			db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+			clear_enemies();
 			if (ddf > recorded_max_ddf) {
-				// STUB
-				printf("\nLv5\n");
+				show_dialogue(6);
 			}
 		}
 		else if (ddf >= 600)
@@ -430,7 +433,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				}
 			}
 			
-			if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i])))
+			if (motion.position.y < -250 && (registry.bullets.has(motion_container.entities[i]) || registry.rockets.has(motion_container.entities[i]))) // || registry.waterBalls.has(motion_container.entities[i])
 				registry.remove_all_components_of(motion_container.entities[i]);
 			else if (registry.lasers.has(motion_container.entities[i]) && (motion.position.x > window_width_px + window_width_px / 2.f || motion.position.x < -window_width_px / 2.f || motion.position.y > window_height_px + window_height_px / 2.f || motion.position.y < -window_height_px / 2.f))
 				registry.remove_all_components_of(motion_container.entities[i]);
@@ -438,8 +441,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				registry.remove_all_components_of(motion_container.entities[i]);
 		}
 
-		if (registry.players.get(player_hero).hasWeapon)
+		if (registry.players.get(player_hero).hasWeapon) {
 			update_weapon(renderer, elapsed_ms_since_last_update * current_speed, player_hero, mouse_clicked);
+			update_water_balls(elapsed_ms_since_last_update * current_speed, registry.weapons.get(registry.players.get(player_hero).weapon).type, mouse_clicked);
+		} else {
+			update_water_balls(elapsed_ms_since_last_update * current_speed, COLLECTABLE_TYPE::COLLECTABLE_COUNT, mouse_clicked);
+		}
 
 		update_equipment(elapsed_ms_since_last_update * current_speed, player_hero);
 		update_dash_boots(elapsed_ms_since_last_update * current_speed, player_hero, motionKeyStatus, BASIC_SPEED);
@@ -447,6 +454,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 		update_explosions(elapsed_ms_since_last_update * current_speed);
+		
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -529,8 +537,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 
 		screen.screen_darken_factor = 1 - min_timer_ms / 3000;
-
-		return true;
 	}
 	return true;
 }
@@ -591,6 +597,20 @@ void WorldSystem::show_dialogue(int dialogue_number)
 	{
 		Entity dialogue = registry.dialogues.entities.back();
 		registry.remove_all_components_of(dialogue);
+		Entity text = registry.dialogueTexts.entities.back();
+		registry.remove_all_components_of(text);
+		motionKeyStatus.reset();
+		if (should_score_prepare_to_show)
+		{
+			registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BROKEN_SINGLE;
+			registry.motions.get(difficulty_bar).position = DB_SATAN_CORD;
+			registry.renderRequests.get(difficulty_bar).scale = { 220.f, 128.f };
+			registry.renderRequests.get(score_text).visibility = true;
+			for (Entity n : score_GUI)
+			{
+				registry.renderRequests.get(n).visibility = true;
+			}
+		}
 	}
 
 	dialogue_screen_active = dialogue_number;
@@ -612,9 +632,7 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 		case 6:
 			return SOUND_EFFECT::TELEPORT;
 			break;
-		case 3:
-		case 7:
-		case 8:
+		default: // cases 3, 7, 8. Needed default case to compile
 			return SOUND_EFFECT::LAUGH;
 			break;
 	}
@@ -1083,7 +1101,7 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
-
+	play_music();
 	// Reset the game speed
 	current_speed = 1.f;
 	current_enemy_spawning_speed = 0.f;
@@ -1104,9 +1122,6 @@ void WorldSystem::restart_game()
 	
 	create_parallax_background();
 	initiate_weapons();
-    //TODO: enable this to start with boss
-    boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
-    createHealthBar(renderer, boss);
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -1123,7 +1138,6 @@ void WorldSystem::restart_game()
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();
-	db_decorator.clear();
 
 	create_inGame_GUIs();
 
@@ -1149,6 +1163,7 @@ void WorldSystem::save_game() {
 	{
 		state =
 		{
+			"mute", is_music_muted,
 			"ddl", ddl,
 			"ddf", ddf,
 			"recorded_max_ddf", recorded_max_ddf,
@@ -1205,6 +1220,9 @@ void WorldSystem::save_game() {
 				"hp", registry.enemies.get(spitter).health,
 				"x_pos", registry.motions.get(spitter).position.x,
 				"y_pos", registry.motions.get(spitter).position.y,
+				"x_v", registry.motions.get(spitter).velocity.x,
+				"y_v", registry.motions.get(spitter).velocity.y,
+				"dir", registry.motions.get(spitter).dir,
 				"bullets", registry.spitterEnemies.get(spitter).bulletsRemaining,
 				"timer", registry.spitterEnemies.get(spitter).timeUntilNextShotMs,
 				"shootable", registry.spitterEnemies.get(spitter).canShoot,
@@ -1267,6 +1285,8 @@ int WorldSystem::save_weapon(Entity weapon) {
 		return 3;
 	else if (registry.laserRifles.has(weapon))
 		return 4;
+	else if (registry.tridents.has(weapon))
+		return 5;
 	else
 		return -1;
 }
@@ -1280,26 +1300,32 @@ void WorldSystem::load_game() {
 	if (jsonString != "")
 	{
 		state = json::JSON::Load(jsonString);
-
+		if (state["mute"].ToBool())
+		{
+			toggle_mute_music();
+		}
 		ddl = state["ddl"].ToInt();
+		ddf = state["ddf"].ToFloat();
+		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
 		switch (ddl)
 		{
 			case 4:
-				registry.remove_all_components_of(indicator);
-				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BOSS;
-				db_decorator.push_back(createDBFlame(renderer, DB_FLAME_CORD));
-				db_decorator.push_back(createDBSkull(renderer, DIFF_BAR_CORD));
-				clear_enemies();
+				ddf = 400.f;
+				recorded_max_ddf = 399.f;
+				ddl = 3;
 				break;
 			case 5:
 				registry.remove_all_components_of(indicator);
-				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DIFFICULTY_BAR_BROKEN;
-				registry.motions.get(difficulty_bar).position[1] = 730.f;
-				db_decorator.push_back(createDBSatan(renderer, DB_SATAN_CORD));
+				registry.renderRequests.get(difficulty_bar).used_texture = TEXTURE_ASSET_ID::DB_BROKEN_SINGLE;
+				registry.motions.get(difficulty_bar).position = DB_SATAN_CORD;
+				registry.renderRequests.get(difficulty_bar).scale = { 220.f, 128.f };
+				registry.renderRequests.get(score_text).visibility = true;
+				for (Entity n : score_GUI)
+				{
+					registry.renderRequests.get(n).visibility = true;
+				}
 				break;
 		}
-		ddf = state["ddf"].ToFloat();
-		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
 		points = state["score"].ToInt();
 		Player& player = registry.players.get(player_hero);
 		player.hp = state["hp"].ToInt();
@@ -1315,6 +1341,8 @@ void WorldSystem::load_game() {
 			collect(createGrenadeLauncher(renderer, { 0.f, 0.f }), player_hero);
 		else if (weapon == 4)
 			collect(createLaserRifle(renderer, { 0.f, 0.f }), player_hero);
+		else if (weapon == 5)
+			collect(createTrident(renderer, { 0.f, 0.f }), player_hero);
 
 		for (int i = 0; i < state["fire_enemy"].size(); i++)
 		{
@@ -1366,6 +1394,9 @@ void WorldSystem::load_game() {
 				ns_info.timeUntilNextShotMs = ss["timer"].ToFloat();
 				ns_info.left_x = ss["left_x"].ToFloat();
 				ns_info.right_x = ss["right_x"].ToFloat();
+				Motion& ns_mo = registry.motions.get(ns);
+				ns_mo.velocity = { ss["x_v"].ToFloat(), ss["y_v"].ToFloat() };
+				ns_mo.dir = ss["dir"].ToInt();
 			}
 		}
 
@@ -1404,10 +1435,11 @@ void WorldSystem::load_game() {
 void WorldSystem::create_pause_screen() {
     createButton(renderer, {18, 18}, TEXTURE_ASSET_ID::MENU, [&](){change_pause();});
     createButton(renderer, {window_width_px / 2, window_height_px / 2}, TEXTURE_ASSET_ID::BACK, [&]() {save_game(); }, false);
-    createHelperText(renderer);
+    createHelperText(renderer, 1.4f);
 }
 
 void WorldSystem::create_parallax_background() {
+	parallax_background_color = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::BACKGROUND_COLOR);
 	parallax_moon = createParallaxItem(renderer, {580, 400}, TEXTURE_ASSET_ID::PARALLAX_MOON);
 	parallax_clouds_far_1 = createParallaxItem(renderer, {600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
 	parallax_clouds_far_2 = createParallaxItem(renderer, {-600, 400}, TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR);
@@ -1432,7 +1464,7 @@ void WorldSystem::create_inGame_GUIs() {
 	powerup_GUI = createPowerUpIcon(renderer, POWER_CORD);
 	difficulty_bar = createDifficultyBar(renderer, DIFF_BAR_CORD);
 	indicator = createDifficultyIndicator(renderer, INDICATOR_START_CORD);
-	createScore(renderer, SCORE_CORD);
+	score_text = createScore(renderer, SCORE_CORD);
 	float numberPosition = NUMBER_START_POS;
 	for (int i = 0; i < 5; i++) {
 		score_GUI.push_back(createNumber(renderer, { numberPosition, NUMBER_Y_CORD }));
@@ -1551,10 +1583,10 @@ void WorldSystem::handle_collisions()
 				float vCollisionDepth = scale1.y + scale2.y - abs(block_motion.position.y - solid_motion.position.y);
 				float hCollisionDepth = scale1.x + scale2.x - abs(block_motion.position.x - solid_motion.position.x);
 				if (vCollisionDepth > 0 && (hCollisionDepth <= 0 || vCollisionDepth < hCollisionDepth)) {
-					if (solid_motion.position.y < block_motion.position.y && solid_motion.velocity.y > 0) {
+					if (solid_motion.position.y < block_motion.position.y && (solid_motion.velocity.y > 0 || registry.waterBalls.has(entity_other))) {
 						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.y;
 						solid_motion.velocity.y = 0;
-					} else if (solid_motion.position.y > block_motion.position.y && solid_motion.velocity.y < 0) {
+					} else if (solid_motion.position.y > block_motion.position.y && (solid_motion.velocity.y < 0 || registry.waterBalls.has(entity_other))) {
 						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.y;
 						solid_motion.velocity.y = 0;
 					}
@@ -1575,11 +1607,13 @@ void WorldSystem::handle_collisions()
 						registry.colors.insert(entity_other, {1, .8f, .8f});
 						registry.ghouls.get(entity_other).left_x = block_motion.position.x - scale1.x;
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
-					}
-					else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
+					} else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
 						//registry.colors.insert(entity_other, { 1, .8f, .8f });
 						registry.spitterEnemies.get(entity_other).left_x = max(block_motion.position.x - scale1.x, 70.f);
 						registry.spitterEnemies.get(entity_other).right_x = min(block_motion.position.x + scale1.x, 1125.f);
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = M_PI/2;
+						solid_motion.position.y = block_motion.position.y - scale1.y - scale2.x;
 					}
 				} else if (solid_motion.position.x <= block_motion.position.x - block_motion.scale.x / 2.f - solid_motion.scale.x / 2.f) {
 					if (registry.players.has(entity_other) && motionKeyStatus.test(0) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
@@ -1587,6 +1621,8 @@ void WorldSystem::handle_collisions()
 					} else if (registry.ghouls.has(entity_other)) {
 						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
 						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = 0;
 					}
 				} else if (solid_motion.position.x >= block_motion.position.x + block_motion.scale.x / 2.f + solid_motion.scale.x / 2.f) {
 					if (registry.players.has(entity_other) && motionKeyStatus.test(1) && registry.players.get(entity_other).equipment_type == COLLECTABLE_TYPE::PICKAXE && solid_motion.position.y > 0) {
@@ -1594,7 +1630,25 @@ void WorldSystem::handle_collisions()
 					} else if (registry.ghouls.has(entity_other)) {
 						registry.motions.get(entity_other).velocity.x = -registry.motions.get(entity_other).velocity.x;
 						registry.motions.get(entity_other).dir = -registry.motions.get(entity_other).dir;
+					} else if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = M_PI;
 					}
+				} else {
+					if (registry.waterBalls.has(entity_other)) {
+						solid_motion.angle = -M_PI/2;
+						solid_motion.position.y = block_motion.position.y + scale1.y + scale2.x;
+					}
+				}
+
+				if (registry.waterBalls.has(entity_other)) {
+					registry.waterBalls.get(entity_other).drawing = false;
+					registry.waterBalls.get(entity_other).state = -1;
+					for (Entity line: registry.waterBalls.get(entity_other).trajectory)
+						registry.remove_all_components_of(line);
+					registry.animated.get(entity_other).oneTimeState = 2;
+					registry.animated.get(entity_other).oneTimer = 0;
+					registry.weaponHitBoxes.get(entity_other).isActive = false;
+					solid_motion.velocity = {0, 0};
 				}
 			} 
 			else if (registry.projectiles.has(entity_other))
@@ -1616,9 +1670,14 @@ void WorldSystem::handle_collisions()
 				projectile_motion.velocity = vec2(projectile_motion.velocity.x * projectile.friction_x, projectile_motion.velocity.y * projectile.friction_y);
 			} 
 		} else if (registry.parallaxBackgrounds.has(entity) && registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::PARALLAX_LAVA) {
-			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other))
+			if (registry.bullets.has(entity_other) || registry.rockets.has(entity_other) || registry.grenades.has(entity_other) || registry.spitterBullets.has(entity_other) || registry.collectables.has(entity_other) || registry.waterBalls.has(entity_other)) {
+				if (registry.waterBalls.has(entity_other)) {
+					registry.waterBalls.get(entity_other).drawing = false;
+					for (Entity line: registry.waterBalls.get(entity_other).trajectory)
+						registry.remove_all_components_of(line);
+				}
 				registry.remove_all_components_of(entity_other);
-			else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
+			} else if (registry.players.has(entity_other) && !registry.deathTimers.has(entity_other)) {
 				// Scream, reset timer, and make the hero fall
 				registry.deathTimers.emplace(entity_other);
 				Player& player = registry.players.get(entity_other);
@@ -1689,6 +1748,8 @@ void WorldSystem::update_health_bar()
         if (!registry.enemies.has(registry.healthBar.get(e).owner)) {
             registry.remove_all_components_of(registry.healthBar.get(e).bar);
             registry.remove_all_components_of(e);
+			ddf = 500;
+			should_score_prepare_to_show = true;
         }
     }
 }
@@ -1705,7 +1766,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		play_sound(SOUND_EFFECT::BUTTON_CLICK);
     }
 
-	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && dialogue_screen_active != 0) {
+	if (key == GLFW_KEY_E && action == GLFW_PRESS && dialogue_screen_active != 0) {
 		show_dialogue(0);
 	}
 
@@ -1753,7 +1814,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_1 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-
+				next_enemy_spawn = -1.0;
+				spawn_move_normal_enemies(0);
 			} else {
 				createSword(renderer, registry.motions.get(player_hero).position);
 			}
@@ -1779,12 +1841,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		} else if (key == GLFW_KEY_5 && action == GLFW_PRESS && !pause && debug) {
 			createLaserRifle(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_6 && action == GLFW_PRESS && !pause && debug) {
-			createHeart(renderer, registry.motions.get(player_hero).position);
+			createTrident(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_7 && action == GLFW_PRESS && !pause && debug) {
-			createWingedBoots(renderer, registry.motions.get(player_hero).position);
+			createHeart(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_8 && action == GLFW_PRESS && !pause && debug) {
-			createPickaxe(renderer, registry.motions.get(player_hero).position);
+			createWingedBoots(renderer, registry.motions.get(player_hero).position);
 		} else if (key == GLFW_KEY_9 && action == GLFW_PRESS && !pause && debug) {
+			createPickaxe(renderer, registry.motions.get(player_hero).position);
+		} else if (key == GLFW_KEY_0 && action == GLFW_PRESS && !pause && debug) {
 			createDashBoots(renderer, registry.motions.get(player_hero).position);
 		}
 
@@ -1811,11 +1875,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             update_health_bar();
 		}
 
-		if (key == GLFW_KEY_X && action == GLFW_PRESS)
-		{
-			// save_game();
-		}
-
 		if (key == GLFW_KEY_S && action == GLFW_PRESS && !pause && dialogue_screen_active == 0 && !registry.gravities.get(player_hero).dashing) {
 			pickupKeyStatus = true;
 		}
@@ -1825,7 +1884,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 
 		if (key == GLFW_KEY_C && action == GLFW_PRESS && debug) {
-			show_dialogue(2);
+			show_dialogue(1);
 		}
 
 	}
@@ -1861,7 +1920,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 	}
 
-	if (key == GLFW_KEY_E && action == GLFW_PRESS && debug && ddl == 4) {
+	if (key == GLFW_KEY_X && action == GLFW_PRESS && debug && ddl == 4) {
 		ddf = 500;
 	}
 	
@@ -1899,7 +1958,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 	if (!registry.deathTimers.has(player_hero) && !pause && dialogue_screen_active == 0)
 		for (Entity weapon : registry.weapons.entities)
-			update_weapon_angle(renderer, weapon, mouse_pos);
+			update_weapon_angle(renderer, weapon, mouse_pos, mouse_clicked);
 }
 
 void WorldSystem::on_mouse_click(int key, int action, int mods){
@@ -1921,6 +1980,7 @@ void WorldSystem::on_mouse_click(int key, int action, int mods){
 		}
 	} else if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
 		mouse_clicked = false;
+		weapon_mouse_release();
 		for (Entity entity: registry.buttons.entities) {
         	GameButton &buttonInfo = registry.buttons.get(entity);
 			if (buttonInfo.clicked) {
