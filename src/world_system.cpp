@@ -977,6 +977,11 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
         }
         return;
     }
+
+	for (float& cd: boss_state.cooldowns)
+		if (cd > 0)
+			cd -= elapsed_ms;
+
     switch (boss_state.state) {
         case BOSS_STATE::TELEPORT:
             boss_action_teleport();
@@ -994,7 +999,8 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
             boss_action_summon(2);
             break;
         case BOSS_STATE::SIZE:
-            boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
+            if (boss_state.cooldowns[(uint) BOSS_STATE::SIZE] <= 0)
+				boss_state.state = get_action();
             break;
     }
 }
@@ -1135,53 +1141,67 @@ BOSS_STATE WorldSystem::get_action() {
 	BOSS_STATE action;
 	float max_utility = -1;
 	for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
-		float utility = mdp_helper((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0);
+		float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0, registry.boss.components[0].cooldowns);
 		if (utility > max_utility) {
 			max_utility = utility;
 			action = (BOSS_STATE) i;
 		}
 	}
+	registry.boss.components[0].cooldowns[(uint) BOSS_STATE::SIZE] = BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
+	registry.boss.components[0].cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
 	return action;
 }
 
-float WorldSystem::mdp_helper(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num) {
-	float reward = get_action_reward(action, boss_pos, num_ghouls, num_spitters);
+float WorldSystem::mdp_helper(vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns) {
 	float max_utility = -1;
 	if (step_num <= MDP_HORIZON) {
 		for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
-			float utility = mdp_helper((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, step_num + 1);
-			if (utility > max_utility) {
-				max_utility = utility;
+			if (cooldowns[i] <= 0) {
+				float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0, cooldowns);
+				if (utility > max_utility) {
+					max_utility = utility;
+				}
 			}
 		}
 	}
-	return reward + MDP_DISCOUNT_FACTOR * max_utility;
+	return max_utility;
 }
 
-float WorldSystem::get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters) {
+float WorldSystem::get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns) {
+	cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
+	for (float cd: cooldowns)
+		if (cd > 0)
+			cd -= BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
 	float reward = 0;
 	switch (action) {
-		case BOSS_STATE::TELEPORT:
-			reward += get_reward(boss_pos, num_ghouls, num_spitters, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 0, false), num_ghouls, num_spitters)/4;
-			reward += get_reward(boss_pos, num_ghouls, num_spitters, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false), num_ghouls, num_spitters)/4;
-			reward += get_reward(boss_pos, num_ghouls, num_spitters, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 2, false), num_ghouls, num_spitters)/4;
-			reward += get_reward(boss_pos, num_ghouls, num_spitters, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 7, false), num_ghouls, num_spitters)/4;
+		case BOSS_STATE::TELEPORT: {
+			vec2 new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 0, false);
+			reward += get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters)/4 + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num, cooldowns);
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false);
+			reward += get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters)/4 + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num, cooldowns);
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 2, false);
+			reward += get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters)/4 + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num, cooldowns);
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 7, false);
+			reward += get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters)/4 + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num, cooldowns);
 			break;
-        case BOSS_STATE::SWIPE:
+		} case BOSS_STATE::SWIPE: {
 			vec2 pos_dif = {abs(boss_pos.x - registry.motions.get(player_hero).position.x), abs(boss_pos.y - registry.motions.get(player_hero).position.y)};
 			float x_penalty = std::pow(std::pow(MDP_BASE_REWARD, 1.f/20.f), min(pos_dif.x, 300.f) - 280);
 			float y_penalty = std::pow(std::pow(MDP_BASE_REWARD, 1.f/20.f), min(pos_dif.y, 60.f) - 40);
-			reward = MDP_BASE_REWARD - x_penalty - y_penalty;
+			reward = MDP_BASE_REWARD - x_penalty - y_penalty + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num, cooldowns);
 			break;
-        case BOSS_STATE::SUMMON_GHOULS:
+		} case BOSS_STATE::SUMMON_GHOULS: {
 			for (uint i = 3; i <= 3 + 4; i++)
-				reward += get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls + i, num_spitters) / (4 + 1);
+				reward += get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls + i, num_spitters) / (4 + 1) + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls + i, num_spitters, step_num, cooldowns);
 			break;
-		case BOSS_STATE::SUMMON_SPITTERS:
+		} case BOSS_STATE::SUMMON_SPITTERS: {
             for (uint i = 1; i <= 1 + 3; i++)
-				reward += get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls, num_spitters + i) / (3 + 1);
+				reward += get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls, num_spitters + i) / (3 + 1) + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters + i, step_num, cooldowns);;
             break;
-		case BOSS_STATE::SUMMON_BULLETS:
+		} case BOSS_STATE::SUMMON_BULLETS: {
             vec2 line_pos = (boss_pos + registry.motions.get(player_hero).position) / 2.f;
 			vec2 line_scale = {sqrt(dot(boss_pos - registry.motions.get(player_hero).position, boss_pos - registry.motions.get(player_hero).position)), 1.f};
 			float line_angle = atan2(registry.motions.get(player_hero).position.y - boss_pos.y, registry.motions.get(player_hero).position.x - boss_pos.x);
@@ -1189,12 +1209,13 @@ float WorldSystem::get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_
 			registry.lasers.emplace(line);
 			for (Entity block: registry.blocks.entities) {
 				if (PhysicsSystem::collides(line, block)) {
-					reward = MDP_BASE_REWARD / 2;
+					reward = MDP_BASE_REWARD / 4 + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num, cooldowns);;
 					break;
 				}
 			}
-			reward = MDP_BASE_REWARD - 2;
+			reward = MDP_BASE_REWARD / 2 + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num, cooldowns);;
             break;
+		}
 	}
 	return reward;
 }
@@ -1239,10 +1260,11 @@ float WorldSystem::get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_s
 			}
 		}
 	} else if (num_ghouls_old != num_ghouls) {
-		return MDP_BASE_REWARD / 7 * (num_ghouls - num_ghouls_old) * (1 - max(std::pow(2, num_ghouls_old / MAX_GHOULS) - 1, (double) 1));
+		return MDP_BASE_REWARD / 7 * (num_ghouls - num_ghouls_old) * (1 - max(std::pow(2, num_ghouls_old / BOSS_MAX_GHOULS) - 1, (double) 1));
 	} else if (num_spitters_old != num_spitters) {
-		return MDP_BASE_REWARD / 4 * (num_spitters - num_spitters_old) * (1 - max(std::pow(2, num_spitters_old / MAX_SPITTERS) - 1, (double) 1));
+		return MDP_BASE_REWARD / 4 * (num_spitters - num_spitters_old) * (1 - max(std::pow(2, num_spitters_old / BOSS_MAX_SPITTERS) - 1, (double) 1));
 	}
+	return 0;
 }
 
 // Reset the world state to its initial state

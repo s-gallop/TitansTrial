@@ -146,7 +146,8 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
 
     registry.debugRenderRequests.emplace(entity);
     auto &bossState = registry.boss.emplace(entity);
-
+	for (int i = 0; i <= (uint) BOSS_STATE::SIZE; i++)
+		bossState.cooldowns.push_back(0);
 
     auto hb1 = Entity();
     auto hb2 = Entity();

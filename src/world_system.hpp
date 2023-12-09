@@ -30,10 +30,13 @@ const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_BOULDERS = 2;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_GHOULS = 5;
+const size_t BOSS_MAX_GHOULS = 14;
 const size_t MAX_SPITTERS = 3;
+const size_t BOSS_MAX_SPITTERS = 8;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const int BOSS_HEALTH = 10;
+const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {10000, 2000, 5000, 7000, 3000, 1000};
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
@@ -153,8 +156,8 @@ private:
 
 	//MDP
 	BOSS_STATE get_action();
-	float mdp_helper(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num);
-	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters);
+	float mdp_helper(vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
+	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
 	float get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, vec2 boss_pos, uint num_ghouls, uint num_spitters);
 
     // creates pause gui

@@ -64,6 +64,7 @@ struct Boss
     int phase = 0;
     int hp = 10;
     std::vector<Entity> hurt_boxes;
+	std::vector<float> cooldowns;
 };
 
 struct HealthBar
