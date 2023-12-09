@@ -14,22 +14,24 @@ const float EXPLOSION_SCALING = 2.0f;
 
 const vec2 ENEMY_BB = vec2(26.f, 30.f) * CHARACTER_SCALING;
 const vec2 BOULDER_BB = vec2(15.f, 14.f);
-const vec2 SWORD_BB = vec2(21.f, 50.f);
-const vec2 GUN_BB = vec2(32.f, 32.f);
-const vec2 ROCKET_LAUNCHER_BB = vec2(82.f, 28.f) * .8f;
-const vec2 ROCKET_BB = vec2(43.f, 7.f);
-const vec2 GRENADE_LAUNCHER_BB = vec2(41.f, 18.f) * 1.3f;
-const vec2 GRENADE_BB = vec2(18.f, 19.f);
-const vec2 LASER_RIFLE_BB = vec2(83.f, 28.f) * .8f;
-const vec2 LASER_BB = vec2(window_width_px, 30.f * 0.4f);
+const vec2 SWORD_BB = vec2(32.f, 64.f) * 0.7f;
+const vec2 GUN_BB = vec2(45.f, 32.f);
+const vec2 ARROW_BB = vec2(64.f, 64.f) * 0.5f;
+const vec2 ROCKET_LAUNCHER_BB = vec2(64.f, 32.f) * .8f;
+const vec2 ROCKET_BB = vec2(16.f, 16.f) * 1.2f;
+const vec2 GRENADE_LAUNCHER_BB = vec2(39.f, 39.f) * 0.6f;
+const vec2 GRENADE_BB = vec2(39.f, 39.f) * 0.6f;
+const vec2 LASER_RIFLE_BB = vec2(32.f, 32.f);
+const vec2 LASER_BB = vec2(window_width_px, 92.f * 0.2f);
 const vec2 HEART_BB = vec2(16.f, 16.f) * 2.f;
 const vec2 WINGED_BOOTS_BB = vec2(1489.f, 1946.f) * .02f;
 const vec2 DASH_BOOTS_BB = vec2(27.f, 30.f) * 1.2f;
 const vec2 PICKAXE_BB = vec2(55.f, 80.f) * .5f;
 const vec2 SPITTER_BULLET_BB = vec2(16.f, 16.f) * 3.f;
-const vec2 HELPER_BB = vec2(1058, 532) / 3.f;
+const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 320);
-
+const vec2 TRIDENT_BB = vec2(16, 32) * 1.5f;
+const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -87,13 +89,15 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::MENU_PRESSED,{30, 32} },
         { TEXTURE_ASSET_ID::PLAY, {204, 56}},
         { TEXTURE_ASSET_ID::PLAY_PRESSED, {204, 56}},
-        { TEXTURE_ASSET_ID::SWORD_HELPER, {101, 9}},
-        { TEXTURE_ASSET_ID::GUN_HELPER, {153, 9}},
-        { TEXTURE_ASSET_ID::GRENADE_HELPER, {314, 9}},
-        { TEXTURE_ASSET_ID::ROCKET_HELPER, {150, 9}},
-        { TEXTURE_ASSET_ID::WINGED_BOOTS_HELPER, {142, 9}},
-        { TEXTURE_ASSET_ID::PICKAXE_HELPER, {199, 9}},
-        { TEXTURE_ASSET_ID::DASH_BOOTS_HELPER, {178, 9}},
+        { TEXTURE_ASSET_ID::SWORD_HELPER, {180, 17}},
+        { TEXTURE_ASSET_ID::GUN_HELPER, {263, 17}},
+        { TEXTURE_ASSET_ID::GRENADE_HELPER, {534, 17}},
+        { TEXTURE_ASSET_ID::ROCKET_HELPER, {311, 17}},
+        { TEXTURE_ASSET_ID::LASER_HELPER, {301, 17}},
+        { TEXTURE_ASSET_ID::WINGED_BOOTS_HELPER, {249, 17}},
+        { TEXTURE_ASSET_ID::PICKAXE_HELPER, {333, 17}},
+        { TEXTURE_ASSET_ID::DASH_BOOTS_HELPER, {316, 17}},
+        { TEXTURE_ASSET_ID::CONTINUE_HELPER, {311, 21}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
@@ -110,6 +114,9 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::LAVA_PILLAR, vec2(LAVA_PILLAR_BB.x * 0.5f, LAVA_PILLAR_BB.y)},
         { TEXTURE_ASSET_ID::HEALTH_BAR, vec2(62, 19) * 3.f},
         { TEXTURE_ASSET_ID::HEALTH_BAR_HEALTH, vec2(56, 3) * 3.f},
+        { TEXTURE_ASSET_ID::WATER_BALL, {30, 20}},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, GRENADE_LAUNCHER_BB},
+        { TEXTURE_ASSET_ID::GRENADE, GRENADE_BB}
 };
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
@@ -123,10 +130,12 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::BOSS_SWORD_L, {19, 21}},
         { TEXTURE_ASSET_ID::EXPLOSION, {100, 92}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {1200, 800}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, LAVA_PILLAR_BB},
+        { TEXTURE_ASSET_ID::WATER_BALL, {64, 64}},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, GRENADE_LAUNCHER_BB},
+        { TEXTURE_ASSET_ID::GRENADE, GRENADE_BB},
+        { TEXTURE_ASSET_ID::GUN, GUN_BB}
 };
-
-const float BULLET_MESH_SCALE = 4.0f;
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10 * CHARACTER_SCALING, -1 * CHARACTER_SCALING}},
@@ -139,7 +148,11 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::BOSS_SWORD_L, {0, 0}},
         { TEXTURE_ASSET_ID::EXPLOSION, {0, -8}},
         { TEXTURE_ASSET_ID::PARALLAX_LAVA, {0, -378}},
-        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}}
+        { TEXTURE_ASSET_ID::LAVA_PILLAR, {0,0}},
+        { TEXTURE_ASSET_ID::WATER_BALL, {-17,0}},
+        { TEXTURE_ASSET_ID::GRENADE_LAUNCHER, {4 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GRENADE, {0 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::GUN, {-2 * CHARACTER_SCALING, 0 * CHARACTER_SCALING}}
 };
 
 const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
@@ -208,6 +221,24 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
             {4},
             0,
             4
+        }},
+        {TEXTURE_ASSET_ID::WATER_BALL, {
+            3,
+            {4, 5, 5},
+            0,
+            5
+        }},
+       {TEXTURE_ASSET_ID::GRENADE_LAUNCHER, {
+            1,
+            {20},
+            0,
+            20
+        }},
+       {TEXTURE_ASSET_ID::GRENADE, {
+            1,
+            {20},
+            0,
+            20
         }}
 };
 // the player
@@ -247,6 +278,10 @@ Entity createLaserRifle(RenderSystem* renderer, vec2 position);
 
 Entity createLaser(RenderSystem* renderer, vec2 position, float angle);
 
+Entity createTrident(RenderSystem* renderer, vec2 position);
+
+Entity createWaterBall(RenderSystem* renderer, vec2 position, float angle);
+
 Entity createHeart(RenderSystem* renderer, vec2 position);
 
 Entity createWingedBoots(RenderSystem* renderer, vec2 position);
@@ -255,10 +290,12 @@ Entity createDashBoots(RenderSystem* renderer, vec2 position);
 
 Entity createPickaxe(RenderSystem* renderer, vec2 position);
 
+Entity createMainMenuBackground(RenderSystem* renderer);
+
 // the parallax backgrounds
 Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID texture_id);
 // the helper text during pause
-Entity createHelperText(RenderSystem* renderer);
+Entity createHelperText(RenderSystem* renderer, float size);
 Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type);
 Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
 // the ui button

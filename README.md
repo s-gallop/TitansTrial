@@ -2,6 +2,10 @@
 
 Titan's Trial - A 2D Endless survival game
 
+## Attributions
+
+Please see [ATTRIBUTIONS.MD](ATTRIBUTIONS.md).
+
 ## Write-up Milestone 3
 
 Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:

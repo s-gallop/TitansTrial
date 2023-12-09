@@ -53,6 +53,7 @@ const float HEART_GAP = 35.f;
 const float HEART_Y_CORD = 20.f;
 const vec2 POWER_CORD = { 20.f, 60.f };
 const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
+const vec2 DB_BOSS_CORD = { 140.f, 717.5f };
 const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
 const vec2 INDICATOR_LEVEL_ONE_CORD = { 85.f, 710.f };
 const vec2 INDICATOR_LEVEL_TWO_CORD = { 140.f, 710.f };
@@ -64,7 +65,7 @@ const float NUMBER_START_POS = 992.f;
 const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
-const vec2 DB_SATAN_CORD = { 140.f, 730.f };
+const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
 const uint MDP_HORIZON = 10;
 const float MDP_DISCOUNT_FACTOR = 0.9f;
@@ -174,6 +175,7 @@ private:
 	// backgrounds
     void create_parallax_background();
 	Entity parallax_background;
+	Entity parallax_background_color;
 	Entity parallax_clouds_far_1;
 	Entity parallax_clouds_far_2;
 	Entity parallax_clouds_close_1;

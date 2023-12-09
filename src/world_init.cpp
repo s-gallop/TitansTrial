@@ -269,8 +269,6 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
     motion.position = position;
 
 	registry.enemies.emplace(entity);
-	registry.enemies.get(entity).hittable = false;
-	registry.enemies.get(entity).hitting = false;
 	registry.enemies.get(entity).hit_animation = 3;
 	registry.enemies.get(entity).death_animation = 4;
 
@@ -408,11 +406,31 @@ Entity createSpitterEnemyBullet(RenderSystem *renderer, vec2 pos, float angle)
 	return entity;
 }
 
+Entity createMainMenuBackground(RenderSystem *renderer) {
+	Entity entity = Entity();
+	auto &motion = registry.motions.emplace(entity);
+    motion.angle = 0.f;
+    motion.velocity = {0.f, 0.f};
+    motion.scale = MAIN_MENU_BG_BB;
+    motion.position = {window_width_px/2, window_height_px/2};
+
+    registry.renderRequests.insert(
+            entity,
+            {TEXTURE_ASSET_ID::TITLE_SCREEN_BG,
+             EFFECT_ASSET_ID::TEXTURED,
+             GEOMETRY_BUFFER_ID::SPRITE,
+             false,
+             true,
+             motion.scale});
+
+    return entity;
+}
+
 Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID texture_id)
 {
 	Entity entity = Entity();
 	vec2 vel;
-	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
+	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND || texture_id == TEXTURE_ASSET_ID::BACKGROUND_COLOR || texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON)
 	{
 		vel = vec2();
 	}
@@ -443,6 +461,7 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	motion.velocity = vel;
 	motion.position = pos;
 	if (texture_id == TEXTURE_ASSET_ID::BACKGROUND ||
+		texture_id == TEXTURE_ASSET_ID::BACKGROUND_COLOR ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_MOON ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_CLOSE ||
 		texture_id == TEXTURE_ASSET_ID::PARALLAX_CLOUDS_FAR)
@@ -481,16 +500,16 @@ Entity createParallaxItem(RenderSystem *renderer, vec2 pos, TEXTURE_ASSET_ID tex
 	return entity;
 }
 
-Entity createHelperText(RenderSystem* renderer)
+Entity createHelperText(RenderSystem* renderer, float size)
 {
-    const int PADDING = 20;
+    const int PADDING = 150;
     Entity entity = Entity();
 
     auto &motion = registry.motions.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    motion.scale = HELPER_BB;
-    motion.position = {window_width_px - motion.scale.x/2 - PADDING, motion.scale.y/2 + PADDING};
+    motion.scale = HELPER_BB * size;
+    motion.position = {PADDING, window_height_px/2};
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     registry.renderRequests.insert(
@@ -510,7 +529,7 @@ Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type) {
 
     Motion &motion = registry.motions.emplace(entity);
     motion.position = pos;
-    motion.scale = ASSET_SIZE.at(type) * 2.f;
+    motion.scale = ASSET_SIZE.at(type);
     
 	registry.renderRequests.insert(
             entity,
@@ -586,7 +605,8 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 		 GEOMETRY_BUFFER_ID::SPRITE,
          false,
          true,
-         motion.scale});
+         SPRITE_SCALE.at(TEXTURE_ASSET_ID::GUN),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GUN)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -594,10 +614,9 @@ Entity createGun(RenderSystem *renderer, vec2 position)
 
 Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	auto entity = Entity();
-    const float GREY_SCALE = .47f;
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::BULLET);
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	CollisionMesh &collisionMesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::BULLET);
@@ -607,19 +626,16 @@ Entity createBullet(RenderSystem* renderer, vec2 position, float angle) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.angle = angle;
-	motion.velocity = vec2(800.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
-	motion.scale = mesh.original_size * BULLET_MESH_SCALE;
-	
-	vec3& colour = registry.colors.emplace(entity);
-	colour = {GREY_SCALE, GREY_SCALE, GREY_SCALE};
+	motion.velocity = vec2(600.f, 0) * mat2({cos(angle), -sin(angle)}, {sin(angle), cos(angle)});
+	motion.scale = mesh.original_size * 36.f;
 
 	registry.bullets.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-			EFFECT_ASSET_ID::BULLET,
-			GEOMETRY_BUFFER_ID::BULLET,
+		{ TEXTURE_ASSET_ID::ARROW,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
           false,
           true,
           motion.scale});
@@ -703,7 +719,7 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	motion.angle = 0.f;
 	motion.velocity = {0.f, 0.f};
 	motion.position = position;
-	motion.scale = GRENADE_LAUNCHER_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER);
 
 	// Add to swords, gravity and render requests
 	Collectable& collectable = registry.collectables.emplace(entity);
@@ -711,14 +727,16 @@ Entity createGrenadeLauncher(RenderSystem *renderer, vec2 position)
 	registry.grenadeLaunchers.emplace(entity);
 	registry.gravities.emplace(entity);
 	registry.solids.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER));
 	registry.renderRequests.insert(
 		entity,
 		{TEXTURE_ASSET_ID::GRENADE_LAUNCHER,
-		 EFFECT_ASSET_ID::TEXTURED,
+		 EFFECT_ASSET_ID::GRENADE_ORB,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 false,
 		 true,
-		 motion.scale});
+		 SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER),
+		 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE_LAUNCHER)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -735,7 +753,7 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.velocity = velocity;
-	motion.scale = GRENADE_BB;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::GRENADE);
 
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	projectile.friction_x = .6f;
@@ -744,14 +762,16 @@ Entity createGrenade(RenderSystem* renderer, vec2 position, vec2 velocity) {
 	registry.grenades.emplace(entity);
 	registry.weaponHitBoxes.emplace(entity);
 	registry.gravities.emplace(entity);
+	registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::GRENADE));
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::GRENADE,
-			EFFECT_ASSET_ID::TEXTURED,
+			EFFECT_ASSET_ID::GRENADE_ORB,
 			GEOMETRY_BUFFER_ID::SPRITE,
 			false,
 			true,
-			motion.scale});
+		SPRITE_SCALE.at(TEXTURE_ASSET_ID::GRENADE),
+		SPRITE_OFFSET.at(TEXTURE_ASSET_ID::GRENADE)});
     registry.debugRenderRequests.emplace(entity);
 
 	return entity;
@@ -845,6 +865,68 @@ Entity createLaser(RenderSystem* renderer, vec2 position, float angle) {
 			false,
 			true,
 			motion.scale });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
+Entity createTrident(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = position;
+	motion.scale = TRIDENT_BB;
+
+	// Add to swords, gravity and render requests
+	Collectable& collectable = registry.collectables.emplace(entity);
+	collectable.type = COLLECTABLE_TYPE::TRIDENT;
+	registry.tridents.emplace(entity);
+	registry.gravities.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TRIDENT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 motion.scale });
+	registry.debugRenderRequests.emplace(entity);
+	return entity;
+}
+
+Entity createWaterBall(RenderSystem* renderer, vec2 position, float angle) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.angle = angle;
+	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::WATER_BALL);
+
+	AnimationInfo& animation = registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::WATER_BALL));
+	animation.curState = 1;
+
+	registry.waterBalls.emplace(entity);
+	registry.solids.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::WATER_BALL,
+			EFFECT_ASSET_ID::WATER_BALL,
+			GEOMETRY_BUFFER_ID::SPRITE,
+			false,
+			true,
+			SPRITE_SCALE.at(TEXTURE_ASSET_ID::WATER_BALL),
+			SPRITE_OFFSET.at(TEXTURE_ASSET_ID::WATER_BALL)});
 	registry.debugRenderRequests.emplace(entity);
 	return entity;
 }
@@ -1185,7 +1267,7 @@ Entity createScore(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
@@ -1208,7 +1290,7 @@ Entity createNumber(RenderSystem* renderer, vec2 pos) {
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		 true,
-		 true,
+		 false,
 		 motion.scale });
 
 	registry.inGameGUIs.emplace(entity);
@@ -1350,6 +1432,27 @@ Entity createHealthBar(RenderSystem* renderer, Entity owner) {
 }
 
 Entity createDialogue(RenderSystem* renderer, TEXTURE_ASSET_ID texture_id) {
+	Entity text = Entity();
+
+	auto& text_motion = registry.motions.emplace(text);
+	text_motion.angle = 0.f;
+	text_motion.velocity = { 0.f, 0.f };
+	text_motion.position = { 600, 300 };
+	text_motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::CONTINUE_HELPER);
+
+	registry.renderRequests.insert(
+		text,
+		{ TEXTURE_ASSET_ID::CONTINUE_HELPER,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		 false,
+		 true,
+		 text_motion.scale });
+
+	registry.dialogueTexts.emplace(text);
+
+    registry.debugRenderRequests.emplace(text);
+
 	Entity entity = Entity();
 
 	auto& motion = registry.motions.emplace(entity);
