@@ -313,7 +313,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		{
 			ddl = 3;
 			if (ddf > recorded_max_ddf) {
-				show_dialogue(4);
+				show_dialogue(6);
 			}
 		}
 		else if (ddf >= 400 && ddf < 500 && ddl != 4)
@@ -332,7 +332,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
 			createHealthBar(renderer, boss);
 			if (ddf > recorded_max_ddf) {
-				show_dialogue(5);
+				show_dialogue(7);
 				printf("\nLv4\n");
 			}
 		}
@@ -341,7 +341,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			ddl = 5;
 			clear_enemies();
 			if (ddf > recorded_max_ddf) {
-				show_dialogue(6);
+				show_dialogue(8);
 			}
 		}
 		else if (ddf >= 600)
@@ -578,7 +578,9 @@ void WorldSystem::show_dialogue(int dialogue_number)
 	dialogue_screen_active = dialogue_number;
 	if (dialogue_number != 0) {
 		play_sound(effect_to_play(dialogue_number));
-		play_dialogue_music();
+		if (dialogue_number != 9) {
+			play_dialogue_music();
+		}
 		createDialogue(renderer, connectDialogue(dialogue_number));
 	} else {
 		stop_dialogue_music();
@@ -594,6 +596,8 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 		case 6:
 			return SOUND_EFFECT::TELEPORT;
 			break;
+		case 9:
+			return SOUND_EFFECT::BELL;
 		default: // cases 3, 7, 8. Needed default case to compile
 			return SOUND_EFFECT::LAUGH;
 			break;
@@ -618,8 +622,10 @@ TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
 		return TEXTURE_ASSET_ID::DIALOGUE_6;
 	case 7:
 		return TEXTURE_ASSET_ID::DIALOGUE_7;
-	default:
+	case 8:
 		return TEXTURE_ASSET_ID::DIALOGUE_8;
+	default:
+		return TEXTURE_ASSET_ID::ENDLESS_OVERLAY;
 	}
 }
 
@@ -1335,7 +1341,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
     }
 
 	if (key == GLFW_KEY_E && action == GLFW_PRESS && dialogue_screen_active != 0) {
+		bool endlessStarted = dialogue_screen_active == 8;
 		show_dialogue(0);
+		if (endlessStarted) {
+			show_dialogue(9);
+		}
 	}
 
 	if (!registry.deathTimers.has(player_hero) && dialogue_screen_active == 0)

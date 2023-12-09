@@ -45,6 +45,7 @@ enum class SOUND_EFFECT {
     BOSS_TP = BOSS_SLASH + 1,
     BOSS_SUMMON = BOSS_TP + 1,
     BOSS_DEATH = BOSS_SUMMON + 1,
+    BELL = BOSS_DEATH + 1
 };
 
 void play_main_menu_music();

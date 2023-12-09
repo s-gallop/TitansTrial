@@ -51,6 +51,7 @@ uint init_sound()
 	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_teleport.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_summon.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_death.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("bell.wav").c_str()));
 
 	if (background_music == nullptr || dialogue_background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk *effect)
 												   { return effect == nullptr; }))
