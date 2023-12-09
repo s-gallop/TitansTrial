@@ -19,6 +19,27 @@ Changes from M3_Proposal can be seen highlighted in green in the M4_Proposal doc
 
 ### A note on game balance
 
+The game is based on a dynamic difficulty system, and a new run always starts at the lowest difficulty. Player death is permanent and results in starting from difficulty 1, as inspired by roguelike games. Difficulty increases through levels 1-4, followed by the boss level, and then an endless mode that is much harder. The goal is to each endless and trying to beat your highest score. This is how we take care of balancing difficulty through enemies and weapons:
+
+* Dynamic Difficulty Factor & Level
+  * Enemy spawning frequency, kinds and numbers
+  * Weapon spawning kinds and probability
+  * Spitter shoots faster at higher difficulty
+
+* Variable Enemy Health Value
+  * Ranged enemy and combat enemy have different hp
+  * Boulders can only be dstroyed by explosion (but with only one explosion)
+
+* Variable Weapon Advantages
+  * Weapons of mass destruction have longer cooldown time and higher damage (chaos orb grenade and orb rocket launcher)
+  * Sword has the highest damage (due to high risk)
+  * Weapons that go through platforms have lowest damage (beam staff)
+
+* Boss Status
+  * Boss has the highest HP
+  * Boss can only be damaged by explosion
+  * Boss have variable ways to attack and defence itself
+
 ## Write-up Milestone 3
 
 Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:
