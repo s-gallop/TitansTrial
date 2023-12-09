@@ -46,6 +46,6 @@ enum class SOUND_EFFECT {
 void play_main_menu_music();
 void play_music();
 void play_sound(SOUND_EFFECT id);
-void toggle_mute_music();
+void set_mute_music(bool mute);
 void play_dialogue_music();
 void stop_dialogue_music();

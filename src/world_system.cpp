@@ -1298,7 +1298,6 @@ int WorldSystem::save_weapon(Entity weapon) {
 }
 
 void WorldSystem::load_game() {
-	restart_game();
 	std::ifstream in("game_save.json");
 	std::stringstream buffer;
 	buffer << in.rdbuf();
@@ -1308,8 +1307,12 @@ void WorldSystem::load_game() {
 		state = json::JSON::Load(jsonString);
 		if (state["mute"].ToBool())
 		{
-			toggle_mute_music();
+			is_music_muted = true;
+			set_mute_music(is_music_muted);
 		}
+		// restart after loading mute status
+		restart_game();
+
 		ddl = state["ddl"].ToInt();
 		ddf = state["ddf"].ToFloat();
 		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
@@ -1931,7 +1934,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 	
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
-		toggle_mute_music();
+		is_music_muted = !is_music_muted;
+		set_mute_music(is_music_muted);
 	}
 }
 
