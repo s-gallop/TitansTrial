@@ -641,6 +641,12 @@ void WorldSystem::update_graphics_all_enemies()
             enemy.hitting = true;
             if (registry.motions.get(entity).velocity.x != 0)
                 registry.motions.get(entity).dir = registry.motions.get(entity).velocity.x > 0 ? 1 : -1;
+
+            if (registry.boss.has(entity)) {
+                enemy.hittable = false;
+                enemy.hitting = false;
+                registry.boss.get(entity).state = BOSS_STATE::TELEPORT;
+            }
         }
     }
 }
