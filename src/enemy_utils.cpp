@@ -543,16 +543,28 @@ float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint 
     switch (action) {
         case BOSS_STATE::TELEPORT: {
             vec2 new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 0, false);
-            reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 4.f;
+            if (new_pos != boss_pos) {
+                reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) +
+                        MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 3.f;
+            }
 
             new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false);
-            reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 4.f;
+            if (new_pos != boss_pos) {
+                reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) +
+                        MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 3.f;
+            }
 
             new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 2, false);
-            reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 4.f;
+            if (new_pos != boss_pos) {
+                reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) +
+                        MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 3.f;
+            }
 
             new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 7, false);
-            reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 4.f;
+            if (new_pos != boss_pos) {
+                reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters, player_hero, boss) +
+                        MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer)) / 3.f;
+            }
             break;
         } case BOSS_STATE::SWIPE: {
             vec2 pos_dif = {abs(boss_pos.x - registry.motions.get(player_hero).position.x), abs(boss_pos.y - registry.motions.get(player_hero).position.y)};
@@ -578,8 +590,8 @@ float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint 
             for (Entity block: registry.blocks.entities) {
                 if (PhysicsSystem::collides(line, block)) {
                     registry.remove_all_components_of(line);
-                    reward = MDP_BASE_REWARD/100.f + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer);
-                    break;
+                    reward = MDP_BASE_REWARD / 1000.f + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num + 1, cooldowns, player_hero, boss, renderer);
+                    return reward;
                 }
             }
             registry.remove_all_components_of(line);
@@ -605,8 +617,8 @@ float get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, 
             x_buffer = max(abs(boss_pos.x - player_motion.position.x) - registry.motions.get(boss).scale.x / 2, 0.f);
             y_buffer = max(abs(boss_pos.y - player_motion.position.y) - registry.motions.get(boss).scale.y / 2, 0.f);
             float player_dist = sqrt(dot(vec2(x_buffer, y_buffer), vec2(x_buffer, y_buffer)));
-            if (player_dist_old < 100)
-                return MDP_BASE_REWARD;
+            if (player_dist_old < 150)
+                return MDP_BASE_REWARD * 1000;
             else {
                 return MDP_BASE_REWARD * (1 - min(std::pow(2, player_dist_old / 300.f) - 1, (double) 1)) * max(min((player_dist - player_dist_old) / 100.f, 1.f), -1.f);
             }
