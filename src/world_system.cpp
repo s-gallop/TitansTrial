@@ -54,6 +54,7 @@ int ddl;
 float ddf;
 float recorded_max_ddf;
 bool should_score_prepare_to_show = false;
+bool death_skip_dialogue = false;
 
 float lavaPillarTimer = 0;
 
@@ -532,6 +533,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			{
 				registry.deathTimers.remove(entity);
 				screen.screen_darken_factor = 0;
+				death_skip_dialogue = true;
 				restart_game();
 				return true;
 			}
@@ -1314,7 +1316,15 @@ void WorldSystem::restart_game()
 	motionKeyStatus.reset();
 	ddl = -1;
 	ddf = 0.f;
-	recorded_max_ddf = -1.f;
+	if (!death_skip_dialogue)
+	{
+		recorded_max_ddf = -1.f;
+	}
+	else if (recorded_max_ddf >= 500)
+	{
+		recorded_max_ddf = 499;
+	}
+	death_skip_dialogue = false;
 	should_score_prepare_to_show = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
