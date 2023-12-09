@@ -367,6 +367,7 @@ void boss_action_teleport(Entity boss){
     Boss& boss_state = registry.boss.get(boss);
     Enemies& enemy_info = registry.enemies.get(boss);
     if (boss_state.phase == 0) {
+        play_sound(SOUND_EFFECT::TELEPORT);
         enemy_info.hitting = false;
         enemy_info.hittable = false;
         info.oneTimeState = PHASE_OUT;
@@ -392,6 +393,7 @@ void boss_action_swipe(Entity boss){
     Boss& boss_state = registry.boss.get(boss);
     AnimationInfo& info = registry.animated.get(boss);
     if (boss_state.phase == 0) {
+        play_sound(SOUND_EFFECT::BOSS_SLASH);
         info.oneTimeState = SWIPE;
         registry.motions.get(boss_state.hurt_boxes[0]).position = registry.motions.get(boss).position + vec2(0,55);
         registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
@@ -423,6 +425,7 @@ void boss_action_summon(Entity boss, RenderSystem* renderer, uint type){
     AnimationInfo& info = registry.animated.get(boss);
     Boss& boss_state = registry.boss.get(boss);
     if (boss_state.phase == 0) {
+        play_sound(SOUND_EFFECT::BOSS_SUMMON);
         info.oneTimeState = SUMMON;
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {

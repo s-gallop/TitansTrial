@@ -40,12 +40,16 @@ enum class SOUND_EFFECT {
     BUTTON_CLICK = EQUIPMENT_DROP + 1,
     TELEPORT = BUTTON_CLICK + 1,
     LAUGH = TELEPORT + 1,
-    WATER_BALL_SHOOT = LAUGH + 1
+    WATER_BALL_SHOOT = LAUGH + 1,
+    BOSS_SLASH = WATER_BALL_SHOOT + 1,
+    BOSS_TP = BOSS_SLASH + 1,
+    BOSS_SUMMON = BOSS_TP + 1,
+    BOSS_DEATH = BOSS_SUMMON + 1,
 };
 
 void play_main_menu_music();
 void play_music();
 void play_sound(SOUND_EFFECT id);
-void toggle_mute_music();
+void set_mute_music(bool mute);
 void play_dialogue_music();
 void stop_dialogue_music();

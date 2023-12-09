@@ -84,6 +84,7 @@ class RenderSystem
 		textures_path("helpers/grenade_helper.png"),
 		textures_path("helpers/rocket_helper.png"),
 		textures_path("helpers/laser_helper.png"),
+		textures_path("helpers/trident_helper.png"),
 		textures_path("helpers/winged_boots_helper.png"),
 		textures_path("helpers/pickaxe_helper.png"),
 		textures_path("helpers/dash_boots_helper.png"),

@@ -5,7 +5,8 @@ Mix_Music *background_music;
 std::vector<Mix_Chunk *> sound_effects;
 Mix_Music *dialogue_background_music;
 Mix_Music *main_menu_background_music;
-bool is_music_muted = false;
+
+bool is_music_muted;
 
 uint init_sound()
 {
@@ -46,6 +47,10 @@ uint init_sound()
 	sound_effects.push_back(Mix_LoadWAV(audio_path("teleport.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("hades_laugh.wav").c_str()));
 	sound_effects.push_back(Mix_LoadWAV(audio_path("water_ball_shoot.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_slam.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_teleport.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_summon.wav").c_str()));
+	sound_effects.push_back(Mix_LoadWAV(audio_path("boss_death.wav").c_str()));
 
 	if (background_music == nullptr || dialogue_background_music == nullptr || std::any_of(sound_effects.begin(), sound_effects.end(), [](Mix_Chunk *effect)
 												   { return effect == nullptr; }))
@@ -98,7 +103,6 @@ void destroy_sound()
 
 void play_main_menu_music() {
 	Mix_PlayMusic(main_menu_background_music, -1);
-	is_music_muted = false;
 	fprintf(stderr, "Loaded main menu music\n");
 }
 
@@ -106,21 +110,18 @@ void play_music()
 {
 	Mix_FadeOutMusic(300);
 	Mix_PlayMusic(background_music, -1);
-	is_music_muted = false;
 	fprintf(stderr, "Loaded music\n");
 }
 
-void toggle_mute_music()
+void set_mute_music(bool muted)
 {
-	if (!is_music_muted)
+	if (muted)
 	{
 		Mix_VolumeMusic(0);
-		is_music_muted = true;
 	}
 	else
 	{
-		Mix_VolumeMusic(100);
-		is_music_muted = false;
+		Mix_VolumeMusic(60);
 	}
 }
 

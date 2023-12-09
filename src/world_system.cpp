@@ -53,6 +53,7 @@ int ddl;
 float ddf;
 float recorded_max_ddf;
 bool should_score_prepare_to_show = false;
+bool death_skip_dialogue = false;
 
 float lavaPillarTimer = LAVA_PILLAR_SPAWN_DELAY;
 
@@ -209,8 +210,10 @@ void WorldSystem::create_almanac_screen() {
 	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
 	createLaserRifle(renderer, {window_width_px / 6, 650});
 	createToolTip(renderer, {window_width_px * 2 / 3, 650}, TEXTURE_ASSET_ID::LASER_HELPER);
+	createTrident(renderer, {window_width_px / 6, 700});
+	createToolTip(renderer, {window_width_px * 2 / 3, 700}, TEXTURE_ASSET_ID::TRIDENT_HELPER);
 
-	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
+	createButton(renderer, { window_width_px / 2, 760 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
 }
 
 
@@ -489,6 +492,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			{
 				registry.deathTimers.remove(entity);
 				screen.screen_darken_factor = 0;
+				death_skip_dialogue = true;
 				restart_game();
 				return true;
 			}
@@ -675,7 +679,15 @@ void WorldSystem::restart_game()
 	motionKeyStatus.reset();
 	ddl = -1;
 	ddf = 0.f;
-	recorded_max_ddf = -1.f;
+	if (!death_skip_dialogue)
+	{
+		recorded_max_ddf = -1.f;
+	}
+	else if (recorded_max_ddf >= 500)
+	{
+		recorded_max_ddf = 499;
+	}
+	death_skip_dialogue = false;
 	should_score_prepare_to_show = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
@@ -833,7 +845,6 @@ int WorldSystem::save_weapon(Entity weapon) {
 }
 
 void WorldSystem::load_game() {
-	restart_game();
 	std::ifstream in("game_save.json");
 	std::stringstream buffer;
 	buffer << in.rdbuf();
@@ -843,8 +854,12 @@ void WorldSystem::load_game() {
 		state = json::JSON::Load(jsonString);
 		if (state["mute"].ToBool())
 		{
-			toggle_mute_music();
+			is_music_muted = true;
+			set_mute_music(is_music_muted);
 		}
+		// restart after loading mute status
+		restart_game();
+
 		ddl = state["ddl"].ToInt();
 		ddf = state["ddf"].ToFloat();
 		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
@@ -1091,12 +1106,10 @@ void WorldSystem::handle_collisions()
 						{
 							ddf += 5.f;
 						}
-						if (registry.enemies.get(entity_other).death_animation == -2) {
-							registry.remove_all_components_of(entity_other);
-						} else {
-							registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
-							registry.animated.get(entity_other).oneTimer = 0;
-						}
+						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+                        if (registry.boss.has(entity_other)) {
+                            play_sound(SOUND_EFFECT::BOSS_DEATH);
+                        }
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
 						registry.animated.get(entity_other).oneTimer = 0;
@@ -1471,7 +1484,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
-		toggle_mute_music();
+		is_music_muted = !is_music_muted;
+		set_mute_music(is_music_muted);
 	}
 }
 
