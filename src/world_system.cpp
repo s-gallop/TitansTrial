@@ -212,8 +212,10 @@ void WorldSystem::create_almanac_screen() {
 	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
 	createLaserRifle(renderer, {window_width_px / 6, 650});
 	createToolTip(renderer, {window_width_px * 2 / 3, 650}, TEXTURE_ASSET_ID::LASER_HELPER);
+	createTrident(renderer, {window_width_px / 6, 700});
+	createToolTip(renderer, {window_width_px * 2 / 3, 700}, TEXTURE_ASSET_ID::TRIDENT_HELPER);
 
-	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
+	createButton(renderer, { window_width_px / 2, 760 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
 }
 
 
