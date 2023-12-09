@@ -213,8 +213,10 @@ void WorldSystem::create_almanac_screen() {
 	createToolTip(renderer, {window_width_px * 2 / 3, 600}, TEXTURE_ASSET_ID::DASH_BOOTS_HELPER);
 	createLaserRifle(renderer, {window_width_px / 6, 650});
 	createToolTip(renderer, {window_width_px * 2 / 3, 650}, TEXTURE_ASSET_ID::LASER_HELPER);
+	createTrident(renderer, {window_width_px / 6, 700});
+	createToolTip(renderer, {window_width_px * 2 / 3, 700}, TEXTURE_ASSET_ID::TRIDENT_HELPER);
 
-	createButton(renderer, { window_width_px / 2, 700 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
+	createButton(renderer, { window_width_px / 2, 760 }, TEXTURE_ASSET_ID::BACK, [&]() {create_title_screen();});
 }
 
 
@@ -1023,6 +1025,7 @@ void WorldSystem::boss_action_teleport(){
     Boss& boss_state = registry.boss.get(boss);
     Enemies& enemy_info = registry.enemies.get(boss);
     if (boss_state.phase == 0) {
+		play_sound(SOUND_EFFECT::BOSS_TP);
         enemy_info.hitting = false;
         enemy_info.hittable = false;
         info.oneTimeState = PHASE_OUT;
@@ -1053,6 +1056,7 @@ void WorldSystem::boss_action_swipe(){
         registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
         boss_state.phase++;
     } else if (boss_state.phase == 1 && info.oneTimeState != -1) {
+		play_sound(SOUND_EFFECT::BOSS_SLASH);
         Motion& motion = registry.motions.get(boss);
         int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
         if (frame == 1) {
@@ -1083,6 +1087,7 @@ void WorldSystem::boss_action_summon(uint type){
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
         info.oneTimeState = STAND_UP;
+		play_sound(SOUND_EFFECT::BOSS_SUMMON);
         switch (type) {
             case 0:
                 for(int i = 0; i < 3 + rand() % 4; i++) {
@@ -1483,7 +1488,6 @@ int WorldSystem::save_weapon(Entity weapon) {
 }
 
 void WorldSystem::load_game() {
-	restart_game();
 	std::ifstream in("game_save.json");
 	std::stringstream buffer;
 	buffer << in.rdbuf();
@@ -1493,8 +1497,12 @@ void WorldSystem::load_game() {
 		state = json::JSON::Load(jsonString);
 		if (state["mute"].ToBool())
 		{
-			toggle_mute_music();
+			is_music_muted = true;
+			set_mute_music(is_music_muted);
 		}
+		// restart after loading mute status
+		restart_game();
+
 		ddl = state["ddl"].ToInt();
 		ddf = state["ddf"].ToFloat();
 		recorded_max_ddf = state["recorded_max_ddf"].ToFloat();
@@ -1742,12 +1750,7 @@ void WorldSystem::handle_collisions()
 						{
 							ddf += 5.f;
 						}
-						if (registry.enemies.get(entity_other).death_animation == -2) {
-							registry.remove_all_components_of(entity_other);
-						} else {
-							registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
-							registry.animated.get(entity_other).oneTimer = 0;
-						}
+						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
 						registry.animated.get(entity_other).oneTimer = 0;
@@ -2127,7 +2130,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
-		toggle_mute_music();
+		is_music_muted = !is_music_muted;
+		set_mute_music(is_music_muted);
 	}
 }
 
