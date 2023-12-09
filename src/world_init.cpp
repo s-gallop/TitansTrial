@@ -1375,7 +1375,7 @@ Entity createLavaPillar(RenderSystem* renderer, vec2 pos) {
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.angle = 0.f;
-	motion.velocity = { 0.f, -530.f };
+	motion.velocity = { 0.f, -700.f };
 	motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::LAVA_PILLAR);
 	registry.gravities.emplace(entity);
 	Enemies& enemy = registry.enemies.emplace(entity);
