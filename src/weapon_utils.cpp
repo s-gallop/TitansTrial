@@ -385,7 +385,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		Gun& gun = registry.guns.get(weapon);
 		if (gun.cooldown > 0) {
 			gun.cooldown -= elapsed_ms;
-			if (gun.cooldown <= 640 && !gun.loaded) {
+			if (gun.cooldown <= 930 && !gun.loaded) {
 				play_sound(SOUND_EFFECT::GUN_LEVER);
 				gun.loaded = true;
 			}
@@ -394,7 +394,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		RocketLauncher& launcher = registry.rocketLaunchers.get(weapon);
 		if (launcher.cooldown > 0) {
 			launcher.cooldown -= elapsed_ms;
-			if (launcher.cooldown <= 2000 && !launcher.loaded) {
+			if (launcher.cooldown <= 1900 && !launcher.loaded) {
 				play_sound(SOUND_EFFECT::ROCKET_LAUNCHER_RELOAD);
 				launcher.loaded = true;
 			}
@@ -404,7 +404,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		LaserRifle& launcher = registry.laserRifles.get(weapon);
 		if (launcher.cooldown > 0) {
 			launcher.cooldown -= elapsed_ms;
-			if (launcher.cooldown <= LASER_COOLDOWN && !launcher.loaded) {
+			if (launcher.cooldown <= 1100 && !launcher.loaded) {
 				play_sound(SOUND_EFFECT::LASER_RIFLE_RELOAD);
 				launcher.loaded = true;
 			}
@@ -414,7 +414,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 		GrenadeLauncher& launcher = registry.grenadeLaunchers.get(weapon);
 		if (launcher.cooldown > 0) {
 			launcher.cooldown -= elapsed_ms;
-			if (!launcher.loaded) {
+			if (launcher.cooldown <= 1770 && !launcher.loaded) {
 				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
 				launcher.loaded = true;
 			}
