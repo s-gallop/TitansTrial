@@ -673,6 +673,9 @@ void WorldSystem::update_graphics_all_enemies()
 		AnimationInfo& animation = registry.animated.get(entity);
 
 		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
+			if (registry.boss.has(entity)) {
+				play_sound(SOUND_EFFECT::BOSS_DEATH);
+			}
 			registry.remove_all_components_of(entity);
             update_health_bar();
 		} else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
@@ -1016,6 +1019,7 @@ void WorldSystem::boss_action_teleport(){
     Boss& boss_state = registry.boss.get(boss);
     Enemies& enemy_info = registry.enemies.get(boss);
     if (boss_state.phase == 0) {
+		play_sound(SOUND_EFFECT::BOSS_TP);
         enemy_info.hitting = false;
         enemy_info.hittable = false;
         info.oneTimeState = PHASE_OUT;
@@ -1046,6 +1050,7 @@ void WorldSystem::boss_action_swipe(){
         registry.motions.get(boss_state.hurt_boxes[1]).position = registry.motions.get(boss).position + vec2(0,15);
         boss_state.phase++;
     } else if (boss_state.phase == 1 && info.oneTimeState != -1) {
+		play_sound(SOUND_EFFECT::BOSS_SLASH);
         Motion& motion = registry.motions.get(boss);
         int frame = (int)floor(info.oneTimer * ANIMATION_SPEED_FACTOR);
         if (frame == 1) {
@@ -1076,6 +1081,7 @@ void WorldSystem::boss_action_summon(){
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
         info.oneTimeState = STAND_UP;
+		play_sound(SOUND_EFFECT::BOSS_SUMMON);
         switch (rand() % 2) {
             case 0:
                 for(int i = 0; i < 3 + rand() % 4; i++) {
