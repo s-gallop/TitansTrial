@@ -62,7 +62,7 @@ Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal doc
   * world_init.cpp:
     * func createFollowingEnemy
   * world_system.cpp:
-    * func spawn_move_following_enemies
+    * func move_tracer
   * ai_system.cpp:
     * everything
 * Parallax Background
