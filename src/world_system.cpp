@@ -456,7 +456,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		update_grenades(renderer, elapsed_ms_since_last_update * current_speed);
 		update_explosions(elapsed_ms_since_last_update * current_speed);
-		
+		boss_action_sword_spawn(false, vec2(0,0), vec2(0,0));
 		// Animation Stuff
 		vec2 playerVelocity = registry.motions.get(player_hero).velocity;
 		AnimationInfo &playerAnimation = registry.animated.get(player_hero);
@@ -491,6 +491,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		spawn_move_ghouls(elapsed_ms_since_last_update);
 		spawn_spitter_enemy(elapsed_ms_since_last_update);
 		update_collectable_timer(elapsed_ms_since_last_update * current_speed, renderer, ddl);
+		
 		if (boss && registry.boss.size()) {
 			boss_action_decision(elapsed_ms_since_last_update);
 		}
@@ -638,7 +639,6 @@ SOUND_EFFECT WorldSystem::effect_to_play(int dialogue_number) {
 			return SOUND_EFFECT::LAUGH;
 			break;
 	}
-	return SOUND_EFFECT::LAUGH;
 }
 
 TEXTURE_ASSET_ID WorldSystem::connectDialogue(int num)
@@ -987,6 +987,11 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
         }
         return;
     }
+
+	for (float& cd: boss_state.cooldowns)
+		if (cd > 0)
+			cd -= elapsed_ms;
+
     switch (boss_state.state) {
         case BOSS_STATE::TELEPORT:
             boss_action_teleport();
@@ -994,11 +999,18 @@ void WorldSystem::boss_action_decision(float elapsed_ms){
         case BOSS_STATE::SWIPE:
             boss_action_swipe();
             break;
-        case BOSS_STATE::SUMMON:
-            boss_action_summon();
+        case BOSS_STATE::SUMMON_GHOULS:
+            boss_action_summon(0);
+            break;
+		case BOSS_STATE::SUMMON_SPITTERS:
+            boss_action_summon(1);
+            break;
+		case BOSS_STATE::SUMMON_BULLETS:
+            boss_action_summon(2);
             break;
         case BOSS_STATE::SIZE:
-            boss_state.state = static_cast<BOSS_STATE>(rand() % ((int)BOSS_STATE::SIZE));
+            if (boss_state.cooldowns[(uint) BOSS_STATE::SIZE] <= 0)
+				boss_state.state = get_action();
             break;
     }
 }
@@ -1063,7 +1075,7 @@ void WorldSystem::boss_action_swipe(){
     }
 }
 
-void WorldSystem::boss_action_summon(){
+void WorldSystem::boss_action_summon(uint type){
     const int SUMMON = 6;
     const int STAND_UP = 10;
     AnimationInfo& info = registry.animated.get(boss);
@@ -1074,16 +1086,18 @@ void WorldSystem::boss_action_summon(){
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
         info.oneTimeState = STAND_UP;
 		play_sound(SOUND_EFFECT::BOSS_SUMMON);
-        switch (rand() % 2) {
+        switch (type) {
             case 0:
                 for(int i = 0; i < 3 + rand() % 4; i++) {
                     createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
                 }
-                for(int i = 0; i < 1 + rand() % 3; i++) {
+                break;
+			case 1:
+				for(int i = 0; i < 1 + rand() % 3; i++) {
                     createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
                 }
-                break;
-            case 1:
+				break;
+            case 2:
                 for(int i = 0; i < 10 + rand() % 6; i++) {
                     Motion& motion = registry.motions.get(boss);
                     createSpitterEnemyBullet(renderer, motion.position, motion.angle);
@@ -1096,6 +1110,169 @@ void WorldSystem::boss_action_summon(){
         boss_state.state = BOSS_STATE::SIZE;
     }
 
+}
+
+void WorldSystem::boss_action_sword_spawn(bool create, vec2 pos, vec2 scale) {
+	float SWORD_SPEED1 = 40.f;
+	float SWORD_SPEED2 = 80.f;
+
+	if (create) {
+		vec2 rad = vec2(scale.x/2.f, scale.y/2.f);
+		float angle = ((float)rand() / RAND_MAX) * (2.f * M_PI);
+		vec2 spawn_pos = pos + (rad * vec2(cos(angle), sin(angle)));
+		//printf("Position: %f\n", angle);
+		//create_boss_sword(renderer, spawn_pos, 1);
+		create_boss_sword(renderer, spawn_pos, rand() % 2);
+	}
+	else {
+		Motion& hero_motion = registry.motions.get(player_hero);
+		auto& sword_container = registry.bossSwords;
+		for (uint i = 0; i < sword_container.size(); i++)
+		{
+			BossSword& sword = sword_container.components[i];
+			Entity entity = sword_container.entities[i];
+			Motion& motion = registry.motions.get(entity);
+
+			vec2 following_direction = hero_motion.position - motion.position;
+			following_direction = following_direction / sqrt(dot(following_direction, following_direction));
+
+			motion.velocity = following_direction * ((sword.type == 1) ? SWORD_SPEED1 : SWORD_SPEED2);
+		}
+	}
+	
+	//if (registry.bossSwords.components.size() < 2)
+	//{
+	//	//create_boss_sword(renderer, find_index_from_map(vec2(12, 8)), rand() % 2);
+	//	
+	//}
+}
+
+BOSS_STATE WorldSystem::get_action() {
+	vec2 boss_pos = registry.motions.get(boss).position;
+	uint num_ghouls = registry.ghouls.entities.size();
+	uint num_spitters = registry.spitterEnemies.entities.size();
+	BOSS_STATE action;
+	float max_utility = 0;
+	for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
+		if (registry.boss.components[0].cooldowns[i] <= 0) {
+			float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0, registry.boss.components[0].cooldowns);
+			if (utility > max_utility) {
+				max_utility = utility;
+				action = (BOSS_STATE) i;
+			}
+		}
+	}
+	if (max_utility == 0) {
+		action = BOSS_STATE::SIZE;
+	} else {
+		registry.boss.components[0].cooldowns[(uint) BOSS_STATE::SIZE] = BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
+		registry.boss.components[0].cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
+	}
+	return action;
+}
+
+float WorldSystem::mdp_helper(vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns) {
+	float max_utility = 0;
+	if (step_num <= MDP_HORIZON) {
+		for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
+			if (cooldowns[i] <= 0) {
+				float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, step_num, cooldowns);
+				if (utility > max_utility) {
+					max_utility = utility;
+				}
+			}
+		}
+	}
+	return max_utility;
+}
+
+float WorldSystem::get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns) {
+	cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
+	for (float& cd: cooldowns)
+		if (cd > 0)
+			cd -= BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
+	float reward = 0;
+	switch (action) {
+		case BOSS_STATE::TELEPORT: {
+			vec2 new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 0, false);
+			reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns)) / 4.f;
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false);
+			reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns)) / 4.f;
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 2, false);
+			reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns)) / 4.f;
+			
+			new_pos = getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 7, false);
+			reward += (get_reward(boss_pos, num_ghouls, num_spitters, new_pos, num_ghouls, num_spitters) + MDP_DISCOUNT_FACTOR * mdp_helper(new_pos, num_ghouls, num_spitters, step_num + 1, cooldowns)) / 4.f;
+			break;
+		} case BOSS_STATE::SWIPE: {
+			vec2 pos_dif = {abs(boss_pos.x - registry.motions.get(player_hero).position.x), abs(boss_pos.y - registry.motions.get(player_hero).position.y)};
+			float x_penalty = std::pow(std::pow(MDP_BASE_REWARD, 1.f/20.f), min(pos_dif.x, 300.f) - 280);
+			float y_penalty = std::pow(std::pow(MDP_BASE_REWARD, 1.f/20.f), min(pos_dif.y, 60.f) - 40);
+			reward = MDP_BASE_REWARD - x_penalty - y_penalty + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num + 1, cooldowns);
+			break;
+		} case BOSS_STATE::SUMMON_GHOULS: {
+			for (uint i = 3; i <= 3 + 4; i++)
+				reward += (get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls + i, num_spitters) + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls + i, num_spitters, step_num + 1, cooldowns)) / 5.f;
+			break;
+		} case BOSS_STATE::SUMMON_SPITTERS: {
+            for (uint i = 1; i <= 1 + 3; i++)
+				reward += (get_reward(boss_pos, num_ghouls, num_spitters, boss_pos, num_ghouls, num_spitters + i) + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters + i, step_num + 1, cooldowns)) / 4.f;
+            break;
+		} case BOSS_STATE::SUMMON_BULLETS: {
+            vec2 line_pos = (boss_pos + registry.motions.get(player_hero).position) / 2.f;
+			vec2 line_scale = {sqrt(dot(boss_pos - registry.motions.get(player_hero).position, boss_pos - registry.motions.get(player_hero).position)), 1.f};
+			float line_angle = atan2(registry.motions.get(player_hero).position.y - boss_pos.y, registry.motions.get(player_hero).position.x - boss_pos.x);
+			Entity line = createLine(renderer, line_pos, {0, 0}, line_scale, line_angle);
+			registry.lasers.emplace(line);
+			registry.collisionMeshPtrs.emplace(line, &(renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE)));
+			for (Entity block: registry.blocks.entities) {
+				if (PhysicsSystem::collides(line, block)) {
+					registry.remove_all_components_of(line);
+					reward = MDP_BASE_REWARD/100.f + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num + 1, cooldowns);
+					break;
+				}
+			}
+			registry.remove_all_components_of(line);
+			reward = MDP_BASE_REWARD / 2.5f + MDP_DISCOUNT_FACTOR * mdp_helper(boss_pos, num_ghouls, num_spitters, step_num + 1, cooldowns);
+            break;
+		}
+	}
+	return reward;
+}
+
+float WorldSystem::get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, vec2 boss_pos, uint num_ghouls, uint num_spitters) {
+	if (num_ghouls_old != num_ghouls) {
+		return MDP_BASE_REWARD / 7.f * (num_ghouls - num_ghouls_old) * (1 - min(std::pow(2, num_ghouls_old / (float) BOSS_MAX_GHOULS) - 1, (double) 1));
+	} else if (num_spitters_old != num_spitters) {
+		return MDP_BASE_REWARD / 4.f * (num_spitters - num_spitters_old) * (1 - min(std::pow(2, num_spitters_old / (float) BOSS_MAX_SPITTERS) - 1, (double) 1));
+	} else {
+		Player& player = registry.players.get(player_hero);
+		if (player.hasWeapon && registry.swords.has(player.weapon)) {
+			Motion& player_motion = registry.motions.get(player_hero);
+			float x_buffer = max(abs(boss_pos_old.x - player_motion.position.x) - registry.motions.get(boss).scale.x / 2, 0.f);
+			float y_buffer = max(abs(boss_pos_old.y - player_motion.position.y) - registry.motions.get(boss).scale.y / 2, 0.f);
+			float player_dist_old = sqrt(dot(vec2(x_buffer, y_buffer), vec2(x_buffer, y_buffer)));
+			x_buffer = max(abs(boss_pos.x - player_motion.position.x) - registry.motions.get(boss).scale.x / 2, 0.f);
+			y_buffer = max(abs(boss_pos.y - player_motion.position.y) - registry.motions.get(boss).scale.y / 2, 0.f);
+			float player_dist = sqrt(dot(vec2(x_buffer, y_buffer), vec2(x_buffer, y_buffer)));
+			if (player_dist_old < 100)
+				return MDP_BASE_REWARD;
+			else {
+				return MDP_BASE_REWARD * (1 - min(std::pow(2, player_dist_old / 300.f) - 1, (double) 1)) * max(min((player_dist - player_dist_old) / 100.f, 1.f), -1.f);
+			}
+		} else {
+			Motion& player_motion = registry.motions.get(player_hero);
+			float x_buffer = max(abs(boss_pos_old.x - player_motion.position.x) - registry.motions.get(boss).scale.x / 2, 0.f);
+			float y_buffer = max(abs(boss_pos_old.y - player_motion.position.y) - registry.motions.get(boss).scale.y / 2, 0.f);
+			float player_dist_old = sqrt(dot(vec2(x_buffer, y_buffer), vec2(x_buffer, y_buffer)));
+			x_buffer = max(abs(boss_pos.x - player_motion.position.x) - registry.motions.get(boss).scale.x / 2, 0.f);
+			y_buffer = max(abs(boss_pos.y - player_motion.position.y) - registry.motions.get(boss).scale.y / 2, 0.f);
+			float player_dist = sqrt(dot(vec2(x_buffer, y_buffer), vec2(x_buffer, y_buffer)));
+			return MDP_BASE_REWARD * (1 - min(std::pow(2, player_dist / 300.f) - 1, (double) 1)) * max(min((player_dist_old - player_dist) / 100.f, 1.f), -1.f);
+		}
+	}
 }
 
 // Reset the world state to its initial state
@@ -1126,6 +1303,10 @@ void WorldSystem::restart_game()
 	
 	create_parallax_background();
 	initiate_weapons();
+
+    //TODO: enable this to start with boss
+   /* boss = createBossEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS), 1, false));
+    createHealthBar(renderer, boss);*/
 
 	// Create a new hero
 	player_hero = createHero(renderer, { 100, 200 });
@@ -1559,13 +1740,10 @@ void WorldSystem::handle_collisions()
 							ddf += 5.f;
 						}
 						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
-						if (registry.boss.has(entity_other)) {
-							play_sound(SOUND_EFFECT::BOSS_DEATH);
-						}
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
+						registry.animated.get(entity_other).oneTimer = 0;
 					}
-					registry.animated.get(entity_other).oneTimer = 0;
 				}
 				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
@@ -1936,6 +2114,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		ddf = 500;
 	}
 	
+	if (key == GLFW_KEY_U && action == GLFW_RELEASE && debug) {
+		boss_action_sword_spawn(true, registry.motions.get(player_hero).position, registry.motions.get(player_hero).scale);
+	}
+
 	if (action == GLFW_RELEASE && key == GLFW_KEY_M) {
 		is_music_muted = !is_music_muted;
 		set_mute_music(is_music_muted);

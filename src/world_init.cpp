@@ -146,7 +146,8 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
 
     registry.debugRenderRequests.emplace(entity);
     auto &bossState = registry.boss.emplace(entity);
-
+	for (int i = 0; i <= (uint) BOSS_STATE::SIZE; i++)
+		bossState.cooldowns.push_back(0);
 
     auto hb1 = Entity();
     auto hb2 = Entity();
@@ -195,6 +196,60 @@ Entity createBossEnemy(RenderSystem *renderer, vec2 position)
 
 
     return entity;
+}
+
+Entity create_boss_sword(RenderSystem* renderer, vec2 position, int type) {
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	CollisionMesh& mesh = renderer->getCollisionMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.collisionMeshPtrs.emplace(entity, &mesh);
+
+	// Initialize the motion
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = vec2(0.f, -0.1f);
+	motion.position = position;
+
+	registry.enemies.emplace(entity);
+	registry.enemies.get(entity).health = 1;
+	registry.enemies.get(entity).hit_animation = -2;
+	registry.enemies.get(entity).death_animation = -2;
+
+	registry.bossSwords.emplace(entity);
+	registry.bossSwords.get(entity).type = type;
+
+	if (type == 1) 
+	{
+		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS_SWORD_S);
+		registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS_SWORD_S));
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::BOSS_SWORD_S,
+			 EFFECT_ASSET_ID::BOSS_SWORD_S,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			 false,
+			 true,
+			 SPRITE_SCALE.at(TEXTURE_ASSET_ID::BOSS_SWORD_S),
+			 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::BOSS_SWORD_S) });
+	}
+	else {
+		motion.scale = ASSET_SIZE.at(TEXTURE_ASSET_ID::BOSS_SWORD_L);
+		registry.animated.emplace(entity, ANIMATION_INFO.at(TEXTURE_ASSET_ID::BOSS_SWORD_L));
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::BOSS_SWORD_L,
+			 EFFECT_ASSET_ID::BOSS_SWORD_L,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			 false,
+			 true,
+			 SPRITE_SCALE.at(TEXTURE_ASSET_ID::BOSS_SWORD_L),
+			 SPRITE_OFFSET.at(TEXTURE_ASSET_ID::BOSS_SWORD_L) });
+	}
+
+	registry.debugRenderRequests.emplace(entity);
+
+	return entity;
 }
 
 Entity createGhoul(RenderSystem* renderer, vec2 position)

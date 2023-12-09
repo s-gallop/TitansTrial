@@ -30,10 +30,13 @@ const size_t MAX_FIRE_ENEMIES = 10;
 const size_t MAX_BOULDERS = 2;
 const size_t MAX_FOLLOWING_ENEMIES = 1;
 const size_t MAX_GHOULS = 5;
+const size_t BOSS_MAX_GHOULS = 14;
 const size_t MAX_SPITTERS = 3;
+const size_t BOSS_MAX_SPITTERS = 8;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const int BOSS_HEALTH = 10;
+const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {12000, 2000, 70000, 10000, 2000, 5000};
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
@@ -64,6 +67,9 @@ const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
+const uint MDP_HORIZON = 2;
+const float MDP_DISCOUNT_FACTOR = 0.9f;
+const float MDP_BASE_REWARD = 100;
 
 class WorldSystem
 {
@@ -116,7 +122,8 @@ public:
     void boss_action_decision(float elapsed_ms);
     void boss_action_teleport();
     void boss_action_swipe();
-    void boss_action_summon();
+    void boss_action_summon(uint type);
+	void boss_action_sword_spawn(bool create, vec2 pos, vec2 scale);
 
 	// Check for collisions
 	void handle_collisions();
@@ -147,6 +154,12 @@ private:
 	void load_game();
 
 	int save_weapon(Entity weapon);
+
+	//MDP
+	BOSS_STATE get_action();
+	float mdp_helper(vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
+	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
+	float get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, vec2 boss_pos, uint num_ghouls, uint num_spitters);
 
     // creates pause gui
     void create_pause_screen();
