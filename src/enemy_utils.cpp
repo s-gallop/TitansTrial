@@ -5,7 +5,94 @@
 
 #include "enemy_utils.hpp"
 
-// deal with normal eneimies' spawning and moving
+
+static std::default_random_engine rng = std::default_random_engine(std::random_device()());
+static std::uniform_real_distribution<float> uniform_dist;
+
+void do_enemy_spawn(float elapsed_ms, RenderSystem* renderer, int ddl) {
+    adjust_difficulty(ddl);
+    next_enemy_spawn -= elapsed_ms * (5.f/(registry.enemies.components.size()+1)+0.5);
+    printf("%f \n", next_enemy_spawn);
+    if (next_enemy_spawn > 0.f) {
+        return;
+    }
+
+    size_t spawns[ENEMY_COUNT] = {
+            registry.fireEnemies.components.size(),
+            registry.ghouls.components.size(),
+            registry.spitterEnemies.components.size(),
+            registry.boulders.components.size()
+    };
+
+    float random = uniform_dist(rng);
+    int selectedEnemy = 0;
+    while (selectedEnemy < ENEMY_COUNT) {
+        if (spawn_prob[selectedEnemy] >= random && spawns[selectedEnemy] < max_spawns[selectedEnemy]) {
+            break;
+        }
+        selectedEnemy++;
+    }
+    switch (SpawnableEnemyType(selectedEnemy)) {
+        case FIRELINGS: {
+            summon_fireling_helper(renderer);
+            break;
+        }
+        case GHOULS: {
+            createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
+            break;
+        }
+        case SPITTERS: {
+            createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
+            break;
+        }
+        case BOULDERS: {
+            summon_boulder_helper(renderer);
+            break;
+        }
+        case ENEMY_COUNT:
+            break;
+    }
+    next_enemy_spawn = (spawn_delay * spawn_delay_variance) + uniform_dist(rng) * (spawn_delay * (1-spawn_delay_variance));
+}
+
+void adjust_difficulty(int ddl){
+    switch (ddl) {
+        case 0:
+            max_spawns = {8, 3, 0, 0};
+            spawn_prob = {.7, 1, 1, 1};
+            spawn_delay = 6000;
+            break;
+        case 1:
+            spitter_projectile_delay_ms = 5000.f;
+            max_spawns = {10, 5, 2, 0};
+            spawn_prob = {.5, .85, 1, 1};
+            spawn_delay = 5000;
+            break;
+        case 2:
+            spitter_projectile_delay_ms = 3500.f;
+            max_spawns = {12, 6, 3, 1};
+            spawn_prob = {.4, .8, .95, 1};
+            spawn_delay = 4000;
+            break;
+        case 3:
+            spitter_projectile_delay_ms = 3000.f;
+            max_spawns = {15, 4, 3, 2};
+            spawn_prob = {.4, .6, .85, 1};
+            spawn_delay = 3500;
+            break;
+        case 4:
+            max_spawns = {0, 0, 0, 0};
+            break;
+        default:
+            spitter_projectile_delay_ms = 2500.f;
+            max_spawns = {18, 7, 5, 3};
+            spawn_prob = {.3, .6, .8, 1};
+            spawn_delay = 3000;
+            break;
+    }
+}
+
+
 void move_firelings(RenderSystem* renderer)
 {
     auto &testAI_container = registry.testAIs;
@@ -349,4 +436,25 @@ void boss_action_summon(Entity boss, RenderSystem* renderer){
         boss_state.state = BOSS_STATE::SIZE;
     }
 
+}
+
+void summon_boulder_helper(RenderSystem* renderer) {
+    float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
+    float x_speed = 50 + 100 * uniform_dist(rng);
+    x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
+    float size = 3 + uniform_dist(rng);
+    createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
+}
+
+void summon_fireling_helper(RenderSystem* renderer){
+    float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
+    int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+    int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
+    float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
+    Entity newEnemy = createFireing(renderer, vec2(window_width_px, rightHeight));
+    TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
+    enemyTestAI.departFromRight = true;
+    enemyTestAI.a = (float)squareFactor;
+    enemyTestAI.b = curveParameter;
+    enemyTestAI.c = (float)leftHeight;
 }

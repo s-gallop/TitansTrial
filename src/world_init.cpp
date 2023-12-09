@@ -89,8 +89,8 @@ Entity createFireing(RenderSystem *renderer, vec2 position)
 	registry.enemies.insert(entity, {
         1,
         2,
-        5,
-        5
+        FIRELING_HP,
+        FIRELING_HP
     });
 
 	registry.fireEnemies.emplace(entity);
@@ -191,8 +191,8 @@ Entity createGhoul(RenderSystem* renderer, vec2 position)
 	registry.enemies.insert(entity, {
         3,
         4,
-        8,
-        8
+        GHOUL_HP,
+        GHOUL_HP
     });
 
 	registry.ghouls.emplace(entity);
@@ -271,8 +271,8 @@ Entity createSpitterEnemy(RenderSystem *renderer, vec2 pos)
 	registry.enemies.insert(entity, {
         3,
         4,
-        12,
-        12
+        SPITTER_HP,
+        SPITTER_HP
     });
 	registry.colors.insert(entity, {1, .8f, .8f});
 
@@ -842,7 +842,7 @@ Entity createWaterBall(RenderSystem* renderer, vec2 position, float angle) {
 
 	registry.waterBalls.emplace(entity);
 	registry.solids.emplace(entity);
-	registry.weaponHitBoxes.emplace(entity);
+	registry.weaponHitBoxes.emplace(entity).damage = WATER_BALL_DMG;
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::WATER_BALL,

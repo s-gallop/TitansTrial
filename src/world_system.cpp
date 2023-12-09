@@ -58,10 +58,8 @@ float lavaPillarTimer = 0;
 
 // Create the fish world
 WorldSystem::WorldSystem()
-	: points(0), next_enemy_spawn(0.f)
+	: points(0)
 {
-	// Seeding rng with random device
-	rng = std::default_random_engine(std::random_device()());
 }
 
 WorldSystem::~WorldSystem()
@@ -452,8 +450,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		if (boss && registry.boss.size()) {
 			boss_action_decision(boss, renderer);
 		}
-        adjust_difficulty();
-        do_enemy_spawn(elapsed_ms_since_last_update);
+        do_enemy_spawn(elapsed_ms_since_last_update, renderer, ddl);
 		update_graphics_all_enemies();
 
 		if ((ddl == 2 || ddl == 3) && following_enemies.empty())
@@ -1297,102 +1294,6 @@ void WorldSystem::update_health_bar()
     }
 }
 
-void WorldSystem::do_enemy_spawn(float elapsed_ms) {
-    next_enemy_spawn -= elapsed_ms * (5.f/(registry.enemies.components.size()+1)+0.5);
-    printf("%f \n", next_enemy_spawn);
-    if (next_enemy_spawn > 0.f) {
-        return;
-    }
-
-    size_t spawns[ENEMY_COUNT] = {
-            registry.fireEnemies.components.size(),
-            registry.ghouls.components.size(),
-            registry.spitterEnemies.components.size(),
-            registry.boulders.components.size()
-    };
-
-    float random = uniform_dist(rng);
-    int selectedEnemy = 0;
-    while (selectedEnemy < ENEMY_COUNT) {
-        if (spawn_prob[selectedEnemy] >= random && spawns[selectedEnemy] < max_spawns[selectedEnemy]) {
-            break;
-        }
-        selectedEnemy++;
-    }
-    switch (SpawnableEnemyType(selectedEnemy)) {
-        case FIRELINGS: {
-            float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-            int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-            int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-            float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-            Entity newEnemy = createFireing(renderer, vec2(window_width_px, rightHeight));
-            TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
-            enemyTestAI.departFromRight = true;
-            enemyTestAI.a = (float)squareFactor;
-            enemyTestAI.b = curveParameter;
-            enemyTestAI.c = (float)leftHeight;
-            break;
-        }
-        case GHOULS: {
-            createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
-            break;
-        }
-        case SPITTERS: {
-            createSpitterEnemy(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::SPITTER_ENEMY)));
-            break;
-        }
-        case BOULDERS: {
-            float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-            float x_speed = 50 + 100 * uniform_dist(rng);
-            x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
-            float size = 3 + uniform_dist(rng);
-            createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
-            break;
-        }
-        case ENEMY_COUNT:
-            break;
-    }
-    next_enemy_spawn = (spawn_delay * spawn_delay_variance) + uniform_dist(rng) * (spawn_delay * (1-spawn_delay_variance));
-
-
-}
-
-void WorldSystem::adjust_difficulty(){
-    switch (ddl) {
-        case 0:
-            max_spawns = {8, 3, 0, 0};
-            spawn_prob = {.7, 1, 1, 1};
-            spawn_delay = 6000;
-            break;
-        case 1:
-            spitter_projectile_delay_ms = 5000.f;
-            max_spawns = {10, 5, 2, 0};
-            spawn_prob = {.5, .85, 1, 1};
-            spawn_delay = 5000;
-            break;
-        case 2:
-            spitter_projectile_delay_ms = 3500.f;
-            max_spawns = {12, 6, 3, 1};
-            spawn_prob = {.4, .8, .95, 1};
-            spawn_delay = 4000;
-            break;
-        case 3:
-            spitter_projectile_delay_ms = 3000.f;
-            max_spawns = {15, 4, 3, 2};
-            spawn_prob = {.4, .6, .85, 1};
-            spawn_delay = 3500;
-            break;
-        case 4:
-            max_spawns = {0, 0, 0, 0};
-            break;
-        default:
-            spitter_projectile_delay_ms = 2500.f;
-            max_spawns = {18, 7, 5, 3};
-            spawn_prob = {.3, .6, .8, 1};
-            spawn_delay = 3000;
-            break;
-    }
-}
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod)
@@ -1454,16 +1355,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_1 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-                float squareFactor = rand() % 2 == 0 ? 0.0005 : -0.0005;
-                int leftHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-                int rightHeight = ENEMY_SPAWN_HEIGHT_IDLE_RANGE + rand() % (window_height_px - ENEMY_SPAWN_HEIGHT_IDLE_RANGE * 2);
-                float curveParameter = (float)(rightHeight - leftHeight - window_width_px * window_width_px * squareFactor) / window_width_px;
-                Entity newEnemy = createFireing(renderer, vec2(window_width_px, rightHeight));
-                TestAI &enemyTestAI = registry.testAIs.get(newEnemy);
-                enemyTestAI.departFromRight = true;
-                enemyTestAI.a = (float)squareFactor;
-                enemyTestAI.b = curveParameter;
-                enemyTestAI.c = (float)leftHeight;
+                summon_fireling_helper(renderer);
 			} else {
 				createSword(renderer, registry.motions.get(player_hero).position);
 			}
@@ -1481,11 +1373,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		} else if (key == GLFW_KEY_4 && action == GLFW_PRESS && !pause && debug) {
 			if (mod == GLFW_MOD_SHIFT) {
-                float x_pos = uniform_dist(rng) * (window_width_px - 120) + 60;
-                float x_speed = 50 + 100 * uniform_dist(rng);
-                x_speed = uniform_dist(rng) > 0.5 ? x_speed : -x_speed;
-                float size = 3 + uniform_dist(rng);
-                createBoulder(renderer, {x_pos, 0}, {x_speed, 0}, size);
+                summon_boulder_helper(renderer);
 			} else {
 				createRocketLauncher(renderer, registry.motions.get(player_hero).position);
 			}

@@ -39,8 +39,13 @@ const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
 const int SWORD_DMG = 7;
 const int EXPLOSIVE_DMG = 6;
 const int DIR_EXPLOSIVE_DMG = 12;
-const int ARROW_DMG = 5;
+const int ARROW_DMG = 4;
 const int LASER_DMG = 3;
+const int WATER_BALL_DMG = 10;
+
+const int FIRELING_HP = 4;
+const int GHOUL_HP = 8;
+const int SPITTER_HP = 12;
 
 
 const std::vector<vec<2, vec<2,float>>> platforms = {

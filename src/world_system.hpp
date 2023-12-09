@@ -36,7 +36,7 @@ const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
 const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
 const uint MAX_JUMPS = 2;
 const float BASIC_SPEED = 220.f;
-const float JUMP_INITIAL_SPEED = 350.f;
+const float JUMP_INITIAL_SPEED = 370.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 10.f;
 const float HEART_START_POS = 70.f;
@@ -122,10 +122,6 @@ private:
 
 	void motion_helper(Motion& playerMotion);
 
-    void do_enemy_spawn(float elapsed_ms);
-
-    void adjust_difficulty();
-
 	// restart level
 	void restart_game();
 
@@ -165,11 +161,6 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
-	float next_enemy_spawn;
 	Entity player_hero;
     Entity boss;
-
-	// C++ random number generator
-	std::default_random_engine rng;
-	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 };

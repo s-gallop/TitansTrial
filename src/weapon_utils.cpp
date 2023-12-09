@@ -26,13 +26,14 @@ const float GRENADE_SPEED_FACTOR = 1.f;
 const size_t TRAJECTORY_WIDTH = 3;
 const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
-const size_t LASER_COOLDOWN = 1200;
+const size_t LASER_COOLDOWN = 800;
 const size_t TRIDENT_COOLDOWN = 1500;
 const size_t WATER_BALL_SPEED = 500;
 const size_t MAX_WATER_BALL_DRAW_TIME = 1000;
 const size_t MAX_WATER_BALL_DRAW_DIST = 500;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
+const float DASH_SPEED = 800.f;
 
 static std::vector<float> weapon_spawn_prob;
 
@@ -40,9 +41,10 @@ enum WEAPONS {
         SWORD = 0,
         BOW = SWORD + 1,
         ORB = BOW + 1,
-        TRIDENT = ORB + 1,
-        BEAM = TRIDENT + 1,
-        WEAPON_COUNT = BEAM + 1
+        WAND = ORB + 1,
+        BEAM = WAND + 1,
+        TRIDENT = BEAM + 1,
+        WEAPON_COUNT = TRIDENT + 1
 };
 
 static std::default_random_engine rng = std::default_random_engine(std::random_device()());
@@ -477,28 +479,60 @@ void update_equipment(float elapsed_ms, Entity hero) {
 }
 
 void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
-	float rand = uniform_dist(rng);
-	if (ddl == 0)
-		if (rand < 0.7)
-			createSword(renderer, pos);
-		else
-			createGun(renderer, pos);
-	else if (ddl == 1)
-		if (rand < 0.2)
-			createSword(renderer, pos);
-		else if (rand < 0.7)
-			createGun(renderer, pos);
-		else
-			createGrenadeLauncher(renderer, pos);
-	else
-		if (rand < 0.2)
-			createSword(renderer, pos);
-		else if (rand < 0.4)
-			createGun(renderer, pos);
-		else if (rand < 0.7)
-			createGrenadeLauncher(renderer, pos);
-		else
-			createRocketLauncher(renderer, pos);
+    //adjusts difficulty:
+
+    switch (ddl) {
+        case 0:
+            weapon_spawn_prob = {0.7, 1, 1, 1, 1, 1};
+            break;
+        case 1:
+            weapon_spawn_prob = {0.4, 0.7, 0.85, 1, 1, 1};
+            break;
+        case 2:
+            weapon_spawn_prob = {0.3, 0.6, 0.7, 0.8, 1, 1};
+            break;
+        case 3:
+            weapon_spawn_prob = {0.3, 0.5, 0.6, 0.7, 0.9, 1};
+            break;
+        case 4:
+            weapon_spawn_prob = {0.4, 0.5, 0.65, 0.8, 0.9, 1};
+            break;
+        default:
+            weapon_spawn_prob = {0.2, 0.4, 0.5, 0.6, 0.8, 1};
+            break;
+    }
+
+    // selects weapon:
+	float random = uniform_dist(rng);
+    int selectedWeapon = 0;
+    while (selectedWeapon < WEAPON_COUNT) {
+        if (weapon_spawn_prob[selectedWeapon] >= random) {
+            break;
+        }
+        selectedWeapon++;
+    }
+
+    switch (WEAPONS(selectedWeapon)) {
+        case SWORD:
+            createSword(renderer, pos);
+            break;
+        case BOW:
+            createGun(renderer, pos);
+            break;
+        case ORB:
+            createGrenadeLauncher(renderer, pos);
+            break;
+        case WAND:
+            createRocketLauncher(renderer, pos);
+            break;
+        case BEAM:
+            createLaserRifle(renderer, pos);
+        case TRIDENT:
+            createTrident(renderer, pos);
+            break;
+        case WEAPON_COUNT:
+            break;
+    }
 }
 
 void spawn_powerup(RenderSystem* renderer, vec2 pos, int ddl) {
@@ -650,7 +684,7 @@ void check_dash_boots(Entity hero, uint direction) {
 	if (!registry.gravities.get(hero).dashing) {
 		if (direction == dash_direction && dash_window > 0 && dash_time <= 0) {
 			registry.gravities.get(hero).dashing = 1;
-			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
+			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * DASH_SPEED, 0.f};
 			dash_time = DASH_TIME;
 			play_sound(SOUND_EFFECT::DASH);
             AnimationInfo& info = registry.animated.get(hero);
