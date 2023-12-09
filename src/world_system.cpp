@@ -776,9 +776,8 @@ void WorldSystem::spawn_move_ghouls(float elapsed_ms_since_last_update)
 		// Reset timer
         next_ghoul_spawn = (ENEMY_DELAY_MS / 2) + uniform_dist(rng) * (ENEMY_DELAY_MS / 2);
 		Entity newGhoul = createGhoul(renderer, getRandomWalkablePos(ASSET_SIZE.at(TEXTURE_ASSET_ID::GHOUL_ENEMY)));
-		//printf("Curr state %d\n", registry.animated.get(newEnemy).oneTimeState);
+		//printf("Curr state %d\n", registry.animated.get(newGhoul).oneTimeState);
 	}
-	
 
 	Motion& hero_motion = registry.motions.get(player_hero);
 	for (uint i = 0; i < registry.ghouls.entities.size(); i++) {
@@ -1609,6 +1608,8 @@ void WorldSystem::handle_collisions()
 						registry.ghouls.get(entity_other).right_x = block_motion.position.x + scale1.x;
 					} else if (registry.spitterEnemies.has(entity_other) && registry.spitterEnemies.get(entity_other).left_x == -1.f) {
 						//registry.colors.insert(entity_other, { 1, .8f, .8f });
+						registry.animated.get(entity_other).oneTimeState = 3;
+						registry.animated.get(entity_other).oneTimer = 0;
 						registry.spitterEnemies.get(entity_other).left_x = max(block_motion.position.x - scale1.x, 70.f);
 						registry.spitterEnemies.get(entity_other).right_x = min(block_motion.position.x + scale1.x, 1125.f);
 					} else if (registry.waterBalls.has(entity_other)) {
