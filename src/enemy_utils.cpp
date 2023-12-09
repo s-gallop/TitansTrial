@@ -358,11 +358,30 @@ void boss_action_decision(Entity player_hero, Entity boss, RenderSystem* rendere
             break;
     }
 }
-
+std::vector<int> teleport_unique(vec2 pos) {
+    //printf("Boss pos: %f, %f\n", pos.x, pos.y);
+    std::vector<int> ret;
+    if (pos.x == 600.f) {
+        if (pos.y == 73.148148) {
+            ret = { 0, 2, 7 };
+        }
+        else {
+            ret = { 0, 1, 2 };
+        }
+    }
+    else if (pos.x == 187.5f) {
+        ret = { 7, 2, 1 };
+    }
+    else {
+        ret = { 0, 1, 7 };
+    }
+    return ret;
+}
 void boss_action_teleport(Entity boss){
     const int PHASE_OUT = 8;
     const int PHASE_IN = 9;
-    const std::vector<int> boss_platforms{0,1,2,7};
+    Motion& motion = registry.motions.get(boss);
+    const std::vector<int> boss_platforms = teleport_unique(motion.position);
     AnimationInfo& info = registry.animated.get(boss);
     Boss& boss_state = registry.boss.get(boss);
     Enemies& enemy_info = registry.enemies.get(boss);
@@ -373,7 +392,6 @@ void boss_action_teleport(Entity boss){
         info.oneTimeState = PHASE_OUT;
         boss_state.phase++;
     } else if(boss_state.phase == 1 && info.oneTimeState == -1) {
-        Motion& motion = registry.motions.get(boss);
         motion.position = getRandomWalkablePos(motion.scale, boss_platforms[rand() % boss_platforms.size()], false);
         boss_state.phase++;
     } else if(boss_state.phase == 2) {

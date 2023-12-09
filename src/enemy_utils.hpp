@@ -29,6 +29,7 @@ void summon_boulder_helper(RenderSystem* renderer);
 void summon_fireling_helper(RenderSystem* renderer);
 
 void boss_action_decision(Entity player_hero, Entity boss, RenderSystem* renderer, float elapsed_ms);
+std::vector<int> teleport_unique(vec2 pos);
 void boss_action_teleport(Entity boss);
 void boss_action_swipe(Entity boss);
 void boss_action_summon(Entity boss, RenderSystem* renderer, uint type);
