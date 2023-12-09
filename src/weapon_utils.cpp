@@ -14,7 +14,7 @@ float dash_window = 0.f;
 float dash_time = 0.f;
 uint dash_direction = 0;
 
-const size_t COLLECTABLE_DELAY_MS = 3000;
+const size_t COLLECTABLE_DELAY_MS = 6000;
 const size_t DRAG_DELAY = 100;
 const size_t MAX_COLLECTABLES = 6;
 const size_t GUN_COOLDOWN = 800;
@@ -26,16 +26,29 @@ const float GRENADE_SPEED_FACTOR = 1.f;
 const size_t TRAJECTORY_WIDTH = 3;
 const size_t GRENADE_TRAJECTORY_SEGMENT_TIME = 50;
 const float GRENADE_EXPLOSION_FACTOR = 2.5f;
-const size_t LASER_COOLDOWN = 1200;
+const size_t LASER_COOLDOWN = 800;
 const size_t TRIDENT_COOLDOWN = 1500;
 const size_t WATER_BALL_SPEED = 500;
 const size_t MAX_WATER_BALL_DRAW_TIME = 1000;
 const size_t MAX_WATER_BALL_DRAW_DIST = 500;
 const size_t DASH_WINDOW = 250;
 const size_t DASH_TIME = 2250;
+const float DASH_SPEED = 800.f;
 
-std::default_random_engine rng = std::default_random_engine(std::random_device()());
-std::uniform_real_distribution<float> uniform_dist;
+static std::vector<float> weapon_spawn_prob;
+
+enum WEAPONS {
+        SWORD = 0,
+        BOW = SWORD + 1,
+        ORB = BOW + 1,
+        WAND = ORB + 1,
+        BEAM = WAND + 1,
+        TRIDENT = BEAM + 1,
+        WEAPON_COUNT = TRIDENT + 1
+};
+
+static std::default_random_engine rng = std::default_random_engine(std::random_device()());
+static std::uniform_real_distribution<float> uniform_dist;
 
 void initiate_weapons() {
 	next_collectable_spawn = 600.f;
@@ -221,7 +234,7 @@ void swing_sword(RenderSystem* renderer, Entity weapon) {
 			float angleBackup = weaponMot.angleBackup;
 			vec2 hitBoxPos = weaponMot.position + weaponMot.positionOffset * mat2({cos(angleBackup), -sin(angleBackup)}, {sin(angleBackup), cos(angleBackup)});
 			float hbScale = .9 * max(weaponMot.scale.x, weaponMot.scale.y);
-			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}));
+			registry.weapons.get(weapon).hitBoxes.push_back(createWeaponHitBox(renderer, hitBoxPos, {hbScale, hbScale}, {false, true, SWORD_DMG, true, false}));
 			if (!registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed) {
 				registry.weaponHitBoxes.get(registry.weapons.get(weapon).hitBoxes.front()).soundPlayed = true;
 				play_sound(SOUND_EFFECT::SWORD_SWING);
@@ -270,7 +283,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 		AnimationInfo& animation = registry.animated.get(entity);
 		WeaponHitBox& hit_box = registry.weaponHitBoxes.get(entity);
 		RenderRequest& render = registry.renderRequests.get(entity);
-		
+
 		if (water_ball.draw_time < MAX_WATER_BALL_DRAW_TIME) {
 			water_ball.draw_time += elapsed_ms;
 			if (water_ball.draw_time >= MAX_WATER_BALL_DRAW_TIME || water_ball.total_length >= MAX_WATER_BALL_DRAW_DIST) {
@@ -286,7 +299,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 				}
 			}
 		}
-		
+
 		float move_factor = WATER_BALL_SPEED * elapsed_ms / 1000.f;
 		if (water_ball.state == 0) {
 			water_ball.t += move_factor / water_ball.start_length;
@@ -307,15 +320,15 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 					water_ball.state = -1;
 				}
 			}
-		} 
-		
+		}
+
 		if (water_ball.state == 1 && !water_ball.drawing) {
 			animation.curState = 1;
 			hit_box.isActive = true;
 			play_sound(SOUND_EFFECT::WATER_BALL_SHOOT);
 			for (Entity line: water_ball.trajectory)
 				registry.remove_all_components_of(line);
-			
+
 			if (water_ball.trajectory.size() > 1) {
 				water_ball.state++;
 			} else {
@@ -324,7 +337,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 				water_ball.state = -1;
 			}
 		}
-		
+
 		if (water_ball.state == 2) {
 			uint curve_start = water_ball.curve_num * 2;
 			if (water_ball.points.size() <= curve_start + 2) {
@@ -335,7 +348,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 				if (water_ball.t > 1)
 					water_ball.t = 1;
 				vec2 next_pos = bezier_curve(water_ball.t, water_ball.points[curve_start], water_ball.points[curve_start + 1], water_ball.points[curve_start + 2]);
-				
+
 				motion.angle = atan2(next_pos.y - motion.position.y, next_pos.x - motion.position.x);
 				if (motion.angle < -M_PI/2 || motion.angle > M_PI/2) {
 					render.scale.y = -1*abs(render.scale.y);
@@ -344,7 +357,7 @@ void update_water_balls(float elapsed_ms, COLLECTABLE_TYPE weapon_type, bool mou
 					render.scale.y = abs(render.scale.y);
 					motion.scale.y = abs(motion.scale.y);
 				}
-				
+
 				motion.position = next_pos;
 				if (water_ball.t == 1) {
 					water_ball.curve_num++;
@@ -375,7 +388,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 	if (drag_delay > 0) {
 		drag_delay -= elapsed_ms;
 	}
-	
+
 	Entity weapon = registry.players.get(hero).weapon;
 	Motion &weaponMot = registry.motions.get(weapon);
 	weaponMot.position = registry.motions.get(hero).position;
@@ -418,7 +431,7 @@ void update_weapon(RenderSystem* renderer, float elapsed_ms, Entity hero, bool m
 				play_sound(SOUND_EFFECT::GRENADE_LAUNCHER_RELOAD);
 				launcher.loaded = true;
 			}
-		} 
+		}
 		if (mouse_click_pos != vec2({-1.f, -1.f}) && !mouse_clicked) {
 			Motion launcher_motion = registry.motions.get(weapon);
 			mat2 rot_mat = mat2({cos(launcher_motion.angle), -sin(launcher_motion.angle)}, {sin(launcher_motion.angle), cos(launcher_motion.angle)});
@@ -466,28 +479,60 @@ void update_equipment(float elapsed_ms, Entity hero) {
 }
 
 void spawn_weapon(RenderSystem* renderer, vec2 pos, int ddl) {
-	float rand = uniform_dist(rng);
-	if (ddl == 0)
-		if (rand < 0.9)
-			createSword(renderer, pos);
-		else
-			createGun(renderer, pos);
-	else if (ddl == 1)
-		if (rand < 0.2)
-			createSword(renderer, pos);
-		else if (rand < 0.7)
-			createGun(renderer, pos);
-		else
-			createGrenadeLauncher(renderer, pos);
-	else
-		if (rand < 0.1)
-			createSword(renderer, pos);
-		else if (rand < 0.4)
-			createGun(renderer, pos);
-		else if (rand < 0.7)
-			createGrenadeLauncher(renderer, pos);
-		else
-			createRocketLauncher(renderer, pos);
+    //adjusts difficulty:
+
+    switch (ddl) {
+        case 0:
+            weapon_spawn_prob = {0.7, 1, 1, 1, 1, 1};
+            break;
+        case 1:
+            weapon_spawn_prob = {0.4, 0.7, 0.85, 1, 1, 1};
+            break;
+        case 2:
+            weapon_spawn_prob = {0.3, 0.6, 0.7, 0.8, 1, 1};
+            break;
+        case 3:
+            weapon_spawn_prob = {0.3, 0.5, 0.6, 0.7, 0.9, 1};
+            break;
+        case 4:
+            weapon_spawn_prob = {0.4, 0.5, 0.65, 0.8, 0.9, 1};
+            break;
+        default:
+            weapon_spawn_prob = {0.2, 0.4, 0.5, 0.6, 0.8, 1};
+            break;
+    }
+
+    // selects weapon:
+	float random = uniform_dist(rng);
+    int selectedWeapon = 0;
+    while (selectedWeapon < WEAPON_COUNT) {
+        if (weapon_spawn_prob[selectedWeapon] >= random) {
+            break;
+        }
+        selectedWeapon++;
+    }
+
+    switch (WEAPONS(selectedWeapon)) {
+        case SWORD:
+            createSword(renderer, pos);
+            break;
+        case BOW:
+            createGun(renderer, pos);
+            break;
+        case ORB:
+            createGrenadeLauncher(renderer, pos);
+            break;
+        case WAND:
+            createRocketLauncher(renderer, pos);
+            break;
+        case BEAM:
+            createLaserRifle(renderer, pos);
+        case TRIDENT:
+            createTrident(renderer, pos);
+            break;
+        case WEAPON_COUNT:
+            break;
+    }
 }
 
 void spawn_powerup(RenderSystem* renderer, vec2 pos, int ddl) {
@@ -556,7 +601,7 @@ void do_weapon_action(RenderSystem* renderer, Entity weapon, vec2 mouse_pos) {
 	} else if (registry.guns.has(weapon)) {
 		Gun& gun = registry.guns.get(weapon);
 		if (gun.cooldown <= 0) {
-			createBullet(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
+            createArrow(renderer, registry.motions.get(weapon).position, registry.motions.get(weapon).angle);
 			play_sound(SOUND_EFFECT::BULLET_SHOOT);
 			gun.cooldown = GUN_COOLDOWN;
 			gun.loaded = false;
@@ -639,7 +684,7 @@ void check_dash_boots(Entity hero, uint direction) {
 	if (!registry.gravities.get(hero).dashing) {
 		if (direction == dash_direction && dash_window > 0 && dash_time <= 0) {
 			registry.gravities.get(hero).dashing = 1;
-			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * 750.f, 0.f};
+			registry.motions.get(hero).velocity = {(direction ? -1 : 1) * DASH_SPEED, 0.f};
 			dash_time = DASH_TIME;
 			play_sound(SOUND_EFFECT::DASH);
             AnimationInfo& info = registry.animated.get(hero);

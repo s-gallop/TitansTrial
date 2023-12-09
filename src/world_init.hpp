@@ -3,10 +3,13 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 #include "render_system.hpp"
+#include "ai_system.hpp"
 #include <map>
 #include <vector>
 
 // These are hard coded to the dimensions of the entity texture
+
+const static std::vector<std::vector<char>> grid_vec = create_grid();
 
 const float CHARACTER_SCALING = 3.0f;
 const float BOSS_SCALING = 2.5f;
@@ -32,6 +35,18 @@ const vec2 HELPER_BB = vec2(566, 510) / 1.8f;
 const vec2 LAVA_PILLAR_BB = vec2(120, 536);
 const vec2 TRIDENT_BB = vec2(16, 32) * 1.5f;
 const vec2 MAIN_MENU_BG_BB = vec2(1200, 800);
+
+const int SWORD_DMG = 7;
+const int EXPLOSIVE_DMG = 6;
+const int DIR_EXPLOSIVE_DMG = 12;
+const int ARROW_DMG = 4;
+const int LASER_DMG = 3;
+const int WATER_BALL_DMG = 10;
+
+const int FIRELING_HP = 4;
+const int GHOUL_HP = 8;
+const int SPITTER_HP = 12;
+
 
 const std::vector<vec<2, vec<2,float>>> platforms = {
         // bottom line
@@ -100,7 +115,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
         { TEXTURE_ASSET_ID::CONTINUE_HELPER, {311, 21}},
         { TEXTURE_ASSET_ID::TITLE_TEXT, {600, 120}},
         { TEXTURE_ASSET_ID::HERO, {15*CHARACTER_SCALING, 16*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::FIRE_ENEMY, {19 * CHARACTER_SCALING, 22 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {14 * CHARACTER_SCALING, 16 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::GHOUL_ENEMY, {13 * CHARACTER_SCALING, 20 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {12 * CHARACTER_SCALING, 12 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::BOSS, {32 * BOSS_SCALING, 60 * BOSS_SCALING}},
@@ -122,7 +137,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > ASSET_SIZE = {
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
         { TEXTURE_ASSET_ID::HERO, {52*CHARACTER_SCALING, 21*CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::FIRE_ENEMY, {-65 * CHARACTER_SCALING, 50 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, {-48 * CHARACTER_SCALING, 32 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::GHOUL_ENEMY, {50 * CHARACTER_SCALING, 28 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, {30 * CHARACTER_SCALING, 30 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {57 * CHARACTER_SCALING, 39 * CHARACTER_SCALING}},
@@ -140,7 +155,7 @@ const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_SCALE = {
 
 const std::map<TEXTURE_ASSET_ID, vec2 > SPRITE_OFFSET = {
         { TEXTURE_ASSET_ID::HERO, {10 * CHARACTER_SCALING, -1 * CHARACTER_SCALING}},
-        { TEXTURE_ASSET_ID::FIRE_ENEMY, { 0 * CHARACTER_SCALING, -6 * CHARACTER_SCALING}},
+        { TEXTURE_ASSET_ID::FIRE_ENEMY, { 0 * CHARACTER_SCALING, -4 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::GHOUL_ENEMY, { 0 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::FOLLOWING_ENEMY, { -1 * CHARACTER_SCALING, -2 * CHARACTER_SCALING}},
         { TEXTURE_ASSET_ID::SPITTER_ENEMY, {-10 * CHARACTER_SCALING, -6 * CHARACTER_SCALING}},
@@ -245,7 +260,7 @@ const std::map<TEXTURE_ASSET_ID, AnimationInfo> ANIMATION_INFO = {
 // the player
 Entity createHero(RenderSystem *renderer, vec2 pos);
 // the enemy
-Entity createFireEnemy(RenderSystem *renderer, vec2 position);
+Entity createFireing(RenderSystem *renderer, vec2 position);
 Entity createBoulder(RenderSystem *renderer, vec2 position, vec2 velocity, float size);
 // the ghoul enemy
 Entity createGhoul(RenderSystem* renderer, vec2 position);
@@ -263,7 +278,7 @@ Entity createSword(RenderSystem *renderer, vec2 position);
 // the gun
 Entity createGun(RenderSystem* renderer, vec2 position);
 // the bullet
-Entity createBullet(RenderSystem* renderer, vec2 position, float angle);
+Entity createArrow(RenderSystem* renderer, vec2 position, float angle);
 
 Entity createRocketLauncher(RenderSystem* renderer, vec2 position);
 
@@ -298,10 +313,10 @@ Entity createParallaxItem(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID tex
 // the helper text during pause
 Entity createHelperText(RenderSystem* renderer, float size);
 Entity createToolTip(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type);
-Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size, std::vector<std::vector<char>>& grid);
+Entity createBlock(RenderSystem* renderer, vec2 pos, vec2 size);
 // the ui button
 Entity createButton(RenderSystem* renderer, vec2 pos, TEXTURE_ASSET_ID type, std::function<void ()> callback, bool visibility = true);
-Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size);
+Entity createWeaponHitBox(RenderSystem* renderer, vec2 pos, vec2 size, WeaponHitBox hitBoxInfo);
 Entity createHurtBox(RenderSystem* renderer, vec2 pos, vec2 size);
 Entity createTitleText(RenderSystem* renderer, vec2 pos);
 Entity createLine(RenderSystem* renderer, vec2 pos, vec2 offset, vec2 scale, float angle);

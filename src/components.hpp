@@ -87,14 +87,12 @@ struct ParallaxBackground
 
 struct Enemies
 {
-	bool hittable = true;
-	bool hitting = true;
-
+    int hit_animation = -2;
+    int death_animation = -2;
 	int health = 2;
     int total_health = health;
-	int hit_animation = -2;
-	
-	int death_animation = -2;
+    bool hittable = true;
+    bool hitting = true;
 };
 
 struct FireEnemy {
@@ -128,7 +126,6 @@ struct FollowingEnemies
 
 struct SpitterEnemy
 {
-	uint bulletsRemaining;
 	float timeUntilNextShotMs;
     bool canShoot;
 	float right_x = -1.f;

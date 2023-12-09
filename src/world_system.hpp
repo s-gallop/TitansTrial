@@ -6,6 +6,7 @@
 // stlib
 #include <vector>
 #include <random>
+#include <map>
 
 // #define SDL_MAIN_HANDLED
 // #include <SDL.h>
@@ -15,8 +16,7 @@
 #include "sound_utils.hpp"
 #include "weapon_utils.hpp"
 #include "ai_system.hpp"
-#include <map>
-
+#include "enemy_utils.hpp"
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 
@@ -26,26 +26,20 @@
 const float ANIMATION_SPEED_FACTOR = 10.0f;
 
 // Game configuration
-const size_t MAX_FIRE_ENEMIES = 10;
-const size_t MAX_BOULDERS = 2;
-const size_t MAX_FOLLOWING_ENEMIES = 1;
-const size_t MAX_GHOULS = 5;
+static float spitter_projectile_delay_ms = 5000.f;
+static float spawn_delay_variance = 0.6;
+static size_t spawn_delay = 6000;
 const size_t BOSS_MAX_GHOULS = 14;
-const size_t MAX_SPITTERS = 3;
 const size_t BOSS_MAX_SPITTERS = 8;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
-const size_t ENEMY_DELAY_MS = 2000 * 3;
-const int BOSS_HEALTH = 10;
+const int BOSS_HEALTH = 80;
 const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {12000, 2000, 70000, 10000, 2000, 5000};
-const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
-const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
 const float SPITTER_PROJECTILE_REDUCTION_FACTOR = 5000.f;
 const float SPITTER_PROJECTILE_MIN_SIZE = 0.3f;
-const uint SPITTER_PROJECTILE_AMT = 10;
 const uint MAX_JUMPS = 2;
-const float BASIC_SPEED = 200.f;
-const float JUMP_INITIAL_SPEED = 350.f;
+const float BASIC_SPEED = 220.f;
+const float JUMP_INITIAL_SPEED = 370.f;
 const int ENEMY_SPAWN_HEIGHT_IDLE_RANGE = 50;
 const float DDF_PUNISHMENT = 10.f;
 const float HEART_START_POS = 70.f;
@@ -55,21 +49,28 @@ const vec2 POWER_CORD = { 20.f, 60.f };
 const vec2 DIFF_BAR_CORD = { 140.f, 750.f };
 const vec2 DB_BOSS_CORD = { 140.f, 717.5f };
 const vec2 INDICATOR_START_CORD = { 35.f, 710.f };
-const vec2 INDICATOR_LEVEL_ONE_CORD = { 85.f, 710.f };
-const vec2 INDICATOR_LEVEL_TWO_CORD = { 140.f, 710.f };
-const vec2 INDICATOR_LEVEL_THREE_CORD = { 195.f, 710.f };
-const vec2 INDICATOR_END_CORD = { 250.f, 710.f };
-const float INDICATOR_VECLOCITY = 55.f / 100.f;
+const float INDICATOR_VELOCITY = 55.f / 100.f;
 const vec2 SCORE_CORD = { 1050.f, 700.f };
 const float NUMBER_START_POS = 992.f;
 const float NUMBER_GAP = 29.f;
 const float NUMBER_Y_CORD = 740.f;
-const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 15000.f;
 const uint MDP_HORIZON = 2;
 const float MDP_DISCOUNT_FACTOR = 0.9f;
 const float MDP_BASE_REWARD = 100;
+
+enum SpawnableEnemyType {
+        FIRELINGS = 0,
+        GHOULS = FIRELINGS + 1,
+        SPITTERS = GHOULS + 1,
+        BOULDERS = SPITTERS + 1,
+        ENEMY_COUNT = BOULDERS + 1
+};
+
+static std::vector<int> max_spawns;
+
+static std::vector<float> spawn_prob;
 
 class WorldSystem
 {
@@ -105,26 +106,6 @@ public:
 
 	void update_graphics_all_enemies();
 
-	// spawn normal enemies (refactor)
-	void spawn_move_normal_enemies(float elapsed_ms_since_last_update);
-
-	void spawn_boulder(float elapsed_ms_since_last_update);
-
-	// spawn ghoul enemies (refactor)
-	void spawn_move_ghouls(float elapsed_ms_since_last_update);
-
-	// spawn following enemies (refactor)
-	void spawn_move_following_enemies(float elapsed_ms_since_last_update);
-
-	// spawn splitter enemies
-	void spawn_spitter_enemy(float elapsed_ms_since_last_update);
-
-    void boss_action_decision(float elapsed_ms);
-    void boss_action_teleport();
-    void boss_action_swipe();
-    void boss_action_summon(uint type);
-	void boss_action_sword_spawn(bool create, vec2 pos, vec2 scale);
-
 	// Check for collisions
 	void handle_collisions();
 
@@ -154,12 +135,6 @@ private:
 	void load_game();
 
 	int save_weapon(Entity weapon);
-
-	//MDP
-	BOSS_STATE get_action();
-	float mdp_helper(vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
-	float get_action_reward(BOSS_STATE action, vec2 boss_pos, uint num_ghouls, uint num_spitters, uint step_num, std::vector<float> cooldowns);
-	float get_reward(vec2 boss_pos_old, uint num_ghouls_old, uint num_spitters_old, vec2 boss_pos, uint num_ghouls, uint num_spitters);
 
     // creates pause gui
     void create_pause_screen();
@@ -191,19 +166,6 @@ private:
 
 	// Game state
 	RenderSystem *renderer;
-	float current_speed;
-	float current_enemy_spawning_speed;
-	float current_ghoul_spawning_speed;
-	float current_spitter_spawning_speed;
-	float current_boulder_spawning_speed;
-	float next_enemy_spawn;
-	float next_ghoul_spawn;
-	float next_spitter_spawn;
-	float next_boulder_spawn;
 	Entity player_hero;
     Entity boss;
-
-	// C++ random number generator
-	std::default_random_engine rng;
-	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 };
