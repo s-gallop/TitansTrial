@@ -40,6 +40,42 @@ The game is based on a dynamic difficulty system, and a new run always starts at
   * Boss can only be damaged by explosion
   * Boss have variable ways to attack and defence itself
 
+M4 Features:
+
+* Story Elements
+  * world_init.cpp:
+    * func createDialogue
+  * render_system.cpp:
+    * func drawDialogueLayer
+  * world_system.cpp:
+    * func connectDialogue
+    * func show_dialogue
+    * func effect_to_play
+    * func step: - lines 295 - 344
+  * physics_system.cpp:
+    * func step - lines 151 - 172
+* Precise Collision
+  * physics_system.cpp - lines 19-123
+* Complex prescribed motion
+  * weapon_utils.cpp - lines 275 - 370 and 635-657
+* Game Balance
+  * enemy_utils.cpp
+    * func adjust_difficulty
+    * func do_enemy_spawn
+  * enemy_utils.hpp
+  * weapon_utils.cpp
+    * func spawn_weapon
+* Advanced AI (MDP)
+  * enemy_utils.cpp - lines 514-651
+* Reloadability
+  * world_system.cpp
+    * func save_game
+    * func save_weapon
+    * func load_game
+    * step - lines 290-363
+* Boss
+  * enemy_utils.cpp - lines 322 - 472
+
 ## Write-up Milestone 3
 
 Changes from M2_Proposal can be seen highlighted in green in the M3_Proposal document. The changes include:
