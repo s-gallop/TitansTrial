@@ -1315,6 +1315,7 @@ void WorldSystem::restart_game()
 	ddl = -1;
 	ddf = 0.f;
 	recorded_max_ddf = -1.f;
+	should_score_prepare_to_show = false;
 	player_color = registry.colors.get(player_hero);
 	player_hearts_GUI.clear();
 	score_GUI.clear();

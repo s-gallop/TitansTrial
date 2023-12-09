@@ -115,6 +115,7 @@ public:
 		registry_list.push_back(&lavaPillars);
         registry_list.push_back(&dialogues);
 		registry_list.push_back(&dialogueTexts);
+		registry_list.push_back(&inGameGUIs);
 	}
 
 	void clear_all_components()
