@@ -1148,16 +1148,22 @@ BOSS_STATE WorldSystem::get_action() {
 	uint num_ghouls = registry.spitterEnemies.entities.size();
 	uint num_spitters = registry.spitterEnemies.entities.size();
 	BOSS_STATE action;
-	float max_utility = -1;
+	float max_utility = 0;
 	for (uint i = 0; i < (uint) BOSS_STATE::SIZE; i++) {
-		float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0, registry.boss.components[0].cooldowns);
-		if (utility > max_utility) {
-			max_utility = utility;
-			action = (BOSS_STATE) i;
+		if (registry.boss.components[0].cooldowns[i] <= 0) {
+			float utility = get_action_reward((BOSS_STATE) i, boss_pos, num_ghouls, num_spitters, 0, registry.boss.components[0].cooldowns);
+			if (utility > max_utility) {
+				max_utility = utility;
+				action = (BOSS_STATE) i;
+			}
 		}
 	}
-	registry.boss.components[0].cooldowns[(uint) BOSS_STATE::SIZE] = BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
-	registry.boss.components[0].cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
+	if (max_utility == 0) {
+		action = BOSS_STATE::SIZE;
+	} else {
+		registry.boss.components[0].cooldowns[(uint) BOSS_STATE::SIZE] = BOSS_ACTION_COOLDOWNS[(uint) BOSS_STATE::SIZE];
+		registry.boss.components[0].cooldowns[(uint) action] = BOSS_ACTION_COOLDOWNS[(uint) action];
+	}
 	return action;
 }
 
@@ -1737,15 +1743,16 @@ void WorldSystem::handle_collisions()
 						{
 							ddf += 5.f;
 						}
-						if (registry.enemies.get(entity_other).death_animation = -2) {
+						if (registry.enemies.get(entity_other).death_animation == -2) {
 							registry.remove_all_components_of(entity_other);
-							continue;
+						} else {
+							registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+							registry.animated.get(entity_other).oneTimer = 0;
 						}
-						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
+						registry.animated.get(entity_other).oneTimer = 0;
 					}
-					registry.animated.get(entity_other).oneTimer = 0;
 				}
 				
 				if (registry.bullets.has(entity) || registry.rockets.has(entity) || registry.grenades.has(entity)) {
