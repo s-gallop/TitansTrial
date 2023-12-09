@@ -36,7 +36,7 @@ const size_t BOSS_MAX_SPITTERS = 8;
 const float ENEMY_INVULNERABILITY_TIME = 500.f;
 const size_t ENEMY_DELAY_MS = 2000 * 3;
 const int BOSS_HEALTH = 10;
-const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {10000, 2000, 5000, 7000, 3000, 1000};
+const std::vector<size_t> BOSS_ACTION_COOLDOWNS = {12000, 2000, 70000, 10000, 2000, 5000};
 const size_t SPITTER_SPAWN_DELAY_MS = 10000 * 3;
 const float SPITTER_PROJECTILE_DELAY_MS = 5000.f;
 const float INITIAL_SPITTER_PROJECTILE_DELAY_MS = 1000.f;
@@ -67,7 +67,7 @@ const float NUMBER_Y_CORD = 740.f;
 const vec2 DB_FLAME_CORD = { 145.f, 693.f };
 const vec2 DB_SATAN_CORD = { 140.f, 725.f };
 const float LAVA_PILLAR_SPAWN_DELAY = 4000.f;
-const uint MDP_HORIZON = 10;
+const uint MDP_HORIZON = 2;
 const float MDP_DISCOUNT_FACTOR = 0.9f;
 const float MDP_BASE_REWARD = 100;
 
