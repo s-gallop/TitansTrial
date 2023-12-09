@@ -17,6 +17,27 @@ Changes from M3_Proposal can be seen highlighted in green in the M4_Proposal doc
 * Precise collision
 * Game balance (read below)
 
+### A note on user interaction feedback
+
+* Make sword always active or give it an attack animation
+  * Decided not to because it's part of the functionality
+* Create a super rare powerup to deal with the following enemy
+  * Decided not to because it needs to be a constant nuisance throughout the level
+* Lower attack cooldowns since higher levels are very difficult
+  * More and better (powerful) weapons. Lower cooldowns, and higher damage
+* Visual change to the background/stage to indicate difficulty change
+  * Level indicator at bottom left and there's an overlay before endless mode
+* Have some sort of end goal
+  * Boss + endless for people who can beat the boss
+* More enemies
+  * Added boss + ghoul + boulder. Spitter was changed
+* Make the sword better
+  * Does more damage now (as it it more dangerous to use)
+* Define the purpose of the score
+  * Remove score until you reach the endless level
+* Make grenade launcher shoot multiple grenades (or otherwise buff it since it's the slowest weapon to use)
+  * Increased damage
+
 ### A note on game balance
 
 The game is based on a dynamic difficulty system, and a new run always starts at the lowest difficulty. Player death is permanent and results in starting from difficulty 1, as inspired by roguelike games. Difficulty increases through levels 1-4, followed by the boss level, and then an endless mode that is much harder. This is how we take care of balancing difficulty through enemies and weapons:
