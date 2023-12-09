@@ -19,7 +19,7 @@ Changes from M3_Proposal can be seen highlighted in green in the M4_Proposal doc
 
 ### A note on game balance
 
-The game is based on a dynamic difficulty system, and a new run always starts at the lowest difficulty. Player death is permanent and results in starting from difficulty 1, as inspired by roguelike games. Difficulty increases through levels 1-4, followed by the boss level, and then an endless mode that is much harder. The goal is to each endless and trying to beat your highest score. This is how we take care of balancing difficulty through enemies and weapons:
+The game is based on a dynamic difficulty system, and a new run always starts at the lowest difficulty. Player death is permanent and results in starting from difficulty 1, as inspired by roguelike games. Difficulty increases through levels 1-4, followed by the boss level, and then an endless mode that is much harder. This is how we take care of balancing difficulty through enemies and weapons:
 
 * Dynamic Difficulty Factor & Level
   * Enemy spawning frequency, kinds and numbers
