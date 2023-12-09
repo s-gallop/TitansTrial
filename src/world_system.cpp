@@ -674,9 +674,6 @@ void WorldSystem::update_graphics_all_enemies()
 		AnimationInfo& animation = registry.animated.get(entity);
 
 		if (animation.oneTimeState == enemy.death_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.death_animation]) {
-			if (registry.boss.has(entity)) {
-				play_sound(SOUND_EFFECT::BOSS_DEATH);
-			}
 			registry.remove_all_components_of(entity);
             update_health_bar();
 		} else if (animation.oneTimeState == enemy.hit_animation && (int)floor(animation.oneTimer * ANIMATION_SPEED_FACTOR) == animation.stateFrameLength[enemy.hit_animation]) {
@@ -1560,6 +1557,9 @@ void WorldSystem::handle_collisions()
 							ddf += 5.f;
 						}
 						registry.animated.get(entity_other).oneTimeState = enemy.death_animation;
+						if (registry.boss.has(entity_other)) {
+							play_sound(SOUND_EFFECT::BOSS_DEATH);
+						}
 					} else {
 						registry.animated.get(entity_other).oneTimeState = enemy.hit_animation;
 					}
