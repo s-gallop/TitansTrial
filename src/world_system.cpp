@@ -979,6 +979,7 @@ void WorldSystem::load_game() {
 	}
 	else
 	{
+		restart_game();
 		state =
 		{
 			"history_max_ddf", 0.f,
