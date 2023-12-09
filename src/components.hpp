@@ -32,8 +32,10 @@ enum class INVULN_TYPE
 enum class BOSS_STATE {
     TELEPORT = 0,
     SWIPE = TELEPORT + 1,
-    SUMMON = SWIPE + 1,
-    SIZE = SUMMON + 1,
+	SUMMON_GHOULS = SWIPE + 1,
+	SUMMON_SPITTERS = SUMMON_GHOULS+ 1,
+	SUMMON_BULLETS = SUMMON_SPITTERS + 1,
+    SIZE = SUMMON_BULLETS + 1,
 };
 
 struct Blank
@@ -64,6 +66,7 @@ struct Boss
     int phase = 0;
     int hp = 10;
     std::vector<Entity> hurt_boxes;
+	std::vector<float> cooldowns;
 };
 
 struct HealthBar
@@ -96,6 +99,10 @@ struct Enemies
 
 struct FireEnemy {
 
+};
+
+struct BossSword {
+	int type;
 };
 
 struct LavaPillar {
@@ -391,7 +398,9 @@ enum class TEXTURE_ASSET_ID
 	SPITTER_ENEMY = FOLLOWING_ENEMY + 1,
 	SPITTER_ENEMY_BULLET = SPITTER_ENEMY + 1,
     BOSS = SPITTER_ENEMY_BULLET + 1,
-	SWORD = BOSS + 1,
+	BOSS_SWORD_S = BOSS + 1,
+	BOSS_SWORD_L = BOSS_SWORD_S + 1,
+	SWORD = BOSS_SWORD_L + 1,
 	GUN = SWORD + 1,
 	ARROW = GUN + 1,
 	ROCKET_LAUNCHER = ARROW + 1,
@@ -496,7 +505,9 @@ enum class EFFECT_ASSET_ID
     SCREEN_LAYER = FOLLOWING_ENEMY + 1,
 	LAVA_PILLAR = SCREEN_LAYER + 1,
     BOSS = LAVA_PILLAR + 1,
-    HEALTH_BAR = BOSS + 1,
+	BOSS_SWORD_S = BOSS + 1,
+	BOSS_SWORD_L = BOSS_SWORD_S + 1,
+    HEALTH_BAR = BOSS_SWORD_L + 1,
 	DIALOGUE_LAYER = HEALTH_BAR + 1,
 	GRENADE_ORB = DIALOGUE_LAYER + 1,
 	EFFECT_COUNT = GRENADE_ORB + 1,
